@@ -16,7 +16,8 @@ root = tk.Tk()
 root.title("Camera Monitoring and Data Capture")
 
 custom_prefix_var = tk.StringVar(value="Session")
-folder_path_var = tk.StringVar(value=os.path.join(os.path.expanduser("~"), "Desktop"))
+# folder_path_var = tk.StringVar(value=os.path.join(os.path.expanduser("~"), "Desktop"))
+folder_path_var = tk.StringVar(value=os.getcwd())
 capture_interval_var = tk.StringVar(value="10")
 countdown_var = tk.StringVar(value="")
 connection_status_var = tk.StringVar(value="Disconnected")
@@ -27,7 +28,7 @@ CAMERA_URLS = [
 ]
 
 caps = [cv2.VideoCapture(url) for url in CAMERA_URLS]
-caps.append(cv2.VideoCapture(1))  # Local webcam
+# caps.append(cv2.VideoCapture(1))  # Local webcam
 caps = [cap if cap.isOpened() else None for cap in caps]
 
 SERVER_IP = '172.29.143.185'
