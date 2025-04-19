@@ -342,6 +342,31 @@ def delete_by_group_tag(group_tag):
         conn.commit()
         print(f"Deleted all records with group_tag: {group_tag}" if cursor.rowcount else "No records found with that group_tag.")
 
+def update_print_data(print_tag, **fields):
+    """Update one or more fields of a print entry identified by print_tag."""
+    if not fields:
+        print("No fields provided to update.")
+        return
+
+    set_clause = ", ".join(f"{key} = ?" for key in fields)
+    values = list(fields.values())
+    values.append(print_tag)
+
+    with sqlite3.connect(DB_FILE) as conn:
+        cursor = conn.cursor()
+        cursor.execute(f'''
+            UPDATE prints
+            SET {set_clause}
+            WHERE print_tag = ?
+        ''', values)
+        conn.commit()
+
+        if cursor.rowcount:
+            print(f"Successfully updated print_tag: {print_tag}")
+        else:
+            print(f"No record found with print_tag: {print_tag}")
+
+
 def main():
     create_database()
     update_table_schema()
@@ -353,9 +378,10 @@ def main():
         print("3. Delete row by print_tag")
         print("4. Delete rows by group_tag")
         print("5. Delete all data")
-        print("6. Exit")
+        print("6. Update print data by print_tag")  # New option to update
+        print("7. Exit")
 
-        choice = input("Enter your choice (1/2/3/4/5/6): ").strip()
+        choice = input("Enter your choice (1/2/3/4/5/6/7): ").strip()
 
         if choice == '1':
             fetch_all_data()
@@ -373,11 +399,26 @@ def main():
                 delete_by_group_tag(group_tag)
         elif choice == '5':
             delete_all_data()
-        elif choice == '6':
+        elif choice == '6':  # Handling update option
+            print_tag = input("Enter the print_tag to update: ").strip()
+            field = input("Enter the field name to update (e.g., temperature, humidity, print_speed): ").strip()
+            value = input("Enter the new value: ").strip()
+
+            # Check if the field is a valid numeric value
+            if field in ["humidity", "temperature", "print_speed", "layer_height", "pressure", "width"]:
+                try:
+                    value = float(value)
+                except ValueError:
+                    print("Invalid value for numeric field.")
+                    continue
+            # Update the record
+            update_print_data(print_tag, **{field: value})
+        elif choice == '7':
             print("Exiting...")
             break
         else:
             print("Invalid choice. Please select a valid option.")
+
 
 if __name__ == "__main__":
     main()
