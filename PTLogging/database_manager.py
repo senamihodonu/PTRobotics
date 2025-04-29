@@ -192,7 +192,7 @@ import sqlite3
 import csv
 import os
 
-DB_FILE = "print_data.db"
+DB_FILE = "print.db"
 
 def create_database():
     with sqlite3.connect(DB_FILE) as conn:
