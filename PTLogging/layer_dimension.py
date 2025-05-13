@@ -62,7 +62,7 @@ def annotate_and_save(image, timestamp, bbox, width_mm, height_mm):
     cv2.putText(image, f"Height: {height_mm:.2f} mm", (x, y - 35),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
-    processed_name = f"processed_image_{timestamp}.jpg"
+    processed_name = f"p_{timestamp}.jpg"
     output_path = os.path.join(IMAGE_DIR, processed_name)
     cv2.imwrite(output_path, image)
 
@@ -99,7 +99,7 @@ def main():
 
         if key == ord('c'):
             timestamp = get_timestamp()
-            image_name = f"captured_image_{timestamp}.jpg"
+            image_name = f"c_{timestamp}.jpg"
             image_path = os.path.join(IMAGE_DIR, image_name)
             cv2.imwrite(image_path, frame)
             print(f"Image saved: {image_path}")

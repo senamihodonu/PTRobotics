@@ -1,0 +1,21 @@
+[VERSION]
+APIVERSION=(100)
+VERSION=(2,10,4,1)
+[FRAME]
+PLACEMENT=(44,2,3,-1,-1,-1,-1,26,26,1178,613)
+FRAME DATA=(1,1,0,0)
+[FRAME DATA]
+1=(44,2,3,-1,-1,-8,-31,156,156,981,582)
+[Ladder Views]
+F1V1=(95,1,0,7,16,5,1,1,1,0,1)
+[Ladder Frame 1]
+Ladder View 1z=(0,0,1267,400)
+ModuleSegment=6
+[FRAME TYPES]
+1=3
+[TAB INFO]
+Tab0=3,$Main
+[DISPLAY MODE]
+DoMDIRestore=0
+[SYSTEM NAME]
+System Name=GREATWHITE
