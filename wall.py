@@ -13,8 +13,8 @@ sys.path.append(os.path.normpath(src_path))
 
 from robot_controller import robot
 
-two_dirs_up = os.path.abspath(os.path.join(__file__, "../../.."))
-sys.path.insert(0,two_dirs_up)
+# two_dirs_up = os.path.abspath(os.path.join(__file__, "../../.."))
+# sys.path.insert(0,two_dirs_up)
 
 from PyPLCConnection import (
     PyPLCConnection,
@@ -59,7 +59,7 @@ print(f"[INFO] PLC Y-axis speed configured to {speed} mm/min")
 # Set Z axis speed
 # plc.calculate_pulses_per_second(z_speed, DIP_SWITCH_SETTING_Z, LEAD_Z_SCREW, 'z')
 
-plc.travel(Z_DOWN_MOTION, 400, "mm", z_speed)
+plc.travel(Z_UP_MOTION, 10, "mm", z_speed)
 
 
 # # --- Home Position ---
