@@ -1,3 +1,0 @@
-id,group_tag,print_tag,image_tag1,image_tag2,vision_capture,humidity,temperature,print_speed,layer_width,layer_height,nozzle_height
-5,User_20250521-114051_SSE,20250521-114051_p1,None,None,c_20250521-114051.jpg,0.0,0.0,100.0,37.15151515151515,24.484848484848484,19.0
-6,User_20250521-114051_SSE,20250521-114101_p2,None,None,c_20250521-114101.jpg,0.0,0.0,100.0,36.90909090909091,24.424242424242426,19.0
