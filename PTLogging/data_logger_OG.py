@@ -23,7 +23,7 @@ countdown_var = tk.StringVar(value="")
 connection_status_var = tk.StringVar(value="Disconnected")
 
 CAMERA_URLS = [
-    "http://172.29.172.128:8080/video",
+    "http://172.29.149.105:8080/video",
     "http://172.29.179.38:8080/video"
 ]
 

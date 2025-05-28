@@ -6,7 +6,7 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Navigate to the src directory relative to this file
-src_path = os.path.join(current_dir, '..', 'fanuc_ethernet_ip_drivers', 'src')
+src_path = os.path.join(current_dir, 'fanuc_ethernet_ip_drivers', 'src')
 
 # Normalize the path and add it to sys.path
 sys.path.append(os.path.normpath(src_path))
@@ -33,7 +33,8 @@ from PyPLCConnection import (
 print("Small program established")
 
 woody = robot(ROBOT_IP)
-speed = 200
+speed = 2
+
 woody.set_speed(int(speed))
 
 # --- Home Position ---
@@ -55,8 +56,6 @@ P = 0.000
 R = -180
 pose=[X, Y, Z, W, P, R]
 woody.write_cartesian_position(pose)
-speed = 2
-woody.set_speed(int(speed))
 
 X = 286.206+60
 Y = -290.305

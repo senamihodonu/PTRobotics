@@ -10,13 +10,13 @@ import database_manager_mv as db
 import layer_dimension as ld
 import sys
 
-two_dirs_up = os.path.abspath(os.path.join(__file__, "../../.."))
+two_dirs_up = os.path.abspath(os.path.join(__file__, "../.."))
 sys.path.insert(0,two_dirs_up)
 
 from PyPLCConnection import (
-    PyPLCConnection,
+    PyPLCConnection, 
     DISTANCE_SENSOR_IN, PLC_IP,
-    DISTANCE_DATA_ADDRESS
+    DISTANCE_DATA_ADDRESS, 
 )
 
 

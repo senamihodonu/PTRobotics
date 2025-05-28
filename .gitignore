@@ -177,5 +177,4 @@ cython_debug/
 # PLC 
 *.dlo
 *.wsp
-*.csv
 *.txt

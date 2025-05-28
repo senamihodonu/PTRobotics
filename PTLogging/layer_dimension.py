@@ -7,7 +7,7 @@ from datetime import datetime
 # Constants
 IMAGE_DIR = "MVImages"
 CSV_FILE = os.path.join(IMAGE_DIR, "measurement_log.csv")
-PIXELS_PER_MM = 15# Calibration factor (can be improved with known object)
+PIXELS_PER_MM = 13.8# Calibration factor (can be improved with known object)
 
 # Ensure image directory exists
 os.makedirs(IMAGE_DIR, exist_ok=True)
@@ -81,7 +81,7 @@ def process_image(image, image_name, timestamp):
     return width_mm, height_mm
 
 def main():
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Error: Could not open camera.")
         return

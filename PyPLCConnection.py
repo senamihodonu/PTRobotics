@@ -197,7 +197,7 @@ if __name__ == "__main__":
     # plc.write_modbus_coils(Z_UP_MOTION, True)
 
     # plc.write_modbus_coils(Z_UP_MOTION, False)
-    # plc.write_modbus_coils(plc.PROGRAM_RUNNING_IND, False)
+    plc.write_modbus_coils(GREEN, False)
     plc.write_modbus_coils(Z_DOWN_MOTION, False)
     plc.write_modbus_coils(Z_UP_MOTION, False)
     plc.write_modbus_coils(Y_RIGHT_MOTION, False)
