@@ -170,66 +170,22 @@ class PyPLCConnection:
         return travel_time
     
     def reset_coils(self):
-        for addr in range(20):
-            plc.write_modbus_coils(addr, False)
-        # plc.write_modbus_coils(PROGRAM_RUNNING_IND, False)
-        # plc.write_modbus_coils(Z_DOWN_MOTION, False)
-        # plc.write_modbus_coils(Z_UP_MOTION, False)
-        # plc.write_modbus_coils(Y_RIGHT_MOTION, False)
-        # plc.write_modbus_coils(Y_LEFT_MOTION, False)
+        plc = PyPLCConnection(PLC_IP)
+        plc.read_single_register(DISTANCE_DATA_ADDRESS)
+        plc.write_modbus_coils(GREEN, False)
+        plc.write_modbus_coils(Z_DOWN_MOTION, False)
+        plc.write_modbus_coils(Z_UP_MOTION, False)
+        plc.write_modbus_coils(Y_RIGHT_MOTION, False)
+        plc.write_modbus_coils(Y_LEFT_MOTION, False)
 
 if __name__ == "__main__":
-
-
-
-    plc_ip_address = "192.168.1.25"
-
-    sim = "172.29.154.198"
-
-    # plc = PyPLCConnection(sim)
-    plc = PyPLCConnection(plc_ip_address)
+    plc = PyPLCConnection(PLC_IP)
     plc.read_single_register(DISTANCE_DATA_ADDRESS)
-    # # Perform operations with the PLC here...
-    # # # client = plc.connect_to_plc()
-    # plc.write_modbus_coils(1, False)
-    # plc.write_modbus_coils(2, False)
 
-    # plc.write_modbus_coils(Z_UP_MOTION, True)
-
-    # plc.write_modbus_coils(Z_UP_MOTION, False)
-    plc.write_modbus_coils(GREEN, False)
-    plc.write_modbus_coils(Z_DOWN_MOTION, False)
-    plc.write_modbus_coils(Z_UP_MOTION, False)
-    plc.write_modbus_coils(Y_RIGHT_MOTION, False)
-    plc.write_modbus_coils(Y_LEFT_MOTION, False)
 
 
     
 
 
 
-
-    # plc.write_modbus_coils(Z_DOWN_MOTION, False)
-
-
-
-
-
-
-    # # plc.move_motor(25,200, X_LEFT_MOTION)
-    # # print(plc.speed_to_pulse_per_sec(12000, 20000, LEAD_Y_SCREW))
-    # speed_mm_min = 200
-    # lead_mm_rev = LEAD_Y_SCREW
-    # steps_per_rev = DIP_SWITCH_SETTING
-    # plc.calculate_pulse_per_second(speed_mm_min, steps_per_rev, lead_mm_rev, 'y')
-
-    # coil_address = 3
-    # distance = 12
-    # unit = "inches"
-    # plc.travel(Y_RIGHT_MOTION, distance, "inches", speed_mm_min)
-    # register_address = 6
-    # while True:
-    #     plc.read_single_register(register_address)
-    #     time.sleep(3)
-    
 

@@ -234,4 +234,4 @@ for z_position in range(2):
 
 
 # turn off green light to show program is done
-plc.write_modbus_coils(GREEN_LIGHT,False)
+plc.write_modbus_coils(GREEN,False)
