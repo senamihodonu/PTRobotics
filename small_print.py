@@ -5,16 +5,26 @@ import os
 # Get the absolute path to the directory of this script
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Navigate to the src directory relative to this file
-src_path = os.path.join(current_dir, 'fanuc_ethernet_ip_drivers', 'src')
+# Navigate to the fanuc_ethernet_ip_drivers/src directory
+src_path = os.path.normpath(
+    os.path.join(current_dir, "..", "fanuc_ethernet_ip_drivers", "src")
+)
 
-# Normalize the path and add it to sys.path
-sys.path.append(os.path.normpath(src_path))
+# Add the src path to sys.path
+sys.path.append(src_path)
 
 from robot_controller import robot
 
-# two_dirs_up = os.path.abspath(os.path.join(__file__, "../../.."))
-# sys.path.insert(0,two_dirs_up)
+# Get the absolute path to the directory of this script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Navigate to the fanuc_ethernet_ip_drivers/src directory
+src_path = os.path.normpath(
+    os.path.join(current_dir, "..", "fanuc_ethernet_ip_drivers", "src")
+)
+
+# Add the src path to sys.path
+sys.path.append(src_path)
 
 from PyPLCConnection import (
     PyPLCConnection,
@@ -48,48 +58,15 @@ J6= -45.407
 pose=[J1, J2, J3, J4, J5, J6]
 woody.write_joint_pose(pose)
 
-X = 286.206
-Y = -290.305
-Z = 644.356
-W = 0
-P = 0.000 
-R = -180
-pose=[X, Y, Z, W, P, R]
-woody.write_cartesian_position(pose)
+# Cartesian movements
+positions = [
+    (286.206, -290.305, 644.356),
+    (286.206 + 60, -290.305, 644.356),
+    (286.206 + 60, -290.305 + 609.6, 644.356),
+    (286.206, -290.305 + 609.6, 644.356),
+    (286.206, -290.305, 644.356)
+]
 
-X = 286.206+60
-Y = -290.305
-Z = 644.356
-W = 0
-P = 0.000 
-R = -180
-pose=[X, Y, Z, W, P, R]
-woody.write_cartesian_position(pose)
-
-
-X = 286.206+60
-Y = -290.305+609.6
-Z = 644.356
-W = 0
-P = 0.000 
-R = -180
-pose=[X, Y, Z, W, P, R]
-woody.write_cartesian_position(pose)
-
-X = 286.206
-Y = -290.305+609.6
-Z = 644.356
-W = 0
-P = 0.000 
-R = -180
-pose=[X, Y, Z, W, P, R]
-woody.write_cartesian_position(pose)
-
-X = 286.206
-Y = -290.305
-Z = 644.356
-W = 0
-P = 0.000 
-R = -180
-pose=[X, Y, Z, W, P, R]
-woody.write_cartesian_position(pose)
+for X, Y, Z in positions:
+    pose = [X, Y, Z, 0, 0.000, -180]
+    woody.write_cartesian_position(pose)
