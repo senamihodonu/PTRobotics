@@ -43,7 +43,7 @@ from PyPLCConnection import (
 print("Small program established")
 
 woody = robot(ROBOT_IP)
-speed = 1
+speed = 200
 
 woody.set_speed(int(speed))
 
@@ -59,22 +59,15 @@ pose=[J1, J2, J3, J4, J5, J6]
 woody.write_joint_pose(pose)
 
 # # Cartesian movements
+Z = 644.356
+positions = [
+    (286.206, -290.305, Z),
+    (286.206 - 25.40, -290.305+76.20, Z),
+    (286.206 - 50.8, -290.305+91.00, Z),
+    # (286.206, -290.305 + 609.6, Z),
+    # (286.206, -290.305, Z)
+]
 
-starting_x = 286.206-10
-starting_y = -290.305
-starting_z = 644.356
-
-for x in range(1):
-    positions = [
-        (starting_x, starting_y, starting_z),
-        (starting_x + 50, starting_y, starting_z),
-        (starting_x + 50, starting_y + 609.6, starting_z),
-        (starting_x, starting_y + 609.6, starting_z),
-        (starting_x, starting_y, starting_z)
-    ]
-
-    for X, Y, Z in positions:
-        pose = [X, Y, Z, 0, 0.000, -180]
-        woody.write_cartesian_position(pose)
-    
-    starting_z -= 15
+for X, Y, Z in positions:
+    pose = [X, Y, Z, 0, 0.000, -180]
+    woody.write_cartesian_position(pose)

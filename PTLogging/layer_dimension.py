@@ -7,7 +7,7 @@ from datetime import datetime
 # Constants
 IMAGE_DIR = "MVImages"
 CSV_FILE = os.path.join(IMAGE_DIR, "measurement_log.csv")
-PIXELS_PER_MM = 13.8# Calibration factor (can be improved with known object)
+PIXELS_PER_MM = 11.5# Calibration factor (can be improved with known object)
 
 # Ensure image directory exists
 os.makedirs(IMAGE_DIR, exist_ok=True)
