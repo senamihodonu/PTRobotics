@@ -68,6 +68,11 @@ positions = [
     # (286.206, -290.305, Z)
 ]
 
-for X, Y, Z in positions:
-    pose = [X, Y, Z, 0, 0.000, -180]
-    woody.write_cartesian_position(pose)
+X = 286.206
+Y = -290.305
+pose = [X, Y, Z, 0, 0.000, -180]
+
+X = 286.206 - 25.40
+Y = -290.305+76.2
+pose = [X, Y, Z, 0, 0.000, -180]
+woody.write_cartesian_position_2(pose)
