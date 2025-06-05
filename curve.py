@@ -46,6 +46,7 @@ woody = robot(ROBOT_IP)
 speed = 200
 
 woody.set_speed(int(speed))
+woody.set_robot_speed_percent(10)
 
 # --- Home Position ---
 print("[HOME] Moving robot to home position")

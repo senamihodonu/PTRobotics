@@ -1,6 +1,7 @@
 # Imports
 import sys
 import os
+import time
 
 # Get the absolute path to the directory of this script
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -43,12 +44,13 @@ from PyPLCConnection import (
 print("Small program established")
 
 woody = robot(ROBOT_IP)
-# speed = 200
+speed = 200
 
-# woody.set_speed(int(speed))
-percent = 100
+woody.set_speed(int(speed))
+percent = 20
 for x in range(5):
-    woody.get_robot_speed_percent(percent)
-    percent-=10
+    woody.set_robot_speed_percent(percent)
+    time.sleep(3)
+    percent+=20
 
 
