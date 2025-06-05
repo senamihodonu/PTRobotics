@@ -6,7 +6,7 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Navigate to the src directory relative to this file
-src_path = os.path.join(current_dir, '..', 'fanuc_ethernet_ip_drivers', 'src')
+src_path = os.path.join(current_dir, 'fanuc_ethernet_ip_drivers', 'src')
 
 # Normalize the path and add it to sys.path
 sys.path.append(os.path.normpath(src_path))

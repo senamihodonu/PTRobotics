@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+.DS_Store
+doxygen-awesome-css/
+Doxyfile*
+*_test*
+
+# jetbrains IDEs
+.idea/
+
+# Ignore IDE configs
+.vscode/
+.idea/
+
+# Ignore virtual environments
+venv/
+env/
+
+# embeded git folder
+fanuc_ethernet_ip_drivers
+
+#PLC
+.dlo/

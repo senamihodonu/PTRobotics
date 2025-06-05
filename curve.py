@@ -7,24 +7,13 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Navigate to the fanuc_ethernet_ip_drivers/src directory
 src_path = os.path.normpath(
-    os.path.join(current_dir, "..", "fanuc_ethernet_ip_drivers", "src")
+    os.path.join(current_dir, "fanuc_ethernet_ip_drivers", "src")
 )
 
 # Add the src path to sys.path
 sys.path.append(src_path)
 
 from robot_controller import robot
-
-# Get the absolute path to the directory of this script
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Navigate to the fanuc_ethernet_ip_drivers/src directory
-src_path = os.path.normpath(
-    os.path.join(current_dir, "..", "fanuc_ethernet_ip_drivers", "src")
-)
-
-# Add the src path to sys.path
-sys.path.append(src_path)
 
 from PyPLCConnection import (
     PyPLCConnection,
