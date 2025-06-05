@@ -53,7 +53,7 @@ for x in range(5):
     print(f"The set speed is {woody.get_speed()}")
     print(f"The speed percentage is {woody.get_robot_speed_percent()}")
     print(f"The actual speed is {woody.get_actual_robot_speed()}")
-    time.sleep(3)
+    time.sleep(5)
     percent+=20
 
 
