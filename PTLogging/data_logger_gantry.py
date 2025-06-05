@@ -10,14 +10,30 @@ import database_manager_mv as db
 import layer_dimension as ld
 import sys
 
-two_dirs_up = os.path.abspath(os.path.join(__file__, "../.."))
+two_dirs_up = os.path.abspath(os.path.join(__file__, "../../.."))
 sys.path.insert(0,two_dirs_up)
 
 from PyPLCConnection import (
-    PyPLCConnection, 
+    PyPLCConnection,
     DISTANCE_SENSOR_IN, PLC_IP,
-    DISTANCE_DATA_ADDRESS, 
+    DISTANCE_DATA_ADDRESS,
+    ROBOT_IP
 )
+
+# Get the absolute path to the directory of this script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Navigate to the fanuc_ethernet_ip_drivers/src directory
+src_path = os.path.normpath(
+    os.path.join(current_dir, "..", "..", "fanuc_ethernet_ip_drivers", "src")
+)
+
+# Add the src path to sys.path
+sys.path.append(src_path)
+
+from robot_controller import robot
+
+woody = robot(ROBOT_IP)
 
 
 plc = PyPLCConnection(PLC_IP)
@@ -136,12 +152,22 @@ def select_folder():
         folder_path_var.set(folder)
 
 def get_nozzle_height():
-    # Placeholder for future dynamic calculation
-    return plc.read_single_register(DISTANCE_DATA_ADDRESS)  # Default in mm
+    """
+    Returns the current nozzle height from the PLC.
+    
+    Returns:
+        float: Nozzle height in millimeters.
+    """
+    return plc.read_single_register(DISTANCE_DATA_ADDRESS)
 
 def get_print_speed():
-    # Placeholder for future dynamic calculation
-    return 100.0  # Default in mm
+    """
+    Returns the current print speed of the robot.
+    
+    Returns:
+        float: Print speed in millimeters per second.
+    """
+    return woody.get_actual_robot_speed()
 
 def capture_and_save():
     global temperature, humidity, photo_count, socket_connected, session_folder, session_start_time
