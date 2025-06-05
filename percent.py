@@ -50,6 +50,9 @@ woody.set_speed(int(speed))
 percent = 20
 for x in range(5):
     woody.set_robot_speed_percent(percent)
+    print(f"The set speed is {woody.get_speed()}")
+    print(f"The speed percentage is {woody.get_robot_speed_percent()}")
+    print(f"The actual speed is {woody.get_actual_robot_speed()}")
     time.sleep(3)
     percent+=20
 
