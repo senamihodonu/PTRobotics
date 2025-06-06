@@ -10,8 +10,15 @@ import database_manager_mv as db
 import layer_dimension as ld
 import sys
 
-two_dirs_up = os.path.abspath(os.path.join(__file__, "../../.."))
-sys.path.insert(0,two_dirs_up)
+# Get the absolute path to the directory of this script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Navigate to the fanuc_ethernet_ip_drivers/src directory
+pyp_path = os.path.normpath(
+    os.path.join(current_dir, "..")
+)
+
+# Add the src path to sys.path
+sys.path.append(pyp_path)
 
 from PyPLCConnection import (
     PyPLCConnection,
@@ -20,8 +27,7 @@ from PyPLCConnection import (
     ROBOT_IP
 )
 
-# Get the absolute path to the directory of this script
-current_dir = os.path.dirname(os.path.abspath(__file__))
+
 
 # Navigate to the fanuc_ethernet_ip_drivers/src directory
 src_path = os.path.normpath(
