@@ -180,4 +180,6 @@ cython_debug/
 *.txt
 MVImages/
 *.vscode
+.dlo
+.wsp
 
