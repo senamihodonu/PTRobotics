@@ -8,6 +8,37 @@ import random
 import csv
 from datetime import datetime
 import matplotlib.pyplot as plt
+import sys
+import os
+
+
+# Get the absolute path to the directory of this script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Navigate to the fanuc_ethernet_ip_drivers/src directory
+src_path = os.path.normpath(
+    os.path.join(current_dir, "..", "fanuc_ethernet_ip_drivers", "src")
+)
+
+# Add the src path to sys.path
+sys.path.append(src_path)
+
+from robot_controller import robot
+
+from PyPLCConnection import (
+    PyPLCConnection,
+    LEAD_Y_SCREW, LEAD_Z_SCREW,
+    DIP_SWITCH_SETTING_Y,
+    GREEN,
+    Y_LEFT_MOTION, Y_RIGHT_MOTION,
+    Z_DOWN_MOTION, Z_UP_MOTION,
+    DISTANCE_SENSOR_IN,
+    DIP_SWITCH_SETTING_Z,
+    PLC_IP,
+    ROBOT_IP
+)
+
+woody = robot(ROBOT_IP)
 
 # -----------------------------
 # 0. Model Selection Option
@@ -69,12 +100,16 @@ def get_live_sensor_data():
     }
 
 def send_override_to_robot(percent):
+    woody.get_speed()
+    woody.get_robot_speed_percent()
+    woody.get_actual_robot_speed()
     """
     Send override percentage to FANUC robot.
     In real-world setup, replace this with actual communication code (e.g., TCP/IP, fieldbus).
     """
     # Example print for simulation
     print(f"[Robot] Override set to {percent:.1f}%")
+    woody.set_robot_speed_percent(percent)
     
     # Example (for real system, this would be an actual command):
     # robot_comm.set_speed_override(percent)
