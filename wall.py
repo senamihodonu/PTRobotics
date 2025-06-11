@@ -13,8 +13,6 @@ sys.path.append(os.path.normpath(src_path))
 
 from robot_controller import robot
 
-# two_dirs_up = os.path.abspath(os.path.join(__file__, "../../.."))
-# sys.path.insert(0,two_dirs_up)
 
 from PyPLCConnection import (
     PyPLCConnection,

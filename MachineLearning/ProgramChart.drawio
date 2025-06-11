@@ -1,0 +1,92 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.4 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="26.0.4">
+  <diagram name="Page-1" id="mk5Dh2SE32kBEam_okTl">
+    <mxGraphModel dx="2284" dy="836" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;spacing=2;fontSize=16;" edge="1" parent="1" source="Ul_T4w_X87LJwgJrpFP6-1" target="Ul_T4w_X87LJwgJrpFP6-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-18" value="Logged parameters" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];spacing=2;fontSize=16;" vertex="1" connectable="0" parent="Ul_T4w_X87LJwgJrpFP6-13">
+          <mxGeometry x="-0.2308" y="2" relative="1" as="geometry">
+            <mxPoint x="166" y="37" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-1" value="&amp;nbsp;&lt;b&gt; Program 2&lt;/b&gt;&lt;div&gt;&amp;nbsp; Data Logging&lt;/div&gt;&lt;div&gt;&lt;ul&gt;&lt;li&gt;Layer width&lt;/li&gt;&lt;li&gt;Print speed&lt;/li&gt;&lt;li&gt;Nozzle height&lt;/li&gt;&lt;li&gt;Humidity&lt;/li&gt;&lt;li&gt;Temperature&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;spacing=2;fontSize=16;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="220" y="230" width="150" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;fontSize=16;" edge="1" parent="1" source="Ul_T4w_X87LJwgJrpFP6-4" target="Ul_T4w_X87LJwgJrpFP6-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-22" value="&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Adjusted nozzle height&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="Ul_T4w_X87LJwgJrpFP6-21">
+          <mxGeometry x="-0.0482" relative="1" as="geometry">
+            <mxPoint x="-18" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=16;" edge="1" parent="1" source="Ul_T4w_X87LJwgJrpFP6-4" target="Ul_T4w_X87LJwgJrpFP6-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-34" value="&lt;font&gt;Speed command&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="Ul_T4w_X87LJwgJrpFP6-32">
+          <mxGeometry x="-0.4593" y="2" relative="1" as="geometry">
+            <mxPoint x="-104" y="48" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-4" value="&lt;b&gt;&amp;nbsp; Program 3&lt;/b&gt;&lt;div&gt;&lt;ul&gt;&lt;li&gt;Speed adjustment&lt;/li&gt;&lt;li&gt;Nozzle height adjustment&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;spacing=2;fontSize=16;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="560" y="400" width="240" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;spacing=2;fontSize=16;" edge="1" parent="1" source="Ul_T4w_X87LJwgJrpFP6-5" target="Ul_T4w_X87LJwgJrpFP6-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-23" value="&lt;font&gt;Layer data&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="Ul_T4w_X87LJwgJrpFP6-14">
+          <mxGeometry x="-0.5119" y="-4" relative="1" as="geometry">
+            <mxPoint x="-14" y="27" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;fontSize=16;" edge="1" parent="1" source="Ul_T4w_X87LJwgJrpFP6-5" target="Ul_T4w_X87LJwgJrpFP6-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-38" value="&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Connects to robot and sends&amp;nbsp;&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;paths via position and speed register&lt;/span&gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="Ul_T4w_X87LJwgJrpFP6-36">
+          <mxGeometry x="0.1371" y="-2" relative="1" as="geometry">
+            <mxPoint x="41" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-5" value="&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;b&gt;Program 1&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;Motion instruction&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;spacing=2;fontSize=16;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="-190" y="420" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;fontSize=16;" edge="1" parent="1" source="Ul_T4w_X87LJwgJrpFP6-24" target="Ul_T4w_X87LJwgJrpFP6-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-39" value="Nozzle height" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="Ul_T4w_X87LJwgJrpFP6-28">
+          <mxGeometry x="-0.1032" relative="1" as="geometry">
+            <mxPoint x="-31" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-24" value="&lt;font&gt;Distance sensor&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;verticalAlign=middle;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="650" y="170" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-42" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ul_T4w_X87LJwgJrpFP6-25" target="Ul_T4w_X87LJwgJrpFP6-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-45" value="&lt;span style=&quot;font-size: 16px;&quot;&gt;Temperature/Humidity&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="Ul_T4w_X87LJwgJrpFP6-42">
+          <mxGeometry x="-0.0787" relative="1" as="geometry">
+            <mxPoint y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-25" value="Environment sensor" style="ellipse;whiteSpace=wrap;html=1;verticalAlign=middle;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="-180" y="170" width="150" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;fontSize=16;" edge="1" parent="1" source="Ul_T4w_X87LJwgJrpFP6-31" target="Ul_T4w_X87LJwgJrpFP6-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-35" value="&lt;font&gt;Speed overide&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;font&gt;(via robot register)&lt;/font&gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="Ul_T4w_X87LJwgJrpFP6-33">
+          <mxGeometry x="0.3282" y="4" relative="1" as="geometry">
+            <mxPoint x="199" y="8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ul_T4w_X87LJwgJrpFP6-31" value="&lt;div style=&quot;text-align: left;&quot;&gt;&lt;b&gt;Robot Program&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;(Handles python communication)&lt;/div&gt;&lt;div&gt;&lt;ul&gt;&lt;li&gt;Motion execution&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;spacing=2;fontSize=16;fillColor=#f8cecc;strokeColor=#b85450;align=center;" vertex="1" parent="1">
+          <mxGeometry x="260" y="620" width="265" height="100" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

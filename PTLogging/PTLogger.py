@@ -1,4 +1,4 @@
-import socket
+import socket 
 import time
 import cv2
 import numpy as np
@@ -9,6 +9,9 @@ from PIL import Image, ImageTk
 import database_manager_mv as db
 import layer_dimension as ld
 import sys
+
+# Set this flag to True to use URL cameras, False to disable them
+USE_URL_CAMERAS = True
 
 # Get the absolute path to the directory of this script
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -27,21 +30,14 @@ from PyPLCConnection import (
     ROBOT_IP
 )
 
-
-
-# Navigate to the fanuc_ethernet_ip_drivers/src directory
 src_path = os.path.normpath(
     os.path.join(current_dir, "..", "..", "fanuc_ethernet_ip_drivers", "src")
 )
-
-# Add the src path to sys.path
 sys.path.append(src_path)
 
 from robot_controller import robot
 
 woody = robot(ROBOT_IP)
-
-
 plc = PyPLCConnection(PLC_IP)
 
 def log(msg):
@@ -62,10 +58,11 @@ CAMERA_URLS = [
     "http://172.29.179.38:8080/video"
 ]
 
-caps = [cv2.VideoCapture(url) for url in CAMERA_URLS]
-caps = [cap if cap.isOpened() else None for cap in caps]
+caps = []
+if USE_URL_CAMERAS:
+    caps = [cv2.VideoCapture(url) for url in CAMERA_URLS]
+    caps = [cap if cap.isOpened() else None for cap in caps]
 
-# Add local camera (index 0)
 vision_camera = cv2.VideoCapture(0)
 vision_camera = vision_camera if vision_camera.isOpened() else None
 
@@ -84,8 +81,8 @@ session_start_time = None
 countdown_seconds = 0
 
 width = None
-# --- FUNCTIONS ---
 
+# --- FUNCTIONS ---
 def update_connection_indicator(connected):
     if connected:
         connection_status_var.set("Connected")
@@ -115,7 +112,7 @@ def try_connect():
         update_connection_indicator(False)
 
 def fetch_sensor_data():
-    global temperature, humidity, socket_connected, client, width, height
+    global temperature, humidity, socket_connected, client, width
     if socket_connected and client is not None:
         try:
             client.sendall("hello".encode())
@@ -126,7 +123,6 @@ def fetch_sensor_data():
                 temperature = float(parts[0].split(": ")[1].replace("\u00b0C", ""))
                 humidity = float(parts[1].split(": ")[1].replace("%", ""))
                 width = float(parts[2].split(": ")[1]) if len(parts) > 2 else None
-
             except (IndexError, ValueError) as e:
                 log(f"Error parsing sensor data: {e}")
         except Exception as e:
@@ -158,21 +154,9 @@ def select_folder():
         folder_path_var.set(folder)
 
 def get_nozzle_height():
-    """
-    Returns the current nozzle height from the PLC.
-    
-    Returns:
-        float: Nozzle height in millimeters.
-    """
     return plc.read_single_register(DISTANCE_DATA_ADDRESS)
 
 def get_print_speed():
-    """
-    Returns the current print speed of the robot.
-    
-    Returns:
-        float: Print speed in millimeters per second.
-    """
     return woody.get_actual_robot_speed()
 
 def capture_and_save():
@@ -181,9 +165,7 @@ def capture_and_save():
         create_session_folder()
 
     fetch_sensor_data()
-    rets, frames = zip(*[(cap.read() if cap else (False, None)) for cap in caps])
-    if not any(rets):
-        log("Warning: No cameras available for capture.")
+    rets, frames = zip(*[(cap.read() if cap else (False, None)) for cap in caps]) if USE_URL_CAMERAS else ([], [])
 
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     photo_count += 1
@@ -193,11 +175,9 @@ def capture_and_save():
         extruder = extruder_var.get()
     except ValueError:
         log("Invalid input! Using default print_speed=50.")
-        print_speed, extruder = 50.0, "SSE"
-
+        extruder = "SSE"
 
     group_tag = f"{custom_prefix_var.get()}_{session_start_time}_{extruder}"
-    # comment = comment_var.get()
     print_speed = get_print_speed()
 
     overlay_lines = [
@@ -211,32 +191,24 @@ def capture_and_save():
 
     image_tags = []
 
-    # Process external IP cameras
-    for idx, (ret, frame) in enumerate(zip(rets, frames)):
-        if ret and frame is not None:
-            image_name = f"c{idx+1}_{timestamp}.jpg"
-            image_path = os.path.join(session_folder, image_name)
+    if USE_URL_CAMERAS:
+        for idx, (ret, frame) in enumerate(zip(rets, frames)):
+            if ret and frame is not None:
+                image_name = f"c{idx+1}_{timestamp}.jpg"
+                image_path = os.path.join(session_folder, image_name)
 
-            for i, line in enumerate(overlay_lines):
-                y_pos = frame.shape[0] - 10 - i * 25
-                cv2.putText(
-                    frame,
-                    line,
-                    (10, y_pos),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.7,
-                    (0, 255, 0),
-                    2,
-                    cv2.LINE_AA
-                )
+                for i, line in enumerate(overlay_lines):
+                    y_pos = frame.shape[0] - 10 - i * 25
+                    cv2.putText(frame, line, (10, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2, cv2.LINE_AA)
 
-            cv2.imwrite(image_path, frame)
-            image_tags.append(image_name)
-        else:
-            image_tags.append(None)
+                cv2.imwrite(image_path, frame)
+                image_tags.append(image_name)
+            else:
+                image_tags.append(None)
 
-    # --- Process vision camera image for measurement ---
+    # Process vision camera
     width_mm = None
+    mv_image_name = None
     if vision_camera:
         ret, vision_frame = vision_camera.read()
         if ret:
@@ -245,17 +217,13 @@ def capture_and_save():
             mv_image_path = os.path.join(session_folder, mv_image_name)
             cv2.imwrite(mv_image_path, vision_frame)
 
-            width_mm, height_mm = ld.process_image(
-                vision_frame.copy(), mv_image_name, timestamp_mv
-            )
+            width_mm, height_mm = ld.process_image(vision_frame.copy(), mv_image_name, timestamp_mv)
             if width_mm is not None:
                 log(f"Vision Camera Measurement — Width: {width_mm:.2f} mm, Height: {height_mm:.2f} mm")
         else:
             log("Failed to read from vision camera for measurement.")
 
-    # Ensure the vision camera image filename is passed as vision_cature
-    vision_cature = mv_image_name if vision_camera and ret else None
-
+    vision_capture = mv_image_name if vision_camera and ret else None
     nozzle_height = get_nozzle_height()
     print_speed = get_print_speed()
 
@@ -263,31 +231,29 @@ def capture_and_save():
         group_tag, print_tag,
         image_tags[0] if len(image_tags) > 0 else None,
         image_tags[1] if len(image_tags) > 1 else None,
-        vision_cature,
+        vision_capture,
         humidity, temperature, print_speed,
-        width_mm, height_mm, 
+        width_mm, height_mm,
         nozzle_height
-)
-
+    )
 
     log(f"Data saved: {print_tag}, Temp: {temperature}, Humidity: {humidity}, Width: {width_mm}, Height: {height_mm}, Group: {group_tag}")
 
-
 def update_video():
     frames = []
-    for cap in caps:
-        if cap:
-            ret, frame = cap.read()
-            if ret:
-                frame = cv2.resize(frame, (240, 180))
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frames.append(ImageTk.PhotoImage(Image.fromarray(frame)))
+    if USE_URL_CAMERAS:
+        for cap in caps:
+            if cap:
+                ret, frame = cap.read()
+                if ret:
+                    frame = cv2.resize(frame, (240, 180))
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    frames.append(ImageTk.PhotoImage(Image.fromarray(frame)))
+                else:
+                    frames.append(None)
             else:
                 frames.append(None)
-        else:
-            frames.append(None)
 
-    # Add vision camera frame
     if vision_camera:
         ret, frame = vision_camera.read()
         if ret:
@@ -306,7 +272,6 @@ def update_video():
             label.config(image="")
 
     root.after(30, update_video)
-
 
 def toggle_auto_capture():
     global collecting_data
@@ -391,13 +356,15 @@ def export_session_data():
     db.export_session_data(group_tag, session_folder)
 
 # --- GUI SETUP ---
-
 db.create_database()
 
 frame = ttk.Frame(root)
 frame.grid(row=0, column=0, padx=10, pady=10)
 
-video_labels = [ttk.Label(frame) for _ in caps]
+video_labels = []
+if USE_URL_CAMERAS:
+    video_labels = [ttk.Label(frame) for _ in caps]
+
 if vision_camera:
     vision_label = ttk.Label(frame)
     video_labels.append(vision_label)
@@ -409,7 +376,6 @@ for i, label in enumerate(video_labels):
 controls_frame = ttk.Frame(root)
 controls_frame.grid(row=1, column=0, padx=10, pady=10)
 
-# print_speed_var = tk.StringVar(value="100")
 extruder_var = tk.StringVar(value="SSE")
 comment_var = tk.StringVar()
 
@@ -447,7 +413,6 @@ ttk.Entry(session_config_frame, textvariable=custom_prefix_var).grid(row=1, colu
 button_frame = ttk.Frame(controls_frame)
 button_frame.grid(row=len(fields)+2, column=0, columnspan=2, pady=10)
 
-# ttk.Button(button_frame, text="Create Session Folder", command=create_session_folder).pack(side=tk.LEFT, padx=5)
 ttk.Button(button_frame, text="Capture", command=capture_and_save).pack(side=tk.LEFT, padx=5)
 ttk.Button(button_frame, text="Start/Stop Capture", command=toggle_auto_capture).pack(side=tk.LEFT, padx=5)
 ttk.Button(button_frame, text="Pause/Resume", command=toggle_pause).pack(side=tk.LEFT, padx=5)
@@ -462,7 +427,6 @@ ttk.Label(status_frame, text="Sensor Status:").pack(side=tk.LEFT)
 status_label = tk.Label(status_frame, textvariable=connection_status_var, bg="red", fg="white", width=12)
 status_label.pack(side=tk.LEFT, padx=5)
 
-# PAUSED LABEL
 paused_label = tk.Label(root, text="PAUSED", font=("Arial", 48), fg="red", bg="yellow")
 paused_label.grid(row=2, column=0, pady=10)
 paused_label.grid_remove()

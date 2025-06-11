@@ -167,6 +167,25 @@ def update_print_data(print_tag, **fields):
         else:
             print(f"No record found with print_tag: {print_tag}")
 
+def export_all_data():
+    """Export all records in the database to a CSV file."""
+    with sqlite3.connect(DB_FILE) as conn:
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT {', '.join(COLUMNS)} FROM prints")
+        rows = cursor.fetchall()
+
+    if not rows:
+        print("No data found to export.")
+        return
+
+    filename = "all_prints_export.csv"
+    with open(filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(COLUMNS)
+        writer.writerows(rows)
+
+    print(f"All data exported to {filename}")
+
 def main():
     create_database()
 
@@ -178,9 +197,10 @@ def main():
         print("4. Delete records by group_tag")
         print("5. Delete all data")
         print("6. Update print data by print_tag")
-        print("7. Exit")
+        print("7. Export all data")
+        print("8. Exit")
 
-        choice = input("Enter your choice (1/2/3/4/5/6/7): ").strip()
+        choice = input("Enter your choice (1/2/3/4/5/6/7/8): ").strip()
 
         if choice == '1':
             fetch_all_data()
@@ -202,6 +222,7 @@ def main():
             print_tag = input("Enter the print_tag to update: ").strip()
             field = input("Enter the field name to update: ").strip()
             value = input("Enter the new value: ").strip()
+            
 
             numeric_fields = {
                 "humidity", "temperature", "print_speed",
@@ -217,6 +238,8 @@ def main():
 
             update_print_data(print_tag, **{field: value})
         elif choice == '7':
+            export_all_data()
+        elif choice == '8':
             print("Exiting...")
             break
         else:
