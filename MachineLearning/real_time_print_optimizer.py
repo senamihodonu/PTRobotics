@@ -68,12 +68,24 @@ def get_live_sensor_data():
         'measured_width': random.uniform(30.0, 33.0)  # Simulated actual measurement
     }
 
+def send_override_to_robot(percent):
+    """
+    Send override percentage to FANUC robot.
+    In real-world setup, replace this with actual communication code (e.g., TCP/IP, fieldbus).
+    """
+    # Example print for simulation
+    print(f"[Robot] Override set to {percent:.1f}%")
+    
+    # Example (for real system, this would be an actual command):
+    # robot_comm.set_speed_override(percent)
+    # or send via Ethernet/IP, Modbus, or PCDK/KAREL
+
 def send_to_printer(corrected_speed):
     print(f"Sending {corrected_speed:.2f} to the robot")
 
 # Set control target and tolerance
-TARGET_WIDTH = 31.5  # mm
-TOLERANCE = 0.5      # mm (+/-)
+TARGET_WIDTH_MIN = 29.0  # mm
+TARGET_WIDTH_MAX = 31.0 # mm
 
 # Set up logging
 log_filename = 'realtime_log.csv'
@@ -117,12 +129,13 @@ try:
         print(f"📏 Difference between predicted and actual width: {width_difference:.2f} mm")
 
         corrected_speed = None
-        if abs(sensors['measured_width'] - TARGET_WIDTH) > TOLERANCE:
+        if not (TARGET_WIDTH_MIN <= sensors['measured_width'] <= TARGET_WIDTH_MAX):
             inv_input = pd.DataFrame([{
                 'nozzle_height': sensors['nozzle_height'],
                 'temperature': sensors['temperature'],
                 'humidity': sensors['humidity'],
-                'target_layer_width': TARGET_WIDTH
+                'target_layer_width': (TARGET_WIDTH_MIN + TARGET_WIDTH_MAX) / 2
+
             }])
 
             if USE_MODEL == "rf":
@@ -134,7 +147,22 @@ try:
 
             print(f"⚠️  Measured width out of spec")
             print(f"→ Adjusting speed from {sensors['print_speed']:.2f} to {corrected_speed:.2f} mm/s")
-            send_to_printer(corrected_speed)
+            # Calculate override percentage
+            current_speed = sensors['print_speed']  # original before correction
+            # Calculate proportional override based on current setpoint (50% baseline)
+            current_percent = 10
+            override_percent = current_percent * (corrected_speed / current_speed)
+
+            # Clip to valid range (e.g., FANUC max override = 100%)
+            override_percent = max(10, min(override_percent, 100))
+
+            current_percent = override_percent
+
+
+            # Send percentage override to robot
+            send_override_to_robot(override_percent)
+            print(f"🚀 Sending override: {override_percent:.1f}%")
+
             sensors['print_speed'] = corrected_speed
         else:
             print(f"✅ Width OK — Measured: {sensors['measured_width']:.2f} mm, Predicted: {predicted_width:.2f} mm")
