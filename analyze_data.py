@@ -39,6 +39,7 @@ from PyPLCConnection import (
 )
 
 woody = robot(ROBOT_IP)
+plc = PyPLCConnection(PLC_IP)
 
 # -----------------------------
 # 0. Model Selection Option
@@ -92,7 +93,7 @@ def print_metrics(name, y_true, y_pred):
 def get_live_sensor_data():
     """Simulated sensor readings (replace with actual sensors)."""
     return {
-        'print_speed': random.uniform(1, 5),
+        'print_speed': woody.get_speed(),
         'nozzle_height': random.uniform(13, 20),
         'temperature': random.uniform(18, 26),
         'humidity': random.uniform(12, 30),
@@ -109,7 +110,7 @@ def send_override_to_robot(percent):
     """
     # Example print for simulation
     print(f"[Robot] Override set to {percent:.1f}%")
-    woody.set_robot_speed_percent(percent)
+    woody.set_robot_speed_percent(int(percent))
     
     # Example (for real system, this would be an actual command):
     # robot_comm.set_speed_override(percent)
