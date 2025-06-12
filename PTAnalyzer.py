@@ -10,6 +10,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import sys
 import os
+import PTLogger
 
 
 # Get the absolute path to the directory of this script
@@ -38,8 +39,8 @@ from PyPLCConnection import (
     ROBOT_IP
 )
 
-woody = robot(ROBOT_IP)
-plc = PyPLCConnection(PLC_IP)
+# woody = robot(ROBOT_IP)
+# plc = PyPLCConnection(PLC_IP)
 
 # -----------------------------
 # 0. Model Selection Option
@@ -91,19 +92,19 @@ def print_metrics(name, y_true, y_pred):
 # 4. Real-Time Monitoring
 # -----------------------------
 def get_live_sensor_data():
+    input_speed, robot_percent, actual_speed = PTLogger.get_print_speed()
     """Simulated sensor readings (replace with actual sensors)."""
     return {
-        'print_speed': woody.get_speed(),
-        'nozzle_height': random.uniform(13, 20),
-        'temperature': random.uniform(18, 26),
-        'humidity': random.uniform(12, 30),
-        'measured_width': random.uniform(30.0, 33.0)  # Simulated actual measurement
+        'print_speed': input_speed,
+        'robot_percent': robot_percent,
+        'actual_speed': actual_speed,
+        'nozzle_height': PTLogger.get_nozzle_height(),
+        'temperature': PTLogger.humidity,
+        'humidity': PTLogger.temperature,
+        'measured_width': PTLogger.layer_width_mm  # Simulated actual measurement
     }
 
 def send_override_to_robot(percent):
-    woody.get_speed()
-    woody.get_robot_speed_percent()
-    woody.get_actual_robot_speed()
     """
     Send override percentage to FANUC robot.
     In real-world setup, replace this with actual communication code (e.g., TCP/IP, fieldbus).

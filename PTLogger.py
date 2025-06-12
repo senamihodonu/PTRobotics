@@ -15,30 +15,45 @@ USE_URL_CAMERAS = False
 
 # Get the absolute path to the directory of this script
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
 # Navigate to the fanuc_ethernet_ip_drivers/src directory
-pyp_path = os.path.normpath(
-    os.path.join(current_dir, "..")
+src_path = os.path.normpath(
+    os.path.join(current_dir, "..", "fanuc_ethernet_ip_drivers", "src")
 )
 
 # Add the src path to sys.path
-sys.path.append(pyp_path)
-
-from PyPLCConnection import (
-    PyPLCConnection,
-    DISTANCE_SENSOR_IN, PLC_IP,
-    DISTANCE_DATA_ADDRESS,
-    ROBOT_IP
-)
-
-src_path = os.path.normpath(
-    os.path.join(current_dir, "..", "..", "fanuc_ethernet_ip_drivers", "src")
-)
 sys.path.append(src_path)
 
 from robot_controller import robot
 
-woody = robot(ROBOT_IP)
-plc = PyPLCConnection(PLC_IP)
+from PyPLCConnection import (
+    DISTANCE_DATA_ADDRESS,
+    PyPLCConnection,
+    LEAD_Y_SCREW, LEAD_Z_SCREW,
+    DIP_SWITCH_SETTING_Y,
+    GREEN,
+    Y_LEFT_MOTION, Y_RIGHT_MOTION,
+    Z_DOWN_MOTION, Z_UP_MOTION,
+    DISTANCE_SENSOR_IN,
+    DIP_SWITCH_SETTING_Z,
+    PLC_IP,
+    ROBOT_IP
+)
+from robot_controller import robot
+
+woody = None
+plc = None
+
+try:
+    woody = robot(ROBOT_IP)
+except Exception as e:
+    print(f"[Warning] Could not connect to robot at {ROBOT_IP}: {e}")
+
+try:
+    plc = PyPLCConnection(PLC_IP)
+except Exception as e:
+    print(f"[Warning] Could not connect to PLC at {PLC_IP}: {e}")
+
 
 def log(msg):
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}")
@@ -157,29 +172,38 @@ def get_nozzle_height():
     return plc.read_single_register(DISTANCE_DATA_ADDRESS)
 
 def get_print_speed():
-    return woody.get_actual_robot_speed()
+    return woody.get_speed(), woody.get_robot_speed_percent(), woody.get_actual_robot_speed()
 
 def capture_and_save():
-    global temperature, humidity, photo_count, socket_connected, session_folder, session_start_time
+    global temperature, humidity, photo_count, socket_connected
+    global session_folder, session_start_time, width_mm, height_mm
+
     if not session_folder:
         create_session_folder()
 
+    # Fetch sensor data
     fetch_sensor_data()
-    rets, frames = zip(*[(cap.read() if cap else (False, None)) for cap in caps]) if USE_URL_CAMERAS else ([], [])
 
+    # Capture images from URL cameras
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     photo_count += 1
     print_tag = f"{timestamp}_p{photo_count}"
 
+    # Get extruder type with fallback
     try:
         extruder = extruder_var.get()
     except ValueError:
         log("Invalid input! Using default print_speed=50.")
         extruder = "SSE"
 
-    group_tag = f"{custom_prefix_var.get()}_{session_start_time}_{extruder}"
+    # Compose group tag
+    custom_prefix = custom_prefix_var.get()
+    group_tag = f"{custom_prefix}_{session_start_time}_{extruder}"
+
+    # Get print speed
     print_speed = get_print_speed()
 
+    # Prepare overlay text for images
     overlay_lines = [
         f"Tag: {print_tag}",
         f"Temp: {temperature:.1f}°C" if temperature is not None else "Temp: N/A",
@@ -192,11 +216,13 @@ def capture_and_save():
     image_tags = []
 
     if USE_URL_CAMERAS:
+        rets, frames = zip(*[(cap.read() if cap else (False, None)) for cap in caps])
         for idx, (ret, frame) in enumerate(zip(rets, frames)):
             if ret and frame is not None:
                 image_name = f"c{idx+1}_{timestamp}.jpg"
                 image_path = os.path.join(session_folder, image_name)
 
+                # Overlay metadata on frame
                 for i, line in enumerate(overlay_lines):
                     y_pos = frame.shape[0] - 10 - i * 25
                     cv2.putText(frame, line, (10, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2, cv2.LINE_AA)
@@ -206,18 +232,17 @@ def capture_and_save():
             else:
                 image_tags.append(None)
 
-    # Process vision camera
+    # Vision camera processing
     width_mm = None
     mv_image_name = None
     if vision_camera:
         ret, vision_frame = vision_camera.read()
         if ret:
-            timestamp_mv = f"{timestamp}"
-            mv_image_name = f"c_{timestamp_mv}.jpg"
+            mv_image_name = f"c_{timestamp}.jpg"
             mv_image_path = os.path.join(session_folder, mv_image_name)
             cv2.imwrite(mv_image_path, vision_frame)
 
-            width_mm, height_mm = ld.process_image(vision_frame.copy(), mv_image_name, timestamp_mv)
+            width_mm, height_mm = ld.process_image(vision_frame.copy(), mv_image_name, timestamp)
             if width_mm is not None:
                 log(f"Vision Camera Measurement — Width: {width_mm:.2f} mm, Height: {height_mm:.2f} mm")
         else:
@@ -225,8 +250,8 @@ def capture_and_save():
 
     vision_capture = mv_image_name if vision_camera and ret else None
     nozzle_height = get_nozzle_height()
-    print_speed = get_print_speed()
 
+    # Save to database
     db.insert_print_data(
         group_tag, print_tag,
         image_tags[0] if len(image_tags) > 0 else None,
@@ -238,6 +263,7 @@ def capture_and_save():
     )
 
     log(f"Data saved: {print_tag}, Temp: {temperature}, Humidity: {humidity}, Width: {width_mm}, Height: {height_mm}, Group: {group_tag}")
+
 
 def update_video():
     frames = []
