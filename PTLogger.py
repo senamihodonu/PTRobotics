@@ -176,7 +176,7 @@ def get_print_speed():
 
 def capture_and_save():
     global temperature, humidity, photo_count, socket_connected
-    global session_folder, session_start_time, width_mm, height_mm
+    global session_folder, session_start_time, width_mm, layer_width_mm
 
     if not session_folder:
         create_session_folder()
@@ -242,9 +242,9 @@ def capture_and_save():
             mv_image_path = os.path.join(session_folder, mv_image_name)
             cv2.imwrite(mv_image_path, vision_frame)
 
-            width_mm, height_mm = ld.process_image(vision_frame.copy(), mv_image_name, timestamp)
+            width_mm, layer_width_mm = ld.process_image(vision_frame.copy(), mv_image_name, timestamp)
             if width_mm is not None:
-                log(f"Vision Camera Measurement — Width: {width_mm:.2f} mm, Height: {height_mm:.2f} mm")
+                log(f"Vision Camera Measurement — Width: {width_mm:.2f} mm, Height: {layer_width_mm:.2f} mm")
         else:
             log("Failed to read from vision camera for measurement.")
 
@@ -258,11 +258,11 @@ def capture_and_save():
         image_tags[1] if len(image_tags) > 1 else None,
         vision_capture,
         humidity, temperature, print_speed,
-        width_mm, height_mm,
+        width_mm, layer_width_mm,
         nozzle_height
     )
 
-    log(f"Data saved: {print_tag}, Temp: {temperature}, Humidity: {humidity}, Width: {width_mm}, Height: {height_mm}, Group: {group_tag}")
+    log(f"Data saved: {print_tag}, Temp: {temperature}, Humidity: {humidity}, Width: {width_mm}, Height: {layer_width_mm}, Group: {group_tag}")
 
 
 def update_video():

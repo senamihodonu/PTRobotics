@@ -111,7 +111,7 @@ def send_override_to_robot(percent):
     """
     # Example print for simulation
     print(f"[Robot] Override set to {percent:.1f}%")
-    woody.set_robot_speed_percent(int(percent))
+    PTLogger.set_robot_speed_percent(int(percent))
     
     # Example (for real system, this would be an actual command):
     # robot_comm.set_speed_override(percent)
