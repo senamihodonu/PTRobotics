@@ -32,7 +32,7 @@ from PyPLCConnection import (
 print("Small program established")
 
 woody = robot(ROBOT_IP)
-speed = 1
+speed = 100
 
 woody.set_speed(int(speed))
 

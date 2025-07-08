@@ -35,7 +35,7 @@ woody = robot(ROBOT_IP)
 speed = 200
 
 woody.set_speed(int(speed))
-woody.set_robot_speed_percent(10)
+woody.set_robot_speed_percent(100)
 
 # --- Home Position ---
 print("[HOME] Moving robot to home position")
@@ -67,16 +67,17 @@ Y = 319.288
 pose = [X, Y, Z, 0, 0.000, -180]
 woody.write_cartesian_position(pose)
 
+# woody.write_cartesian_position_2(pose)
 
 Y = -203.575
 pose = [X, Y, Z, 0, 0.000, -180]
-woody.write_cartesian_position(pose)
+woody.write_cartesian_position_2(pose)
 
 X = 80.29
 pose = [X, Y, Z, 0, 0.000, -180]
-woody.write_cartesian_position(pose)
+woody.write_cartesian_position_3(pose)
 
-Y = 217.864
-pose = [X, Y, Z, 0, 0.000, -180]
-woody.write_cartesian_position(pose)
+# Y = 217.864
+# pose = [X, Y, Z, 0, 0.000, -180]
+# woody.write_cartesian_position(pose)
 
