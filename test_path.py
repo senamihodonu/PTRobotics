@@ -32,38 +32,55 @@ from PyPLCConnection import (
 print("Small program established")
 
 woody = robot(ROBOT_IP)
-speed = 100
+speed = 200
 
 woody.set_speed(int(speed))
-
+woody.set_robot_speed_percent(20)
 # --- Home Position ---
 print("[HOME] Moving robot to home position")
-J1= -45.407
-J2= -5.782
-J3= 12.716
+J1= 0
+J2= -30
+J3= 30
 J4= 0
-J5= 77.284
-J6= -45.407
+J5= -30
+J6= 0
 pose=[J1, J2, J3, J4, J5, J6]
 woody.write_joint_pose(pose)
 
-# # Cartesian movements
+# starting cartesian position
+X = 322.637
+Y = -2.841
+Z = 847.603
+W = 180
+P = -90
+R = 0
+pose=[X, Y, Z, W, P, R]
+woody.write_cartesian_position(pose)
 
-starting_x = 286.206-10
-starting_y = -290.305
-starting_z = 644.356
 
-for x in range(1):
-    positions = [
-        (starting_x, starting_y, starting_z),
-        (starting_x + 50, starting_y, starting_z),
-        (starting_x + 50, starting_y + 609.6, starting_z),
-        (starting_x, starting_y + 609.6, starting_z),
-        (starting_x, starting_y, starting_z)
-    ]
 
-    for X, Y, Z in positions:
-        pose = [X, Y, Z, 0, 0.000, -180]
-        woody.write_cartesian_position(pose)
+# # # Cartesian movements
+
+# starting_x = 286.206-10
+# starting_y = -290.305
+# starting_z = 644.356
+
+# for x in range(1):
+#     positions = [
+#         (starting_x, starting_y, starting_z),
+#         (starting_x + 50, starting_y, starting_z),
+#         (starting_x + 50, starting_y + 609.6, starting_z),
+#         (starting_x, starting_y + 609.6, starting_z),
+#         (starting_x, starting_y, starting_z)
+#     ]
+
+#     for X, Y, Z in positions:
+#         pose = [X, Y, Z, W, P, R]
+#         woody.write_cartesian_position(pose)
     
-    starting_z -= 15
+#     starting_z -= 15
+
+# plc = PyPLCConnection(PLC_IP)
+# distance = 308/4
+# speed = 5
+# plc.travel(Y_RIGHT_MOTION, distance, "mm", speed)

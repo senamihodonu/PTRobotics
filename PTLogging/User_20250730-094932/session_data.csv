@@ -1,0 +1,3 @@
+id,group_tag,print_tag,image_tag1,image_tag2,humidity,temperature,print_speed,layer_height,pressure,width,image_tag3,comments
+1,User_20250730-094932_SSE,20250730-094933_p1,c1_20250730-094933.jpg,None,0.0,0.0,0.0,100.0,15.0,0.0,None,None
+2,User_20250730-094932_SSE,20250730-094943_p2,c1_20250730-094943.jpg,None,0.0,0.0,0.0,100.0,15.0,0.0,None,None

@@ -36,7 +36,7 @@ class robot:
         self.robot_IP = robotIP
         self.CurJointPosList = FANUCethernetipDriver.returnJointCurrentPosition(self.robot_IP)
         self.CurCartesianPosList = FANUCethernetipDriver.returnCartesianCurrentPostion(self.robot_IP)
-        self.PRNumber1 = 1 # This is the position register for holding coordinates
+        self.PRNumber = 1 # This is the position register for holding coordinates
         self.PRNumber2 = 2
         self.PRNumber3 = 3
   
@@ -130,7 +130,7 @@ class robot:
                 self.CurJointPosList[joint_number + 1] = joint_position_array[joint_number - 1]
                 joint_number += 1
     
-            FANUCethernetipDriver.writeJointPositionRegister(self.robot_IP, self.PRNumber1, self.CurJointPosList)
+            FANUCethernetipDriver.writeJointPositionRegister(self.robot_IP, self.PRNumber, self.CurJointPosList)
             self.start_robot(blocking=blocking)
         
 
@@ -212,7 +212,7 @@ class robot:
             self.CurCartesianPosList[5] = coords[3]
             self.CurCartesianPosList[6] = coords[4]
             self.CurCartesianPosList[7] = coords[5]
-            FANUCethernetipDriver.writeCartesianPositionRegister(self.robot_IP, self.PRNumber1,  self.CurCartesianPosList)
+            FANUCethernetipDriver.writeCartesianPositionRegister(self.robot_IP, self.PRNumber,  self.CurCartesianPosList)
             self.start_robot(blocking=blocking)
 
         elif len(coords) == 3:
@@ -221,7 +221,7 @@ class robot:
             self.CurCartesianPosList[3] = coords[1]
             self.CurCartesianPosList[4] = coords[2]
 
-            FANUCethernetipDriver.writeCartesianPositionRegister(self.robot_IP, self.PRNumber1,  self.CurCartesianPosList)
+            FANUCethernetipDriver.writeCartesianPositionRegister(self.robot_IP, self.PRNumber,  self.CurCartesianPosList)
             self.start_robot(blocking=blocking)         
         else:
             # Error
@@ -338,9 +338,175 @@ class robot:
             self.start_robot(blocking=blocking)         
         else:
             # Error
+            raise Warning("Not enough values passed!")    
+            
+        # write PR[1] Cartesian Coordinates
+    # Takes x, y, z, w, p, r coords.
+    # WPR are the orientation of the end effector, DEFAULT to current orientation
+    def write_cartesian_position_register(self, coords:list[float], blocking:bool=True):
+        """! Send cartesian coordinates to robot using X, Y, Z, W, P, R system. 
+        These coordinates usually correlate to the tool end effectors position.
+        @param coords[X, Y, Z, W, P, R]  OR  coords[[X,Y,Z,W,P,R], [X,Y,Z,...], ...]
+            - X cartesian coordinate
+            - Y cartesian coordinate
+            - Z cartesian coordinate
+            - Yaw (optional)
+            - Pitch (optional)
+            - Roll (optional)
+        """
+        
+        if isinstance(coords[0], list):
+            # If the first element is a list (making coords a list of lists of coordinates to all be run one after another)
+            # Check that all elements in the list are also lists
+            if all(isinstance(x, list) for x in coords):
+                for coord in coords:
+                    self.write_cartesian_position(coord, blocking=blocking) # Loop through all coords in list and run them.
+            else:
+                raise Warning("If passing a list of lists, all elements must be lists!")
+            
+        # If here, coords is NOT a list of lists (single list)
+        elif len(coords) == 6:
+            # This means we got all 6 coordinates
+            # First check that the W,P, R are vaild moves
+            # if coords[3] > 179.9 or coords[3] < -179.9:
+            #     raise Warning(f"W, P and R should be in the range of [-179.9, 179.9], got {coords[3]}")
+            # if coords[4] > 179.9 or coords[4] < -179.9:
+            #     raise Warning(f"W, P and R should be in the range of [-179.9, 179.9], got {coords[4]}")
+            # if coords[5] > 179.9 or coords[5] < -179.9:
+            #     raise Warning(f"W, P and R should be in the range of [-179.9, 179.9], got {coords[5]}")
+            
+            self.CurCartesianPosList[2] = coords[0]
+            self.CurCartesianPosList[3] = coords[1]
+            self.CurCartesianPosList[4] = coords[2]
+            self.CurCartesianPosList[5] = coords[3]
+            self.CurCartesianPosList[6] = coords[4]
+            self.CurCartesianPosList[7] = coords[5]
+            FANUCethernetipDriver.writeCartesianPositionRegister(self.robot_IP, self.PRNumber3,  self.CurCartesianPosList)
+            # self.start_robot(blocking=blocking)
+
+        elif len(coords) == 3:
+            # This means we got X,Y,Z
+            self.CurCartesianPosList[2] = coords[0]
+            self.CurCartesianPosList[3] = coords[1]
+            self.CurCartesianPosList[4] = coords[2]
+
+            FANUCethernetipDriver.writeCartesianPositionRegister(self.robot_IP, self.PRNumber1,  self.CurCartesianPosList)
+            # self.start_robot(blocking=blocking)         
+        else:
+            # Error
             raise Warning("Not enough values passed!")        
 
+        # write PR[1] Cartesian Coordinates
+    # Takes x, y, z, w, p, r coords.
+    # WPR are the orientation of the end effector, DEFAULT to current orientation
+    def write_cartesian_position_register2(self, coords:list[float], blocking:bool=True):
+        """! Send cartesian coordinates to robot using X, Y, Z, W, P, R system. 
+        These coordinates usually correlate to the tool end effectors position.
+        @param coords[X, Y, Z, W, P, R]  OR  coords[[X,Y,Z,W,P,R], [X,Y,Z,...], ...]
+            - X cartesian coordinate
+            - Y cartesian coordinate
+            - Z cartesian coordinate
+            - Yaw (optional)
+            - Pitch (optional)
+            - Roll (optional)
+        """
         
+        if isinstance(coords[0], list):
+            # If the first element is a list (making coords a list of lists of coordinates to all be run one after another)
+            # Check that all elements in the list are also lists
+            if all(isinstance(x, list) for x in coords):
+                for coord in coords:
+                    self.write_cartesian_position(coord, blocking=blocking) # Loop through all coords in list and run them.
+            else:
+                raise Warning("If passing a list of lists, all elements must be lists!")
+            
+        # If here, coords is NOT a list of lists (single list)
+        elif len(coords) == 6:
+            # This means we got all 6 coordinates
+            # First check that the W,P, R are vaild moves
+            # if coords[3] > 179.9 or coords[3] < -179.9:
+            #     raise Warning(f"W, P and R should be in the range of [-179.9, 179.9], got {coords[3]}")
+            # if coords[4] > 179.9 or coords[4] < -179.9:
+            #     raise Warning(f"W, P and R should be in the range of [-179.9, 179.9], got {coords[4]}")
+            # if coords[5] > 179.9 or coords[5] < -179.9:
+            #     raise Warning(f"W, P and R should be in the range of [-179.9, 179.9], got {coords[5]}")
+            
+            self.CurCartesianPosList[2] = coords[0]
+            self.CurCartesianPosList[3] = coords[1]
+            self.CurCartesianPosList[4] = coords[2]
+            self.CurCartesianPosList[5] = coords[3]
+            self.CurCartesianPosList[6] = coords[4]
+            self.CurCartesianPosList[7] = coords[5]
+            FANUCethernetipDriver.writeCartesianPositionRegister(self.robot_IP, self.PRNumber3,  self.CurCartesianPosList)
+            # self.start_robot(blocking=blocking)
+
+        elif len(coords) == 3:
+            # This means we got X,Y,Z
+            self.CurCartesianPosList[2] = coords[0]
+            self.CurCartesianPosList[3] = coords[1]
+            self.CurCartesianPosList[4] = coords[2]
+
+            FANUCethernetipDriver.writeCartesianPositionRegister(self.robot_IP, self.PRNumber2,  self.CurCartesianPosList)
+            # self.start_robot(blocking=blocking)         
+        else:
+            # Error
+            raise Warning("Not enough values passed!")           
+        
+        # write PR[1] Cartesian Coordinates
+    # Takes x, y, z, w, p, r coords.
+    # WPR are the orientation of the end effector, DEFAULT to current orientation
+    def write_cartesian_position_register3(self, coords:list[float], blocking:bool=True):
+        """! Send cartesian coordinates to robot using X, Y, Z, W, P, R system. 
+        These coordinates usually correlate to the tool end effectors position.
+        @param coords[X, Y, Z, W, P, R]  OR  coords[[X,Y,Z,W,P,R], [X,Y,Z,...], ...]
+            - X cartesian coordinate
+            - Y cartesian coordinate
+            - Z cartesian coordinate
+            - Yaw (optional)
+            - Pitch (optional)
+            - Roll (optional)
+        """
+        
+        if isinstance(coords[0], list):
+            # If the first element is a list (making coords a list of lists of coordinates to all be run one after another)
+            # Check that all elements in the list are also lists
+            if all(isinstance(x, list) for x in coords):
+                for coord in coords:
+                    self.write_cartesian_position(coord, blocking=blocking) # Loop through all coords in list and run them.
+            else:
+                raise Warning("If passing a list of lists, all elements must be lists!")
+            
+        # If here, coords is NOT a list of lists (single list)
+        elif len(coords) == 6:
+            # This means we got all 6 coordinates
+            # First check that the W,P, R are vaild moves
+            # if coords[3] > 179.9 or coords[3] < -179.9:
+            #     raise Warning(f"W, P and R should be in the range of [-179.9, 179.9], got {coords[3]}")
+            # if coords[4] > 179.9 or coords[4] < -179.9:
+            #     raise Warning(f"W, P and R should be in the range of [-179.9, 179.9], got {coords[4]}")
+            # if coords[5] > 179.9 or coords[5] < -179.9:
+            #     raise Warning(f"W, P and R should be in the range of [-179.9, 179.9], got {coords[5]}")
+            
+            self.CurCartesianPosList[2] = coords[0]
+            self.CurCartesianPosList[3] = coords[1]
+            self.CurCartesianPosList[4] = coords[2]
+            self.CurCartesianPosList[5] = coords[3]
+            self.CurCartesianPosList[6] = coords[4]
+            self.CurCartesianPosList[7] = coords[5]
+            FANUCethernetipDriver.writeCartesianPositionRegister(self.robot_IP, self.PRNumber3,  self.CurCartesianPosList)
+            # self.start_robot(blocking=blocking)
+
+        elif len(coords) == 3:
+            # This means we got X,Y,Z
+            self.CurCartesianPosList[2] = coords[0]
+            self.CurCartesianPosList[3] = coords[1]
+            self.CurCartesianPosList[4] = coords[2]
+
+            FANUCethernetipDriver.writeCartesianPositionRegister(self.robot_IP, self.PRNumber3,  self.CurCartesianPosList)
+            # self.start_robot(blocking=blocking)         
+        else:
+            # Error
+            raise Warning("Not enough values passed!")           
     # Utility Functions
     # write R[5] to set Speed in mm/sec
     def set_speed(self, value: int):

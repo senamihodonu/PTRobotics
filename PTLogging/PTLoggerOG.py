@@ -22,13 +22,21 @@ capture_interval_var = tk.StringVar(value="10")
 countdown_var = tk.StringVar(value="")
 connection_status_var = tk.StringVar(value="Disconnected")
 
-CAMERA_URLS = [
+# Add 0 for the local webcam (default device index)
+CAMERA_SOURCES = [
+    # 0,  # Local webcam
     "http://172.29.149.105:8080/video",
-    "http://172.29.179.38:8080/video"
+    # "http://172.29.179.38:8080/video"
 ]
 
-caps = [cv2.VideoCapture(url) for url in CAMERA_URLS]
-caps = [cap if cap.isOpened() else None for cap in caps]
+caps = []
+for source in CAMERA_SOURCES:
+    cap = cv2.VideoCapture(source)
+    if cap.isOpened():
+        caps.append(cap)
+    else:
+        log(f"Camera source {source} could not be opened.")
+        caps.append(None)
 
 SERVER_IP = '172.29.143.185'
 SERVER_PORT = 5001
@@ -177,6 +185,10 @@ def capture_and_save():
             image_tags.append(image_name)
         else:
             image_tags.append(None)
+
+    # ✅ Ensure exactly 3 image tags are passed to the DB
+    while len(image_tags) < 3:
+        image_tags.append(None)
 
     db.insert_print_data(
         group_tag, print_tag, *image_tags,

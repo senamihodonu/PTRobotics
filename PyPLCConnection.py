@@ -181,6 +181,12 @@ class PyPLCConnection:
 if __name__ == "__main__":
     plc = PyPLCConnection(PLC_IP)
     plc.read_single_register(DISTANCE_DATA_ADDRESS)
+    plc.read_single_register(DISTANCE_DATA_ADDRESS)
+    plc.write_modbus_coils(GREEN, False)
+    plc.write_modbus_coils(Z_DOWN_MOTION, False)
+    plc.write_modbus_coils(Z_UP_MOTION, False)
+    plc.write_modbus_coils(Y_RIGHT_MOTION, False)
+    plc.write_modbus_coils(Y_LEFT_MOTION, False)
 
 
 
