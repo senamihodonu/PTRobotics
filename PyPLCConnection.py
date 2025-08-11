@@ -133,39 +133,45 @@ class PyPLCConnection:
     def travel(self, coil_address, distance, unit, speed_mm_per_min):
         """
         Calculate the time to travel a given distance using the speed of the stepper motor.
-        
-        :param distance_mm: Distance to travel in mm.
-        :param speed_mm_per_min: Speed of the motor in mm/min.
-        :return: Time to travel the given distance in seconds.
+
+        :param coil_address: Modbus coil address to control the motor
+        :param distance: Distance to travel (in unit specified)
+        :param unit: Unit of the distance ('mm', 'inches', or 'feet')
+        :param speed_mm_per_min: Speed of the motor in mm/min
+        :return: Time to travel the given distance in seconds
         """
         if distance <= 0 or speed_mm_per_min <= 0:
             print("Distance and speed must be positive values.")
             return 0
-        
-        if unit.lower() == "inches" or unit.lower() == "in":
-            distance_in_inches = distance
-            distance = distance * 25.4
-            print(f"Traveling {distance_in_inches} inches at {speed_mm_per_min} mm/min.")
 
-        elif unit.lower() == "feet" or unit.lower() == "ft":
-            distance_in_feet = distance
-            distance = distance * 304.8
-            print(f"Traveling {distance_in_feet} feet at {speed_mm_per_min} mm/min.")
+        # Convert distance to mm if needed
+        unit = unit.lower()
+        if unit in ("inches", "in"):
+            print(f"Traveling {distance} inches at {speed_mm_per_min} mm/min.")
+            distance *= 25.4
+        elif unit in ("feet", "ft"):
+            print(f"Traveling {distance} feet at {speed_mm_per_min} mm/min.")
+            distance *= 304.8
+        elif unit != "mm":
+            print(f"Unsupported unit: {unit}")
+            return 0
 
-        # Calculate the time required to travel the distance
+        # Calculate travel time in seconds
         travel_time = (distance / speed_mm_per_min) * 60
-        print(f"travel time {travel_time} seconds")
-        
-        # Turn on the motor
+        print(f"Calculated travel time: {travel_time:.2f} seconds")
+
+        # Turn on motor
+        self.connect_to_plc()
         self.write_modbus_coils(coil_address, True)
         self.close_connection()
-        
-        # Wait for the motor to reach the distance
+
+        # Wait for the duration of travel
         time.sleep(travel_time)
-        
-        # Turn off the motor
+
+        # Turn off motor
         self.connect_to_plc()
         self.write_modbus_coils(coil_address, False)
+        self.close_connection()
 
         return travel_time
     
