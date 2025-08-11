@@ -41,13 +41,13 @@ print(f"[INFO] PLC Y-axis speed configured to {speed} mm/min")
 # Set Z axis speed
 # plc.calculate_pulses_per_second(z_speed, DIP_SWITCH_SETTING_Z, LEAD_Z_SCREW, 'z')
 
-# Ensure initial positioning
-while plc.read_modbus_coils(8) == True or plc.read_modbus_coils(9) == True or plc.read_modbus_coils(14) == True:
-    plc.write_modbus_coils(Z_DOWN_MOTION, True)
-    plc.write_modbus_coils(Y_RIGHT_MOTION,True)
-plc.write_modbus_coils(Z_DOWN_MOTION, False)
-plc.write_modbus_coils(Y_RIGHT_MOTION,False)
-time.sleep(1)
+# # Ensure initial positioning
+# while plc.read_modbus_coils(8) == True or plc.read_modbus_coils(9) == True or plc.read_modbus_coils(14) == True:
+#     plc.write_modbus_coils(Z_DOWN_MOTION, True)
+#     plc.write_modbus_coils(Y_RIGHT_MOTION,True)
+# plc.write_modbus_coils(Z_DOWN_MOTION, False)
+# plc.write_modbus_coils(Y_RIGHT_MOTION,False)
+# time.sleep(1)
 
 woody = robot(ROBOT_IP)
 speed = 200
@@ -65,8 +65,8 @@ J6= 0
 pose=[J1, J2, J3, J4, J5, J6]
 woody.write_joint_pose(pose)
 
-# distance = 100
-# plc.travel(Y_LEFT_MOTION, distance, "mm", speed)
+distance = 100
+plc.travel(Y_LEFT_MOTION, distance, "mm", speed)
 
 # Z = -0
 
