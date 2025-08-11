@@ -130,34 +130,34 @@ class PyPLCConnection:
             self.write_single_register(1,int(pulses_per_second))
         return pulses_per_second
 
-    def travel(self, coil_address, distance, unit, speed_mm_per_min):
+    def travel(self, coil_address, distance, unit, speed_mm_per_sec):
         """
         Calculate the time to travel a given distance using the speed of the stepper motor.
 
         :param coil_address: Modbus coil address to control the motor
         :param distance: Distance to travel (in unit specified)
         :param unit: Unit of the distance ('mm', 'inches', or 'feet')
-        :param speed_mm_per_min: Speed of the motor in mm/min
+        :param speed_mm_per_sec: Speed of the motor in mm/sec
         :return: Time to travel the given distance in seconds
         """
-        if distance <= 0 or speed_mm_per_min <= 0:
+        if distance <= 0 or speed_mm_per_sec <= 0:
             print("Distance and speed must be positive values.")
             return 0
 
         # Convert distance to mm if needed
         unit = unit.lower()
         if unit in ("inches", "in"):
-            print(f"Traveling {distance} inches at {speed_mm_per_min} mm/min.")
+            print(f"Traveling {distance} inches at {speed_mm_per_sec} mm/sec.")
             distance *= 25.4
         elif unit in ("feet", "ft"):
-            print(f"Traveling {distance} feet at {speed_mm_per_min} mm/min.")
+            print(f"Traveling {distance} feet at {speed_mm_per_sec} mm/sec.")
             distance *= 304.8
         elif unit != "mm":
             print(f"Unsupported unit: {unit}")
             return 0
 
         # Calculate travel time in seconds
-        travel_time = (distance / speed_mm_per_min) * 60
+        travel_time = distance / speed_mm_per_sec
         print(f"Calculated travel time: {travel_time:.2f} seconds")
 
         # Turn on motor
@@ -174,7 +174,7 @@ class PyPLCConnection:
         self.close_connection()
 
         return travel_time
-    
+
     def reset_coils(self):
         plc = PyPLCConnection(PLC_IP)
         plc.read_single_register(DISTANCE_DATA_ADDRESS)
@@ -183,6 +183,10 @@ class PyPLCConnection:
         plc.write_modbus_coils(Z_UP_MOTION, False)
         plc.write_modbus_coils(Y_RIGHT_MOTION, False)
         plc.write_modbus_coils(Y_LEFT_MOTION, False)
+
+    def md_extruder_switch(self, value):
+        md_extruder_address = 13
+        self.write_modbus_coils(self, md_extruder_address, value)
 
 if __name__ == "__main__":
     plc = PyPLCConnection(PLC_IP)
