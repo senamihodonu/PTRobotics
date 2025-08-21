@@ -170,9 +170,76 @@ plc.md_extruder_switch("off")
 
 plc.travel(Z_UP_MOTION, 4,"mm","z")
 
-# pose[0] = -56
-# pose[1] = -200
-# woody.write_cartesian_position(pose)
+pose[0] = -60
+pose[1] = 400
+woody.write_cartesian_position(pose)
+
+plc.md_extruder_switch("on")
+
+pose[1] = -400
+woody.write_cartesian_position(pose)
+
+pose[0] = 100
+woody.write_cartesian_position(pose)
+
+pose[1] = 400
+woody.write_cartesian_position(pose)
+
+pose[0] = 96
+woody.write_cartesian_position(pose)
+
+pose[0] = -56
+pose[1] = 200
+woody.write_cartesian_position(pose)
+
+pose[0] = 96
+pose[1] = 0
+woody.write_cartesian_position(pose)
+
+pose[0] = -56
+pose[1] = -200
+woody.write_cartesian_position(pose)
+
+pose[0] = 96
+pose[1] = -396
+woody.write_cartesian_position(pose)
+
+pose[2] = 10    # Z = 10 mm
+plc.md_extruder_switch("off")
+woody.write_cartesian_position(pose)
+
+pose[0] = 100
+pose[1] = 400
+woody.write_cartesian_position(pose)
+
+pose[2] = 0    # Z = 0 mm
+plc.md_extruder_switch("on")
+
+distance = 400
+plc.travel(Y_RIGHT_MOTION, distance, "mm", "y")
+
+pose[0] = -60
+woody.write_cartesian_position(pose)
+
+pose[1] = 4
+woody.write_cartesian_position(pose)
+
+plc.md_extruder_switch("off")
+
+pose[0] = 96
+pose[1] = 0
+woody.write_cartesian_position(pose)
+
+pose[0] = -56
+pose[1] = 200
+woody.write_cartesian_position(pose)
+
+pose[0] = 96
+pose[1] = 396
+woody.write_cartesian_position(pose)
+
+
+
 # raise Z
 # pose[2] = 4
 # woody.write_cartesian_position(pose)
