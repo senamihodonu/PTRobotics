@@ -1,5 +1,6 @@
 import time
 from pymodbus.client import ModbusTcpClient 
+import sys
 
 LEAD_Y_SCREW = 2.54 #mm
 LEAD_Z_SCREW = 5 #mm
@@ -16,6 +17,7 @@ PPS_Y_ADDRESS = 10
 PPS_Z_ADDRESS = 7
 PLC_IP = "192.168.1.25"
 ROBOT_IP = '192.168.1.101' #Woody
+MD_EXTRUDER_ADDRESS = 13
 
 print("---------------------------------------------")
 class PyPLCConnection:
@@ -136,59 +138,25 @@ class PyPLCConnection:
         #     self.write_single_register(1,int(pulses_per_second))
         return pulses_per_second
 
-    def travel(self, coil_address, distance, unit, speed_mm_per_sec):
-        """
-        Calculate the time to travel a given distance using the speed of the stepper motor.
-
-        :param coil_address: Modbus coil address to control the motor
-        :param distance: Distance to travel (in unit specified)
-        :param unit: Unit of the distance ('mm', 'inches', or 'feet')
-        :param speed_mm_per_sec: Speed of the motor in mm/sec
-        :return: Time to travel the given distance in seconds
-        """
-        if distance <= 0 or speed_mm_per_sec <= 0:
-            print("Distance and speed must be positive values.")
-            return 0
-
-        # Convert distance to mm if needed
-        unit = unit.lower()
-        if unit in ("inches", "in"):
-            print(f"Traveling {distance} inches at {speed_mm_per_sec} mm/sec.")
-            distance *= 25.4
-        elif unit in ("feet", "ft"):
-            print(f"Traveling {distance} feet at {speed_mm_per_sec} mm/sec.")
-            distance *= 304.8
-        elif unit != "mm":
-            print(f"Unsupported unit: {unit}")
-            return 0
-
-        # Calculate travel time in seconds
-        travel_time = distance / speed_mm_per_sec
-        print(f"Calculated travel time: {travel_time:.2f} seconds")
-
-        # Turn on motor
-        self.connect_to_plc()
-        self.write_modbus_coils(coil_address, True)
-        self.close_connection()
-
-        # Wait for the duration of travel
-        time.sleep(travel_time)
-
-        # Turn off motor
-        self.connect_to_plc()
-        self.write_modbus_coils(coil_address, False)
-        self.close_connection()
-
-        return travel_time
-
     def reset_coils(self):
-        plc = PyPLCConnection(PLC_IP)
-        plc.read_single_register(DISTANCE_DATA_ADDRESS)
-        plc.write_modbus_coils(GREEN, False)
-        plc.write_modbus_coils(Z_DOWN_MOTION, False)
-        plc.write_modbus_coils(Z_UP_MOTION, False)
-        plc.write_modbus_coils(Y_RIGHT_MOTION, False)
-        plc.write_modbus_coils(Y_LEFT_MOTION, False)
+        """
+        Reset all defined Modbus coil outputs (turn them OFF).
+        """
+        coil_addresses = [
+            GREEN,
+            Z_DOWN_MOTION,
+            Z_UP_MOTION,
+            Y_RIGHT_MOTION,
+            Y_LEFT_MOTION,
+            MD_EXTRUDER_ADDRESS
+        ]
+
+        print("Resetting all coils to False...")
+        for coil in coil_addresses:
+            self.write_modbus_coils(coil, False)
+
+        print("All coils reset complete.")
+
 
     def md_extruder_switch(self, status):
         """
@@ -196,7 +164,7 @@ class PyPLCConnection:
 
         :param status: "on" or "off" (case-insensitive)
         """
-        md_extruder_address = 13
+        
         status_lower = status.strip().lower()
 
         if status_lower == "on":
@@ -207,75 +175,107 @@ class PyPLCConnection:
             print(f"'{status}' is not a supported value. Please enter 'ON' or 'OFF'.")
             return
 
-        self.write_modbus_coils(md_extruder_address, value)
+        self.write_modbus_coils(MD_EXTRUDER_ADDRESS, value)
         print(f"Turning MD pellet extruder {status.strip().upper()}")
 
-    # def travel(self, coil_address, distance, unit, pps=60000, lead_mm=5, pulses_per_rev=20000):
-    #     """
-    #     Move stepper motor a given distance.
 
-    #     :param coil_address: Modbus coil address to control the motor
-    #     :param distance: Distance to travel
-    #     :param unit: Unit of the distance ('mm', 'inches', 'feet')
-    #     :param pps: Pulses per second to send to the motor
-    #     :param lead_mm: Screw lead in mm/rev
-    #     :param pulses_per_rev: Number of pulses for one revolution
-    #     """
+    def travel(self, coil_address, distance, unit, axis):
+        """
+        Move stepper motor a given distance at axis-specific pulse rate,
+        with countdown timer during motion.
 
-    #     if distance <= 0 or pps <= 0:
-    #         print("Distance and PPS must be positive values.")
-    #         return 0
+        :param coil_address: Modbus coil address for motor
+        :param distance: Distance to travel
+        :param unit: 'mm', 'inches', or 'feet'
+        :param axis: Axis being moved ('x', 'y', or 'z')
+        :return: Travel time in seconds
+        """
 
-    #     # --- Convert distance to mm ---
-    #     unit = unit.lower()
-    #     if unit in ("inches", "in"):
-    #         distance_mm = distance * 25.4
-    #     elif unit in ("feet", "ft"):
-    #         distance_mm = distance * 304.8
-    #     elif unit == "mm":
-    #         distance_mm = distance
-    #     else:
-    #         print(f"Unsupported unit: {unit}")
-    #         return 0
+        # Axis-specific settings
+        if axis.lower() == "z":
+            pulse_rate = self.read_single_register(PPS_Z_ADDRESS)         # pulses per second
+            pulses_per_rev = DIP_SWITCH_SETTING_Z
+            lead_mm = LEAD_Z_SCREW
+            gear_ratio = 20
+        elif axis.lower() == "y":
+            pulse_rate = self.read_single_register(PPS_Y_ADDRESS)          # pulses per second
+            pulses_per_rev = DIP_SWITCH_SETTING_Y
+            lead_mm = LEAD_Y_SCREW
+            gear_ratio = 1
+        else:
+            print(f"Error: Unsupported axis '{axis}'")
+            return 0
 
-    #     # --- Calculate pulses needed ---
-    #     mm_per_pulse = lead_mm / pulses_per_rev
-    #     pulses_needed = distance_mm / mm_per_pulse
+        # Validate inputs
+        if distance <= 0:
+            print("Error: Distance must be positive.")
+            return 0
 
-    #     # --- Calculate travel time ---
-    #     travel_time = pulses_needed / pps
-    #     print(f"Distance: {distance_mm:.3f} mm -> Pulses: {pulses_needed:.0f} -> Time: {travel_time:.3f} s")
+        # Convert distance to mm
+        unit = unit.lower()
+        if unit in ("inches", "in"):
+            distance *= 25.4
+        elif unit in ("feet", "ft"):
+            distance *= 304.8
+        elif unit != "mm":
+            print(f"Error: Unsupported unit '{unit}'")
+            return 0
 
-    #     # --- Activate motor for calculated time ---
-    #     self.connect_to_plc()
-    #     self.write_modbus_coils(coil_address, True)
-    #     self.close_connection()
+        # Calculate motion parameters
+        pulses_per_screw_rev = pulses_per_rev * gear_ratio
+        pulses_per_mm = pulses_per_screw_rev / lead_mm
+        speed_mm_per_sec = pulse_rate / pulses_per_mm
+        travel_time = distance / speed_mm_per_sec
 
-    #     time.sleep(travel_time)
+        print(
+            f"Axis: {axis.upper()}, Distance: {distance:.2f} mm, "
+            f"Speed: {speed_mm_per_sec:.3f} mm/s, "
+            f"Travel time: {travel_time:.2f} s"
+        )
 
-    #     self.connect_to_plc()
-    #     self.write_modbus_coils(coil_address, False)
-    #     self.close_connection()
+        # Turn on motor
+        self.connect_to_plc()
+        self.write_modbus_coils(coil_address, True)
+        self.close_connection()
 
-    #     return travel_time
+        # Countdown loop
+        remaining = travel_time
+        while remaining > 0:
+            sys.stdout.write(f"\rTime remaining: {remaining:.1f} s")
+            sys.stdout.flush()
+            time.sleep(1)
+            remaining -= 1
+
+        sys.stdout.write("\rTime remaining: 0.0 s\n")
+        sys.stdout.flush()
+
+        # Turn off motor
+        self.connect_to_plc()
+        self.write_modbus_coils(coil_address, False)
+        self.close_connection()
+
+        return travel_time
+
+
 
 
 if __name__ == "__main__":
     plc = PyPLCConnection(PLC_IP)
-    plc.read_single_register(DISTANCE_DATA_ADDRESS)
-    plc.read_single_register(DISTANCE_DATA_ADDRESS)
-    plc.write_modbus_coils(GREEN, False)
-    plc.write_modbus_coils(Z_DOWN_MOTION, False)
-    plc.write_modbus_coils(Z_UP_MOTION, False)
-    plc.write_modbus_coils(Y_RIGHT_MOTION, False)
-    plc.write_modbus_coils(Y_LEFT_MOTION, False)
-    plc.read_single_register(7)
-    plc.md_extruder_switch("off")
-    # plc.calculate_pulse_per_second("z")
-    # plc.travel(Z_UP_MOTION, 1, "in", pps=60000, lead_mm=5, pulses_per_rev=20000)
+    # plc.read_single_register(DISTANCE_DATA_ADDRESS)
+    # plc.read_single_register(DISTANCE_DATA_ADDRESS)
+    # plc.write_modbus_coils(GREEN, False)
+    # plc.write_modbus_coils(Z_DOWN_MOTION, True)
+    # plc.write_modbus_coils(Z_UP_MOTION, False)
+    # plc.write_modbus_coils(Y_RIGHT_MOTION, False)
+    # plc.write_modbus_coils(Y_LEFT_MOTION, False)
+    # plc.read_single_register(7)
+    # plc.md_extruder_switch("off")
+    # # plc.calculate_pulse_per_second("z")
+    # # plc.travel(Z_UP_MOTION, 1, "in", pps=60000, lead_mm=5, pulses_per_rev=20000)
 
 
-    # plc.write_modbus_coils(Z_UP_MOTION, True)  
+    plc.travel(Z_UP_MOTION, 4,"mm","z")
+    # plc.reset_coils()
 
     # time.sleep()
 

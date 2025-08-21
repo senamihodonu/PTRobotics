@@ -39,35 +39,37 @@ plc = PyPLCConnection(PLC_IP)
 woody = robot(ROBOT_IP)
 speed = 200
 print_speed = 5
+y_speed = 5 
 woody.set_speed(speed)
 woody.set_robot_speed_percent(100)
-
-pose = [-80, -400, 0, 0, 90, 0]  # X, Y, Z, W, P, R
-woody.write_cartesian_position(pose)
-
-# Set Y axis speed
-plc.calculate_pulse_per_second(speed, DIP_SWITCH_SETTING_Y, LEAD_Y_SCREW, 'y')
-print(f"[INFO] PLC Y-axis speed configured to {speed} mm/min")
-# Set Z axis speed
-plc.calculate_pulse_per_second(speed, DIP_SWITCH_SETTING_Z, LEAD_Z_SCREW, 'z')
-
-plc.md_extruder_switch("off")
-# # Ensure initial positioning
-while plc.read_modbus_coils(8) == True or plc.read_modbus_coils(9) == True or plc.read_modbus_coils(14) == True:
-    plc.write_modbus_coils(Z_DOWN_MOTION, True)
-    plc.write_modbus_coils(Y_RIGHT_MOTION,True)
-plc.write_modbus_coils(Z_DOWN_MOTION, False)
-plc.write_modbus_coils(Y_RIGHT_MOTION,False)
+plc.reset_coils()
 time.sleep(2)
 
+pose = [-100, -400, 0, 0, 90, 0]  # X, Y, Z, W, P, R
+woody.write_cartesian_position(pose)
+
+
+plc.md_extruder_switch("off")
+# Ensure initial positioning: move Z down and Y right 
+# until coils 8, 9, or 14 are no longer active
+while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
+    for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
+        plc.write_modbus_coils(coil, True)
+
+# Stop motion
+for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
+    plc.write_modbus_coils(coil, False)
+
+time.sleep(1)
+
+
 # === Setup ===
-woody.set_speed(print_speed)
+woody.set_speed(speed)
 
 # Optional: Move robot to home (commented)
 # print("[HOME] Moving robot to home position")
 # pose = [0, -30, 30, 0, -30, 0]  # J1..J6
 # woody.write_cartesian_position(pose)
-
 
 # Start with MD on
 plc.md_extruder_switch("on")
@@ -106,7 +108,7 @@ woody.write_cartesian_position(pose)
 
 # Turn MD on
 plc.md_extruder_switch("on")
-woody.set_speed(print_speed)
+woody.set_speed(speed)
 
 pose[0] = -56
 pose[1] = 200
@@ -126,7 +128,7 @@ woody.write_cartesian_position(pose)
 
 # === Travel along Y axis using PLC ===
 distance = 400
-plc.travel(Y_LEFT_MOTION, distance, "mm", 5)
+plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
 
 
 # === Post-Travel Movements ===
@@ -165,6 +167,12 @@ pose[1] = -396
 woody.write_cartesian_position(pose)
 
 plc.md_extruder_switch("off")
+
+plc.travel(Z_UP_MOTION, 4,"mm","z")
+
+# pose[0] = -56
+# pose[1] = -200
+# woody.write_cartesian_position(pose)
 # raise Z
 # pose[2] = 4
 # woody.write_cartesian_position(pose)
