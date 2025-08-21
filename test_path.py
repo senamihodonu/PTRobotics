@@ -39,106 +39,117 @@ plc = PyPLCConnection(PLC_IP)
 woody = robot(ROBOT_IP)
 speed = 200
 print_speed = 15
-y_speed = 5 
+offset = 4
+z_offset = 20 
 woody.set_speed(speed)
 woody.set_robot_speed_percent(100)
 plc.reset_coils()
 time.sleep(2)
 
 pose = [-100, -400, 0, 0, 90, 0]  # X, Y, Z, W, P, R
+woody.write_cartesian_position(pose)
+
+
+plc.md_extruder_switch("off")
+# Ensure initial positioning: move Z down and Y right 
+# until coils 8, 9, or 14 are no longer active
+while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
+    for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
+        plc.write_modbus_coils(coil, True)
+
+# Stop motion
+for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
+    plc.write_modbus_coils(coil, False)
+
+time.sleep(1)
+
+
+# === Setup ===
+woody.set_speed(print_speed)
+
+# Optional: Move robot to home (commented)
+# print("[HOME] Moving robot to home position")
+# pose = [0, -30, 30, 0, -30, 0]  # J1..J6
 # woody.write_cartesian_position(pose)
 
+# Start with MD on
+plc.md_extruder_switch("on")
 
-# plc.md_extruder_switch("off")
-# # Ensure initial positioning: move Z down and Y right 
-# # until coils 8, 9, or 14 are no longer active
-# while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
-#     for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
-#         plc.write_modbus_coils(coil, True)
+# === Lead Sequence ===
+pose = [-100, -400, 0, 0, 90, 0]  # X, Y, Z, W, P, R
+woody.write_cartesian_position(pose)
 
-# # Stop motion
-# for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
-#     plc.write_modbus_coils(coil, False)
+pose[0] = -60   # X = -60
+woody.write_cartesian_position(pose)
 
-# time.sleep(1)
+pose[1] = 400   # Y = 400
+woody.write_cartesian_position(pose)
 
+pose[0] = 100   # X = 100
+woody.write_cartesian_position(pose)
 
-# # === Setup ===
-# woody.set_speed(print_speed)
+pose[1] = -400  # Y = -400
+woody.write_cartesian_position(pose)
 
-# # Optional: Move robot to home (commented)
-# # print("[HOME] Moving robot to home position")
-# # pose = [0, -30, 30, 0, -30, 0]  # J1..J6
-# # woody.write_cartesian_position(pose)
+# Turn MD off before moving up
+plc.md_extruder_switch("off")
 
-# # Start with MD on
-# plc.md_extruder_switch("on")
+# Move up slightly before zig-zag
+woody.set_speed(speed)
+pose[2] = z_offset    
+woody.write_cartesian_position(pose)
 
-# # === Lead Sequence ===
-# pose = [-100, -400, 0, 0, 90, 0]  # X, Y, Z, W, P, R
-# woody.write_cartesian_position(pose)
+# === ZigZag Pattern (First Pass) ===
+pose[0] = 100-offset
+pose[1] = 400-offset
+woody.write_cartesian_position(pose)
 
-# pose[0] = -60   # X = -60
-# woody.write_cartesian_position(pose)
+pose[2] = 0     # Lower Z to 0 mm
+woody.write_cartesian_position(pose)
 
-# pose[1] = 400   # Y = 400
-# woody.write_cartesian_position(pose)
+# Turn MD on
+plc.md_extruder_switch("on")
+woody.set_speed(print_speed)
 
-# pose[0] = 100   # X = 100
-# woody.write_cartesian_position(pose)
+pose[0] = -60+offset
+pose[1] = 200
+woody.write_cartesian_position(pose)
 
-# pose[1] = -400  # Y = -400
-# woody.write_cartesian_position(pose)
+pose[0] = 100-offset
+pose[1] = 0
+woody.write_cartesian_position(pose)
 
-# # Turn MD off before moving up
-# plc.md_extruder_switch("off")
+pose[0] = -60+offset
+pose[1] = -200
+woody.write_cartesian_position(pose)
 
-# # Move up slightly before zig-zag
-# woody.set_speed(200)
-# pose[2] = 10    # Z = 10 mm
-# woody.write_cartesian_position(pose)
-
-# # === ZigZag Pattern (First Pass) ===
-# pose[0] = 96
-# pose[1] = 396
-# woody.write_cartesian_position(pose)
-
-# pose[2] = 0     # Lower Z to 0 mm
-# woody.write_cartesian_position(pose)
-
-# # Turn MD on
-# plc.md_extruder_switch("on")
-# woody.set_speed(print_speed)
-
-# pose[0] = -56
-# pose[1] = 200
-# woody.write_cartesian_position(pose)
-
-# pose[0] = 96
-# pose[1] = 0
-# woody.write_cartesian_position(pose)
-
-# pose[0] = -56
-# pose[1] = -200
-# woody.write_cartesian_position(pose)
-
-# pose[0] = 96
+pose[0] = 100-offset
 pose[1] = -400
-# woody.write_cartesian_position(pose)
+woody.write_cartesian_position(pose)
+plc.md_extruder_switch("off")
 
-# # === Travel along Y axis using PLC ===
-# distance = 400
-# plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
+woody.set_speed(speed)
+pose[2] = z_offset    
+woody.write_cartesian_position(pose)
+pose[0] = 100
+pose[1] = 0
+woody.write_cartesian_position(pose)
 
+# === Travel along Y axis using PLC ===
+distance = 400
+plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
 
 woody.set_speed(print_speed)
+plc.md_extruder_switch("on")
+
 # === Post-Travel Movements ===
+pose[1] = -400
+woody.write_cartesian_position(pose)
+
 pose[0] = -60
 woody.write_cartesian_position(pose)
 
-plc.md_extruder_switch("on")
-
-pose[1] = -4
+pose[1] = -offset
 woody.write_cartesian_position(pose)
 
 pose[0] = -100
@@ -152,6 +163,7 @@ woody.write_cartesian_position(pose)
 
 # Turn MD off
 plc.md_extruder_switch("off")
+woody.set_speed(speed)
 
 # === ZigZag Pattern (Second Pass) ===
 pose[0] = 96
@@ -159,24 +171,26 @@ pose[1] = 0
 woody.write_cartesian_position(pose)
 
 # Turn MD on
+woody.set_speed(print_speed)
 plc.md_extruder_switch("on")
 
-pose[0] = -56
+pose[0] = -60+offset
 pose[1] = -200
 woody.write_cartesian_position(pose)
 
-pose[0] = 96
-pose[1] = -396
+pose[0] = 100-offset
+pose[1] = -400+offset
 woody.write_cartesian_position(pose)
-
 plc.md_extruder_switch("off")
 
 plc.travel(Z_UP_MOTION, 4,"mm","z")
 
+woody.set_speed(speed)
 pose[0] = -60
 pose[1] = 400
 woody.write_cartesian_position(pose)
 
+woody.set_speed(print_speed)
 plc.md_extruder_switch("on")
 
 pose[1] = -400
@@ -188,38 +202,44 @@ woody.write_cartesian_position(pose)
 pose[1] = 400
 woody.write_cartesian_position(pose)
 
-pose[0] = 96
+pose[0] = 100-offset
 woody.write_cartesian_position(pose)
 
-pose[0] = -56
+pose[0] = -60+offset
 pose[1] = 200
 woody.write_cartesian_position(pose)
 
-pose[0] = 96
+pose[0] = 100-offset
 pose[1] = 0
 woody.write_cartesian_position(pose)
 
-pose[0] = -56
+pose[0] = -60+offset
 pose[1] = -200
 woody.write_cartesian_position(pose)
 
-pose[0] = 96
-pose[1] = -396
+pose[0] = 100-offset
+pose[1] = -400+offset
 woody.write_cartesian_position(pose)
 
-pose[2] = 10    # Z = 10 mm
 plc.md_extruder_switch("off")
+woody.set_speed(speed)
+pose[2] = z_offset    # Z = 10 mm
 woody.write_cartesian_position(pose)
 
 pose[0] = 100
-pose[1] = 400
+pose[1] = 0
 woody.write_cartesian_position(pose)
 
-pose[2] = 0    # Z = 0 mm
-plc.md_extruder_switch("on")
 
+
+woody.set_speed(print_speed)
 distance = 400
 plc.travel(Y_RIGHT_MOTION, distance, "mm", "y")
+plc.md_extruder_switch("on")
+
+pose[1] = 400
+pose[2] = 0 
+woody.write_cartesian_position(pose)
 
 pose[0] = -60
 woody.write_cartesian_position(pose)
@@ -228,19 +248,23 @@ pose[1] = 4
 woody.write_cartesian_position(pose)
 
 plc.md_extruder_switch("off")
+woody.set_speed(speed)
 
 pose[0] = 96
 pose[1] = 0
 woody.write_cartesian_position(pose)
 
-pose[0] = -56
+woody.set_speed(print_speed)
+plc.md_extruder_switch("on")
+
+pose[0] = -60+offset
 pose[1] = 200
 woody.write_cartesian_position(pose)
 
-pose[0] = 96
-pose[1] = 396
+pose[0] = 100-offset
+pose[1] = 400-offset
 woody.write_cartesian_position(pose)
-
+plc.md_extruder_switch("off")
 
 
 # raise Z
