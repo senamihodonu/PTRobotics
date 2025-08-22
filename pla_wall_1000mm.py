@@ -56,58 +56,30 @@ for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
     plc.write_modbus_coils(coil, False)
 time.sleep(1)
 
-# === Initial Travel to First Robot Position ===
-distance = 95.23
-plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
-
 # === Print Setup ===
 woody.set_speed(print_speed)          # Set robot print speed
 plc.md_extruder_switch("on")          # Turn extruder ON
+time.sleep(1)
 
 # === Lead Sequence (First Pass) ===
-pose[0] = -60                         # Move X to -60
-woody.write_cartesian_position(pose)
-
+pose[0] = 100                         # Move X to -60
 pose[1] = 200                         # Move Y to 200
 woody.write_cartesian_position(pose)
 
-pose[0] = 100                         # Move X to 100
+pose[1] = 0                        # Move Y to 200
+woody.write_cartesian_position(pose)
+plc.md_extruder_switch("off") 
+
+pose[1] = 200
+pose[2] = z_offset                           # Move Y to 200
 woody.write_cartesian_position(pose)
 
-pose[1] = 0                           # Return Y to 0
-woody.write_cartesian_position(pose)
-
-# === End of First Pass ===
-plc.md_extruder_switch("off")         # Turn extruder OFF
-
-# Raise Z to safe height
-woody.set_speed(speed) 
-pose[2] = z_offset
-woody.write_cartesian_position(pose)
-
-# Move robot to clearance position (X=100, Y=400)
-pose[0] = 100
-pose[1] = 400
-woody.write_cartesian_position(pose)
-
-# === Transition Travel ===
-distance = 400
+distance = 200
 plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
 
-# Lower Z back to print height
-woody.set_speed(print_speed) 
-pose[2] = 0
+plc.md_extruder_switch("on") 
+
+pose[1] = 0                        # Move Y to 200
 woody.write_cartesian_position(pose)
 
-# === Second Pass ===
-plc.md_extruder_switch("on")          # Turn extruder ON
-pose[1] = -200                       # Move Y to -400 (extruding)
-woody.write_cartesian_position(pose)
-
-# End of Second Pass
-plc.md_extruder_switch("off")         # Turn extruder OFF
-
-
-
-
-
+plc.md_extruder_switch("off") 

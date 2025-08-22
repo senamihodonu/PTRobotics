@@ -167,12 +167,12 @@ class PyPLCConnection:
         
         status_lower = status.strip().lower()
 
-        if status_lower == "on":
+        if status_lower == "on" or status == 1:
             value = True
-        elif status_lower == "off":
+        elif status_lower == "off" or status == 0:
             value = False
         else:
-            print(f"'{status}' is not a supported value. Please enter 'ON' or 'OFF'.")
+            print(f"'{status}' is not a supported value. Please enter 'ON'/1 or 'OFF'/0.")
             return
 
         self.write_modbus_coils(MD_EXTRUDER_ADDRESS, value)
