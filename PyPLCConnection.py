@@ -274,8 +274,8 @@ if __name__ == "__main__":
     # # plc.travel(Z_UP_MOTION, 1, "in", pps=60000, lead_mm=5, pulses_per_rev=20000)
 
 
-    plc.travel(Z_DOWN_MOTION, 4,"mm","z")
-    # plc.reset_coils()
+    # plc.travel(Z_DOWN_MOTION, 4,"mm","z")
+    plc.reset_coils()
 
     # time.sleep()
 

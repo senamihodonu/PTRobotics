@@ -132,7 +132,7 @@ woody.set_speed(speed)
 pose[2] = z_offset    
 woody.write_cartesian_position(pose)
 pose[0] = 100
-pose[1] = 0
+pose[1] = 20
 woody.write_cartesian_position(pose)
 
 # === Travel along Y axis using PLC ===
@@ -141,6 +141,9 @@ plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
 
 woody.set_speed(print_speed)
 plc.md_extruder_switch("on")
+
+pose[2] = 0
+woody.write_cartesian_position(pose)
 
 # === Post-Travel Movements ===
 pose[1] = -400
