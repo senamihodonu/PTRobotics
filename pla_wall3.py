@@ -30,7 +30,7 @@ woody = robot(ROBOT_IP)
 
 # Motion parameters
 speed = 200
-print_speed = 15
+print_speed = 20
 offset = 4
 layer_height = 3.5
 z_offset = 20 
@@ -58,7 +58,7 @@ time.sleep(1)
 
 # === Print Setup ===
 woody.set_speed(print_speed)          # Set robot print speed
-# plc.md_extruder_switch("on")          # Turn extruder ON
+plc.md_extruder_switch("on")          # Turn extruder ON
 time.sleep(1)
 
 # === Lead Sequence (First Pass) ===
@@ -82,6 +82,11 @@ woody.write_cartesian_position(pose)
 pose[0] = 100                       # Move Y to 200
 woody.write_cartesian_position(pose)
 
-# plc.md_extruder_switch("off") 
+plc.md_extruder_switch("off") 
+woody.set_speed(speed)
+pose = [-100, 0, 0, 0, 90, 0]  # X, Y, Z, W, P, R
+woody.write_cartesian_position(pose)
+
+plc.travel(Y_LEFT_MOTION, 480, 'mm', 'y')
 
 
