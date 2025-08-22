@@ -32,7 +32,7 @@ woody = robot(ROBOT_IP)
 speed = 200
 print_speed = 15
 offset = 4
-layer_height = 4
+layer_height = 3.5
 z_offset = 20 
 
 # Configure robot/PLC
@@ -65,10 +65,13 @@ plc.md_extruder_switch("on")
 pose = [-100, -400, 0, 0, 90, 0]
 woody.write_cartesian_position(pose)
 
-for layer in range(3):
+for layer in range(2):
     # First pass
+    woody.set_speed(speed)
     pose[0] = -60
+    pose[1] = -400
     woody.write_cartesian_position(pose)
+    woody.set_speed(print_speed)
     plc.md_extruder_switch("on")
 
     pose[1] = 400
@@ -82,11 +85,13 @@ for layer in range(3):
 
     pose[0] = -60
     woody.write_cartesian_position(pose)
+    plc.md_extruder_switch("off")
 
     # Offset passes
     pose[0] = -60 + offset
     pose[1] = -400 + offset
     woody.write_cartesian_position(pose)
+    plc.md_extruder_switch("on")
 
     pose[0] = 100 - offset
     pose[1] = -198
@@ -107,3 +112,8 @@ for layer in range(3):
     # End layer
     plc.md_extruder_switch("off")
     pose[2] += layer_height
+
+    if layer == 1:
+        distance = pose[2]+layer_height
+        plc.travel(Z_UP_MOTION, distance, "mm", "z")
+        pose[2] = 0
