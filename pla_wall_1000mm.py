@@ -30,7 +30,7 @@ woody = robot(ROBOT_IP)
 
 # Motion parameters
 speed = 200
-print_speed = 15
+print_speed = 5
 offset = 4
 layer_height = 3.5
 z_offset = 20 
@@ -81,6 +81,7 @@ woody.write_cartesian_position(pose)
 plc.md_extruder_switch("off")         # Turn extruder OFF
 
 # Raise Z to safe height
+woody.set_speed(speed) 
 pose[2] = z_offset
 woody.write_cartesian_position(pose)
 
@@ -90,16 +91,17 @@ pose[1] = 400
 woody.write_cartesian_position(pose)
 
 # === Transition Travel ===
-distance = 495.23
+distance = 400
 plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
 
 # Lower Z back to print height
+woody.set_speed(print_speed) 
 pose[2] = 0
 woody.write_cartesian_position(pose)
 
 # === Second Pass ===
 plc.md_extruder_switch("on")          # Turn extruder ON
-pose[1] = -400                        # Move Y to -400 (extruding)
+pose[1] = -200                       # Move Y to -400 (extruding)
 woody.write_cartesian_position(pose)
 
 # End of Second Pass
