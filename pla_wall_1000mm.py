@@ -66,8 +66,14 @@ pose[0] = 100                         # Move X to -60
 pose[1] = 200                         # Move Y to 200
 woody.write_cartesian_position(pose)
 
+
 pose[1] = 0                        # Move Y to 200
 woody.write_cartesian_position(pose)
+
+pose[0] = 100-offset                         # Move X to -60
+pose[1] = 200-offset                         # Move Y to 200
+woody.write_cartesian_position(pose)
+
 plc.md_extruder_switch("off") 
 
 pose[1] = 200
@@ -81,5 +87,10 @@ plc.md_extruder_switch("on")
 
 pose[1] = 0                        # Move Y to 200
 woody.write_cartesian_position(pose)
+
+pose[0] = 100-offset                         # Move X to -60
+pose[1] = 200                        # Move Y to 200
+woody.write_cartesian_position(pose)
+
 
 plc.md_extruder_switch("off") 
