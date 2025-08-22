@@ -38,7 +38,7 @@ plc = PyPLCConnection(PLC_IP)
 
 woody = robot(ROBOT_IP)
 speed = 200
-print_speed = 15
+print_speed = 20
 offset = 4
 z_offset = 20 
 woody.set_speed(speed)

@@ -31,7 +31,7 @@ woody = robot(ROBOT_IP)
 # Motion parameters
 speed = 200
 print_speed = 15
-offset = 4
+offset = 5
 layer_height = 3.5
 z_offset = 20 
 
@@ -71,6 +71,8 @@ pose[1] = 0                        # Move Y to 200
 woody.write_cartesian_position(pose)
 
 pose[0] = 100-offset                         # Move X to -60
+woody.write_cartesian_position(pose)
+
 pose[1] = 200-offset                         # Move Y to 200
 woody.write_cartesian_position(pose)
 
@@ -80,7 +82,7 @@ pose[1] = 200
 pose[2] = z_offset                           # Move Y to 200
 woody.write_cartesian_position(pose)
 
-distance = 200-10
+distance = 200
 plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
 
 plc.md_extruder_switch("on") 
@@ -91,6 +93,8 @@ pose[1] = 0                        # Move Y to 200
 woody.write_cartesian_position(pose)
 
 pose[0] = 100-offset                         # Move X to -60
+woody.write_cartesian_position(pose)
+
 pose[1] = 200                        # Move Y to 200
 woody.write_cartesian_position(pose)
 
