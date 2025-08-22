@@ -84,9 +84,15 @@ woody.write_cartesian_position(pose)
 
 plc.md_extruder_switch("off") 
 woody.set_speed(speed)
-pose = [-100, 0, 0, 0, 90, 0]  # X, Y, Z, W, P, R
+pose = [-100, 0, 20, 0, 90, 0]  # X, Y, Z, W, P, R
 woody.write_cartesian_position(pose)
 
 plc.travel(Y_LEFT_MOTION, 480, 'mm', 'y')
+
+pose = [100, 400, 0, 0, 90, 0]  # X, Y, Z, W, P, R
+woody.write_cartesian_position(pose)
+
+pose[1] = 300                       # Move Y to 200
+woody.write_cartesian_position(pose)
 
 
