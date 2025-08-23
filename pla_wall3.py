@@ -30,7 +30,7 @@ woody = robot(ROBOT_IP)
 
 # Motion parameters
 speed = 200
-print_speed = 20
+print_speed = 8
 offset = 4
 layer_height = 3.5
 z_offset = 20 
@@ -41,58 +41,90 @@ woody.set_robot_speed_percent(100)
 plc.reset_coils()
 time.sleep(2)
 
-# Move robot to initial pose
-pose = [-100, 0, 0, 0, 90, 0]  # X, Y, Z, W, P, R
-woody.write_cartesian_position(pose)
+# # Move robot to initial pose
+# pose = [-100, 0, 0, 0, 90, 0]  # X, Y, Z, W, P, R
+# woody.write_cartesian_position(pose)
 
-# Ensure safe start: move Z down + Y right until coils 8, 9, or 14 are off
-plc.md_extruder_switch("off")
-while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
-    for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
-        plc.write_modbus_coils(coil, True)
+# # Ensure safe start: move Z down + Y right until coils 8, 9, or 14 are off
+# plc.md_extruder_switch("off")
+# while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
+#     for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
+#         plc.write_modbus_coils(coil, True)
 
-# Stop motion
-for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
-    plc.write_modbus_coils(coil, False)
-time.sleep(1)
+# # Stop motion
+# for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
+#     plc.write_modbus_coils(coil, False)
+# time.sleep(1)
 
-# === Print Setup ===
-woody.set_speed(print_speed)          # Set robot print speed
-plc.md_extruder_switch("on")          # Turn extruder ON
-time.sleep(1)
+# # === Print Setup ===
+# woody.set_speed(print_speed)          # Set robot print speed
+# plc.md_extruder_switch("on")          # Turn extruder ON
+# time.sleep(1)
 
-# === Lead Sequence (First Pass) ===
+# z = 0
+# # === Lead Sequence (First Pass) ===
+# for layer in range(2):
+    
+#     plc.md_extruder_switch("on")
+#     woody.set_speed(print_speed)  
+#     pose = [-100, -90, z, 0, 90, 0]  # X, Y, Z, W, P, R
+#     woody.write_cartesian_position(pose)
 
-pose = [-100, -80, 0, 0, 90, 0]  # X, Y, Z, W, P, R
-woody.write_cartesian_position(pose)
+
+#     pose[0] = -60                        # Move X to -60
+#     woody.write_cartesian_position(pose)
+
+#     pose[1] = 80                        # Move Y to 200
+#     woody.write_cartesian_position(pose)
+
+#     pose[0] = 260                        # Move Y to 200
+#     woody.write_cartesian_position(pose)
+
+#     pose[1] = -80                       # Move Y to 200
+#     woody.write_cartesian_position(pose)
+
+#     pose[0] = 100                       # Move Y to 200
+#     woody.write_cartesian_position(pose)
+
+#     plc.md_extruder_switch("off") 
+#     woody.set_speed(speed)
+#     z = z+20
+#     pose = [-100, 0, z, 0, 90, 0]  # X, Y, Z, W, P, R
+#     woody.write_cartesian_position(pose)
+
+#     plc.travel(Y_LEFT_MOTION, 470, 'mm', 'y')
+
+#     plc.md_extruder_switch("on") 
+
+#     z = z -20
+#     pose = [100, 405, z, 0, 90, 0]  # X, Y, Z, W, P, R
+#     woody.write_cartesian_position(pose)
+#     woody.set_speed(print_speed)
+
+#     pose[1] = -400                       # Move Y to 200
+#     woody.write_cartesian_position(pose)
+
+#     pose[0] = -60                       # Move Y to 200
+#     woody.write_cartesian_position(pose)
+
+#     pose[1] = 400                       # Move Y to 200
+#     woody.write_cartesian_position(pose)
 
 
-pose[0] = -60                        # Move X to -60
-woody.write_cartesian_position(pose)
 
-pose[1] = 80                        # Move Y to 200
-woody.write_cartesian_position(pose)
 
-pose[0] = 260                        # Move Y to 200
-woody.write_cartesian_position(pose)
 
-pose[1] = -80                       # Move Y to 200
-woody.write_cartesian_position(pose)
+#     plc.md_extruder_switch("off") 
+#     z = z+20
+#     woody.set_speed(speed)
+#     pose = [-100, 0, z, 0, 90, 0]  # X, Y, Z, W, P, R
+#     woody.write_cartesian_position(pose)
+#     z = z-20
+#     plc.travel(Y_RIGHT_MOTION, 470, 'mm', 'y')
 
-pose[0] = 100                       # Move Y to 200
-woody.write_cartesian_position(pose)
+#     z += 4
 
-plc.md_extruder_switch("off") 
-woody.set_speed(speed)
-pose = [-100, 0, 20, 0, 90, 0]  # X, Y, Z, W, P, R
-woody.write_cartesian_position(pose)
+print(woody.read_current_cartesian_pose()[2])
 
-plc.travel(Y_LEFT_MOTION, 480, 'mm', 'y')
-
-pose = [100, 400, 0, 0, 90, 0]  # X, Y, Z, W, P, R
-woody.write_cartesian_position(pose)
-
-pose[1] = 300                       # Move Y to 200
-woody.write_cartesian_position(pose)
 
 
