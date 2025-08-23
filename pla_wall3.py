@@ -91,12 +91,16 @@ for layer in range(n):
     # --- Pause extrusion / reposition ---
     plc.md_extruder_switch("off")
     woody.set_speed(speed)
-    pose[2] = z_offset                # Lift Z temporarily
+    pose[2] += z_offset                # Lift Z temporarily
     woody.write_cartesian_position(pose)
 
     pose[0] = -60 + offset
     pose[1] = -80 + offset
     woody.write_cartesian_position(pose)
+
+    pose[2] -= z_offset                # Lift Z temporarily
+    woody.write_cartesian_position(pose)
+
     
     # --- Second extrusion path (offset) ---
     plc.md_extruder_switch("on")
@@ -148,7 +152,7 @@ for layer in range(n):
     pose[2] -= 20                     # Lower Z
     woody.write_cartesian_position(pose)
 
-    plc.md_extruder_switch(1)         # Resume extrusion
+    plc.md_extruder_switch('on')         # Resume extrusion
     woody.set_speed(print_speed)
 
     pose[0] = -60 + offset
@@ -169,19 +173,19 @@ for layer in range(n):
 
     # --- End of layer ---
     plc.md_extruder_switch("off") 
-    z += 20
+    z += z_offset
     woody.set_speed(speed)
     pose = [-100, 0, z, 0, 90, 0]
     woody.write_cartesian_position(pose)
 
-    z -= 20
+    z -= z_offset
     plc.travel(Y_RIGHT_MOTION, 470, 'mm', 'y')  # Travel right
 
     z += layer_height                # Increment Z for next layer
 
 
 # === Z-axis reposition before Pass 2 ===
-z_translation = woody.read_current_cartesian_pose()[2] + layer_height
+z_translation = woody.read_current_cartesian_pose()[2] + layer_height - z_offset
 plc.travel(Z_UP_MOTION, z_translation, 'mm', 'z')
 
 z= 0
@@ -213,11 +217,14 @@ for layer in range(n):
 
     plc.md_extruder_switch("off")
     woody.set_speed(speed)
-    pose[2] = z_offset
+    pose[2] += z_offset
     woody.write_cartesian_position(pose)
 
     pose[0] = -60+offset        # Move X
     pose[1] = -80+offset        # Move X
+    woody.write_cartesian_position(pose)
+
+    pose[2] -= z_offset
     woody.write_cartesian_position(pose)
     
     plc.md_extruder_switch("on")
@@ -268,7 +275,7 @@ for layer in range(n):
 
     pose[2]-=20
     woody.write_cartesian_position(pose)
-    plc.md_extruder_switch(1) 
+    plc.md_extruder_switch("on") 
     woody.set_speed(print_speed)
 
     pose[0] = -60+offset        # Move X
