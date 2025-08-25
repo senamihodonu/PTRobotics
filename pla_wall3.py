@@ -34,6 +34,7 @@ print_speed = 200
 offset = 4
 layer_height = 4
 z_offset = 20
+x_offset = 13.5 #mm
 n=1 
 
 # === Configure robot/PLC ===
