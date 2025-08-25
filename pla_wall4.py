@@ -30,12 +30,13 @@ woody = robot(ROBOT_IP)
 
 # === Parameters ===
 speed = 200
-print_speed = 200
+print_speed = 20
 offset = 4
 layer_height = 4
 z_offset = 20
 x_offset = 13.5
 n=1 
+print_offset=3
 
 # === Configure robot/PLC ===
 woody.set_speed(speed)
@@ -61,72 +62,87 @@ time.sleep(1)
 # === Print setup ===
 woody.set_speed(print_speed)
 plc.md_extruder_switch("on")
-time.sleep(1)
+time.sleep(2)
 
 # === Lead Sequence: Pass 1 ===
-
-
-# --- First extrusion path ---
-plc.md_extruder_switch("on")
-woody.set_speed(print_speed)  
 z = 0
-pose = [-100, 0, z, 0, 90, 0]   # Start point
-woody.write_cartesian_position(pose)
+for x in range(2):
+    # --- First extrusion path ---
+    
+    woody.set_speed(print_speed)  
+    
+    pose = [-100, 0, z, 0, 90, 0]   # Start point
+    woody.write_cartesian_position(pose)
+    plc.md_extruder_switch("on")
+    pose[0] = -60+x_offset                     # Move in X
+    woody.write_cartesian_position(pose)
 
-pose[0] = -60+x_offset                     # Move in X
-woody.write_cartesian_position(pose)
+    pose[1] = 104.78                     # Move in Y
+    woody.write_cartesian_position(pose)
 
-pose[1] = 104.78                     # Move in Y
-woody.write_cartesian_position(pose)
-
-plc.md_extruder_switch("off")
-
-pose[1] = 400                     # Move in Y
-woody.write_cartesian_position(pose)
-
-pose[0] = 100+x_offset                     # Move in X
-woody.write_cartesian_position(pose)
-
-pose[1] = 104.78                     # Move in Y
-woody.write_cartesian_position(pose)
-
-plc.md_extruder_switch("on")
-
-pose[1] = 0                     # Move in Y
-woody.write_cartesian_position(pose)
-
-plc.md_extruder_switch("off")
-
-pose[0] =100
-pose[1] = 400
-pose[2] +=z_offset
-woody.write_cartesian_position(pose)
+    plc.md_extruder_switch("off")
+    woody.set_speed(speed)
+    pose[1] = 400                     # Move in Y
+    woody.write_cartesian_position(pose)
 
 
-distance = 400
-plc.travel(Y_LEFT_MOTION, distance, 'mm', 'y')  # Travel left
-pose[2] -=z_offset
-woody.write_cartesian_position(pose)
+    pose[0] = 100+x_offset                    # Move in X
+    pose[2] += 4 
+    woody.write_cartesian_position(pose)
 
-plc.md_extruder_switch("on")
+    pose[2] -= 4 
+    pose[1] = 104.78                     # Move in Y
+    woody.write_cartesian_position(pose)
+    woody.set_speed(print_speed)
+    plc.md_extruder_switch("on")
 
-pose[1] = 200                     # Move in Y
-woody.write_cartesian_position(pose)
+    pose[1] = 0                     # Move in Y
+    woody.write_cartesian_position(pose)
+    woody.set_speed(speed)
+    plc.md_extruder_switch("off")
 
-plc.md_extruder_switch("off")
+    pose[0] =100
+    pose[1] = 405
+    pose[2] +=z_offset
+    woody.write_cartesian_position(pose)
 
-pose[1] = -400                     # Move in Y
-woody.write_cartesian_position(pose)
 
-pose[0] = -60                    # Move in X
-woody.write_cartesian_position(pose)
+    distance = 400
+    plc.travel(Y_LEFT_MOTION, distance, 'mm', 'y')  # Travel left
+    pose[2] -=z_offset
+    woody.write_cartesian_position(pose)
+    woody.set_speed(print_speed)
+    plc.md_extruder_switch("on")
+    time.sleep(1)
 
-pose[1] = 200                     # Move in Y
-woody.write_cartesian_position(pose)
+    pose[2] +=print_offset
+    woody.write_cartesian_position(pose)
 
-plc.md_extruder_switch("on")
+    pose[1] = 200                     # Move in Y
+    woody.write_cartesian_position(pose)
+    woody.set_speed(speed)
+    plc.md_extruder_switch("off")
 
-pose[1] = 400                     # Move in Y
-woody.write_cartesian_position(pose)
 
-plc.md_extruder_switch("off")
+
+    pose[1] = -400                     # Move in Y
+    woody.write_cartesian_position(pose)
+
+    pose[0] = -60                    # Move in X
+    woody.write_cartesian_position(pose)
+
+    pose[2] -=print_offset
+    woody.write_cartesian_position(pose)
+
+    pose[1] = 200                     # Move in Y
+    woody.write_cartesian_position(pose)
+    woody.set_speed(print_speed)
+    plc.md_extruder_switch("on")
+
+    pose[1] = 400                     # Move in Y
+    woody.write_cartesian_position(pose)
+
+    plc.md_extruder_switch("off")
+    plc.travel(Y_RIGHT_MOTION, distance, 'mm', 'y')  # Travel left
+    pose[2] +=print_offset
+    z+=layer_height
