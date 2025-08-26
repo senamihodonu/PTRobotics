@@ -30,14 +30,15 @@ woody = robot(ROBOT_IP)
 
 # === Parameters ===
 speed = 200            # Robot travel speed (mm/s)
-print_speed = 20       # Printing speed (mm/s)
-inside_offset = 4
-layer_height = 4       # Layer height (mm)
+print_speed = 10       # Printing speed (mm/s)
+inside_offset = 6
+layer_height = 3.5       # Layer height (mm)
 z_offset = 20          # Safe Z offset (mm)
 x_offset = 13.5        # X-axis offset (mm)
-n = 2
-print_offset = 3       # Vertical offset between passes (mm)
+n = 1
+print_offset = 5       # Vertical offset between passes (mm)
 x = 100                # Initial X reference position
+correction = 4
 
 # === Configure robot and PLC ===
 woody.set_speed(speed)
@@ -83,10 +84,6 @@ for layer in range(n):
     pose[1] = 400
     woody.write_cartesian_position(pose)
 
-    # Path 3: Raise Z slightly
-    pose[2] += print_offset
-    woody.write_cartesian_position(pose)
-
     # Path 4: X move forward
     pose[0] = 100 + x_offset
     woody.write_cartesian_position(pose)
@@ -100,13 +97,13 @@ for layer in range(n):
     plc.md_extruder_switch("off")
 
     #==infill==
+
     pose[0] = -60+x_offset+inside_offset
     pose[1] = 0
     woody.write_cartesian_position(pose)
 
     woody.set_speed(print_speed)
     plc.md_extruder_switch("on")
-    time.sleep(1)
 
     pose[0] = 100+x_offset-inside_offset
     pose[1] = 200
@@ -119,10 +116,12 @@ for layer in range(n):
     woody.set_speed(speed)
     plc.md_extruder_switch("off")
 
+    pose[2] += z_offset
+    woody.write_cartesian_position(pose)
+
     # Travel move: retract Z and shift Y
     pose[0] = 100
     pose[1] = 405
-    pose[2] += z_offset
     woody.write_cartesian_position(pose)
 
     distance = 400
@@ -135,22 +134,32 @@ for layer in range(n):
     # --- Second extrusion path ---
     woody.set_speed(print_speed)
     plc.md_extruder_switch("on")
-    time.sleep(1)
+    time.sleep(2)
+
+    # Path 1: Y move backward
+    pose[1] = 0
+    woody.write_cartesian_position(pose)
+
+    # Path 4: Y move forward
+    pose[2] -= correction
+    woody.write_cartesian_position(pose)
 
     # Path 1: Y move backward
     pose[1] = -400
-    woody.write_cartesian_position(pose)
-
-    # Path 2: Lower Z slightly
-    pose[2] -= print_offset
     woody.write_cartesian_position(pose)
 
     # Path 3: X move backward
     pose[0] = -60
     woody.write_cartesian_position(pose)
 
+    pose[1] = 44
+    woody.write_cartesian_position(pose)
+
+    pose[2] += correction
+    woody.write_cartesian_position(pose)
+
     # Path 4: Y move forward
-    pose[1] = 400
+    pose[1] = 405
     woody.write_cartesian_position(pose)
 
     # End of second extrusion
@@ -170,6 +179,9 @@ for layer in range(n):
     pose[0] = -60+inside_offset
     pose[1] = 0
     woody.write_cartesian_position(pose)
+    
+    pose[2] -= correction
+    woody.write_cartesian_position(pose)
 
     pose[0] = 100-inside_offset
     pose[1] = -200
@@ -179,8 +191,14 @@ for layer in range(n):
     pose[1] = -400+inside_offset
     woody.write_cartesian_position(pose)
 
+    pose[2] += correction
+    woody.write_cartesian_position(pose)
+
     woody.set_speed(speed)
     plc.md_extruder_switch("off")
+    # Lower back to print height
+    pose[2] += z_offset
+    woody.write_cartesian_position(pose)
 
     # Travel move back to the right
     plc.travel(Y_RIGHT_MOTION, distance, "mm", "y")
