@@ -22,206 +22,239 @@ from PyPLCConnection import (
     PLC_IP, ROBOT_IP
 )
 
-print("Program initialized.")
+print("=== Program initialized ===")
 
 # === Initialize PLC and Robot ===
 plc = PyPLCConnection(PLC_IP)
 woody = robot(ROBOT_IP)
+print("PLC and Robot connections established.")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 10        # Printing speed (mm/s)
+print_speed = 200        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
 layer_height = 3.5      # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
 x_offset = 13.5         # X-axis offset (mm)
-n = 1                   # Placeholder variable (not used directly here)
 print_offset = 5        # Vertical offset between passes (mm)
-x = 100                 # Initial X reference position
-correction = 4          # Small correction in Z for alignment (mm)
+z_correction = 4          # Small correction in Z for alignment (mm)
+
+print("Parameters set.")
 
 # === Configure robot and PLC ===
 woody.set_speed(speed)
 woody.set_robot_speed_percent(100)
 plc.reset_coils()
 time.sleep(2)
+print("Robot speed configured and PLC coils reset.")
 
 # === Initial pose ===
-# Pose format: [X, Y, Z, W, P, R]
 pose = [-100, 0, 0, 0, 90, 0]
 woody.write_cartesian_position(pose)
+print(f"Robot moved to initial pose: {pose}")
 
 # === Safe start ===
-# Move Z down + Y right until coils 8, 9, or 14 deactivate (safety check)
 plc.md_extruder_switch("off")
+print("Extruder OFF for safe start.")
 while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
+    print("Safety check: coils active, moving Z down and Y right...")
     for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
         plc.write_modbus_coils(coil, True)
 
-# Stop motion once safe
 for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
     plc.write_modbus_coils(coil, False)
+print("Safety check complete.")
 time.sleep(1)
 
 # === Print setup ===
 plc.md_extruder_switch("on")
+print("Extruder ON, starting print sequence...")
 time.sleep(2)
 
 # === Printing loop ===
 z = 0
-z_translation_value = 4  # Threshold to trigger vertical translation
-flg = True               # Printing loop flag
-end_height = 12           # Stop condition (max print height)
+z_translation_value = 4
+flg = True
+end_height = 12
 
 while flg:
-    # --- First extrusion path (outer perimeter) ---
-    pose = [-100, 0, z, 0, 90, 0]   # Starting point
+    print(f"\n=== Starting new layer at z = {z} ===")
+
+    # --- First extrusion path ---
+    pose = [-100, 0, z, 0, 90, 0]
     woody.write_cartesian_position(pose)
+    print(f"Moved to start pose: {pose}")
 
     woody.set_speed(print_speed)
     plc.md_extruder_switch("on")
+    print("Extruder ON for perimeter.")
 
-    # Path 1: Move in X
+    # Path 1: X move
     pose[0] = -60 + x_offset
     woody.write_cartesian_position(pose)
+    print(f"Moving along X: {pose}")
 
-    # Path 2: Move Y forward
+    # Path 2: Y forward
     pose[1] = 400
     woody.write_cartesian_position(pose)
+    print(f"Moving along Y forward: {pose}")
 
-    # Path 3: Move X forward
+    # Path 3: X forward
     pose[0] = 100 + x_offset
     woody.write_cartesian_position(pose)
+    print(f"Moving along X forward: {pose}")
 
-    # Path 4: Move Y back
+    # Path 4: Y back
     pose[1] = 0
     woody.write_cartesian_position(pose)
+    print(f"Moving along Y back: {pose}")
 
-    # End of outer perimeter
     woody.set_speed(speed)
     plc.md_extruder_switch("off")
+    print("Extruder OFF - perimeter complete.")
 
     # --- Infill path ---
     pose[0] = -60 + x_offset + inside_offset
     pose[1] = 0
     woody.write_cartesian_position(pose)
+    print("Starting infill pass...")
 
     woody.set_speed(print_speed)
     plc.md_extruder_switch("on")
 
-    # Infill diagonals
     pose[0] = 100 + x_offset - inside_offset
     pose[1] = 200
     woody.write_cartesian_position(pose)
+    print(f"Infill diagonal 1: {pose}")
 
     pose[0] = -60 + x_offset + inside_offset
     pose[1] = 400 - inside_offset
     woody.write_cartesian_position(pose)
+    print(f"Infill diagonal 2: {pose}")
 
     woody.set_speed(speed)
     plc.md_extruder_switch("off")
-
-    # Raise Z for safe travel
-    pose[2] += z_offset
-    woody.write_cartesian_position(pose)
-
-    # Travel move: retract and shift Y
-    pose[0] = 100
-    pose[1] = 405
-    woody.write_cartesian_position(pose)
-
-    distance = 400
-    plc.travel(Y_LEFT_MOTION, distance, "mm", "y")  # Travel left
-
-    # Lower back to print height
-    pose[2] -= z_offset
-    woody.write_cartesian_position(pose)
-
-    # --- Second extrusion path (return pass) ---
-    woody.set_speed(print_speed)
-    plc.md_extruder_switch("on")
-    time.sleep(2)
-
-    # Path 1: Y back to start
-    pose[1] = 0
-    woody.write_cartesian_position(pose)
-
-    # Apply small Z correction
-    pose[2] -= correction
-    woody.write_cartesian_position(pose)
-
-    # Path 2: Move Y backward
-    pose[1] = -400
-    woody.write_cartesian_position(pose)
-
-    # Path 3: Move X backward
-    pose[0] = -60
-    woody.write_cartesian_position(pose)
-
-    # Correction loop
-    pose[1] = 44
-    woody.write_cartesian_position(pose)
-    pose[2] += correction
-    woody.write_cartesian_position(pose)
-
-    # Path 4: Move Y forward
-    pose[1] = 405
-    woody.write_cartesian_position(pose)
-
-    # End of second extrusion
-    woody.set_speed(speed)
-    plc.md_extruder_switch("off")
-
-    # --- Infill path (reverse pass) ---
-    pose[0] = -60 + inside_offset
-    woody.write_cartesian_position(pose)
-
-    woody.set_speed(print_speed)
-    plc.md_extruder_switch("on")
-
-    pose[0] = 100 - inside_offset
-    pose[1] = 200
-    woody.write_cartesian_position(pose)
-
-    pose[0] = -60 + inside_offset
-    pose[1] = 0
-    woody.write_cartesian_position(pose)
-
-    # Apply small Z correction
-    pose[2] -= correction
-    woody.write_cartesian_position(pose)
-
-    pose[0] = 100 - inside_offset
-    pose[1] = -200
-    woody.write_cartesian_position(pose)
-
-    pose[0] = -60 + inside_offset
-    pose[1] = -400 + inside_offset
-    woody.write_cartesian_position(pose)
-
-    pose[2] += correction
-    woody.write_cartesian_position(pose)
-
-    woody.set_speed(speed)
-    plc.md_extruder_switch("off")
+    print("Extruder OFF - infill complete.")
 
     # Raise Z for travel
     pose[2] += z_offset
     woody.write_cartesian_position(pose)
+    print(f"Raised to safe Z: {pose[2]}")
 
-    # Travel move: back to the right
+    # Travel move left
+    pose[0] = 100
+    pose[1] = 405
+    woody.write_cartesian_position(pose)
+    print(f"Traveling to Y-left prep: {pose}")
+
+    distance = 400
+    plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
+    print("Traveling Y-left 400mm.")
+
+    # Lower back
+    pose[2] -= z_offset
+    woody.write_cartesian_position(pose)
+    print(f"Lowered back to print Z: {pose[2]}")
+
+    # --- Second extrusion path ---
+    woody.set_speed(print_speed)
+    plc.md_extruder_switch("on")
+    print("Extruder ON for return pass.")
+    time.sleep(2)
+
+    pose[1] = 0
+    woody.write_cartesian_position(pose)
+    print(f"Return path Y=0: {pose}")
+
+    pose[2] -= z_correction
+    woody.write_cartesian_position(pose)
+    print(f"Applied Z correction: {pose[2]}")
+
+    pose[1] = -400
+    woody.write_cartesian_position(pose)
+    print(f"Return path Y back: {pose}")
+
+    pose[0] = -60
+    woody.write_cartesian_position(pose)
+    print(f"Return path X back: {pose}")
+
+    # Correction loop
+    pose[1] = 44
+    woody.write_cartesian_position(pose)
+    pose[2] += z_correction
+    woody.write_cartesian_position(pose)
+    print("Correction loop complete.")
+
+    # Path 4
+    pose[1] = 405
+    woody.write_cartesian_position(pose)
+    print(f"Return path final Y forward: {pose}")
+
+    woody.set_speed(speed)
+    plc.md_extruder_switch("off")
+    print("Extruder OFF - return pass complete.")
+
+    # --- Infill reverse ---
+    pose[0] = -60 + inside_offset
+    woody.write_cartesian_position(pose)
+    woody.set_speed(print_speed)
+    plc.md_extruder_switch("on")
+    print("Extruder ON - reverse infill.")
+
+    pose[0] = 100 - inside_offset
+    pose[1] = 200
+    woody.write_cartesian_position(pose)
+    print(f"Reverse infill diagonal 1: {pose}")
+
+    pose[0] = -60 + inside_offset
+    pose[1] = 0
+    woody.write_cartesian_position(pose)
+    print(f"Reverse infill diagonal 2: {pose}")
+
+    pose[2] -= z_correction
+    woody.write_cartesian_position(pose)
+    print(f"Applied Z correction: {pose[2]}")
+
+    pose[0] = 100 - inside_offset
+    pose[1] = -200
+    woody.write_cartesian_position(pose)
+    print(f"Reverse infill diagonal 3: {pose}")
+
+    pose[0] = -60 + inside_offset
+    pose[1] = -400 + inside_offset
+    woody.write_cartesian_position(pose)
+    print(f"Reverse infill diagonal 4: {pose}")
+
+    pose[2] += z_correction
+    woody.write_cartesian_position(pose)
+    print("Correction applied end of reverse infill.")
+
+    woody.set_speed(speed)
+    plc.md_extruder_switch("off")
+    print("Extruder OFF - reverse infill complete.")
+
+    # Raise Z for travel
+    pose[2] += z_offset
+    woody.write_cartesian_position(pose)
+    print(f"Raised to safe Z: {pose[2]}")
+
     plc.travel(Y_RIGHT_MOTION, distance, "mm", "y")
+    print("Traveling Y-right 400mm.")
 
     # --- Layer management ---
     if z > z_translation_value:
         distance = woody.read_current_cartesian_pose()[2]
+        print(f"Z threshold exceeded, traveling up {distance}mm...")
         plc.travel(Z_UP_MOTION, distance, "mm", "z")
         z = 0
+        print("Z reset to 0 after vertical translation.")
 
-    if z == end_height:   # Stop condition
+    if z == end_height:
         flg = False
-    print(f"The current vertical height is {z}")
-    z += layer_height     # Increment layer height
-    print(f"Incrementing vertical height by {layer_height}, z = {z}")
-    
+        print(f"Reached end height {end_height}. Stopping print loop.")
 
+    print(f"Current vertical height: {z}")
+    z += layer_height
+    print(f"Incremented Z by {layer_height}. New z = {z}")
+
+print("=== Print job complete ===")
