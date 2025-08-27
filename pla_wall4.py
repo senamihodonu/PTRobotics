@@ -31,7 +31,7 @@ print("PLC and Robot connections established.")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 200        # Printing speed (mm/s)
+print_speed = 20        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
 layer_height = 3.5      # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
@@ -69,13 +69,14 @@ time.sleep(1)
 # === Print setup ===
 plc.md_extruder_switch("on")
 print("Extruder ON, starting print sequence...")
-time.sleep(2)
+time.sleep(3)
 
 # === Printing loop ===
 z = 0
-z_translation_value = 4
+z_translation_value = layer_height
 flg = True
-end_height = 12
+end_height = 2*layer_height
+temp = 0
 
 while flg:
     print(f"\n=== Starting new layer at z = {z} ===")
@@ -100,12 +101,33 @@ while flg:
     print(f"Moving along Y forward: {pose}")
 
     # Path 3: X forward
+    pose[2] += z_correction
+    woody.write_cartesian_position(pose)
+    print(f"Moving along X forward: {pose}")
+
+
+    # Path 3: X forward
     pose[0] = 100 + x_offset
     woody.write_cartesian_position(pose)
     print(f"Moving along X forward: {pose}")
 
     # Path 4: Y back
-    pose[1] = 0
+    pose[1] = 152
+    woody.write_cartesian_position(pose)
+    print(f"Moving along Y back: {pose}")
+
+    # Path 3: X forward
+    pose[2] -= z_correction
+    woody.write_cartesian_position(pose)
+    print(f"Moving along X forward: {pose}")
+
+    # Path 4: Y back
+    pose[1] = -50
+    woody.write_cartesian_position(pose)
+    print(f"Moving along Y back: {pose}")
+
+    # Path 4: Y back
+    pose[0] = 140
     woody.write_cartesian_position(pose)
     print(f"Moving along Y back: {pose}")
 
@@ -143,7 +165,7 @@ while flg:
 
     # Travel move left
     pose[0] = 100
-    pose[1] = 405
+    pose[1] = 355
     woody.write_cartesian_position(pose)
     print(f"Traveling to Y-left prep: {pose}")
 
@@ -161,6 +183,10 @@ while flg:
     plc.md_extruder_switch("on")
     print("Extruder ON for return pass.")
     time.sleep(2)
+
+    pose[0] = 100
+    woody.write_cartesian_position(pose)
+    print(f"Traveling to Y-left prep: {pose}")
 
     pose[1] = 0
     woody.write_cartesian_position(pose)
@@ -240,16 +266,16 @@ while flg:
 
     plc.travel(Y_RIGHT_MOTION, distance, "mm", "y")
     print("Traveling Y-right 400mm.")
-
+    temp += z 
     # --- Layer management ---
-    if z > z_translation_value:
-        distance = woody.read_current_cartesian_pose()[2]
+    if z >= z_translation_value:
+        distance = z/2
         print(f"Z threshold exceeded, traveling up {distance}mm...")
         plc.travel(Z_UP_MOTION, distance, "mm", "z")
         z = 0
         print("Z reset to 0 after vertical translation.")
 
-    if z == end_height:
+    if temp == end_height:
         flg = False
         print(f"Reached end height {end_height}. Stopping print loop.")
 
