@@ -31,9 +31,9 @@ print("PLC and Robot connections established.")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 20        # Printing speed (mm/s)
+print_speed = 30        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
-layer_height = 3.5      # Vertical step per layer (mm)
+layer_height = 3      # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
 x_offset = 13.5         # X-axis offset (mm)
 print_offset = 5        # Vertical offset between passes (mm)
@@ -73,9 +73,9 @@ time.sleep(3)
 
 # === Printing loop ===
 z = 0
-z_translation_value = layer_height
+z_translation_value = 2*layer_height
 flg = True
-end_height = 2*layer_height
+end_height = 4*layer_height
 temp = 0
 
 while flg:
@@ -266,16 +266,16 @@ while flg:
 
     plc.travel(Y_RIGHT_MOTION, distance, "mm", "y")
     print("Traveling Y-right 400mm.")
-    temp += z 
+    temp += layer_height 
     # --- Layer management ---
     if z >= z_translation_value:
-        distance = z/2
+        distance = z
         print(f"Z threshold exceeded, traveling up {distance}mm...")
         plc.travel(Z_UP_MOTION, distance, "mm", "z")
         z = 0
         print("Z reset to 0 after vertical translation.")
 
-    if temp == end_height:
+    if temp >= end_height:
         flg = False
         print(f"Reached end height {end_height}. Stopping print loop.")
 
