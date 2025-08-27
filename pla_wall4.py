@@ -31,7 +31,7 @@ print("PLC and Robot connections established.")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 30        # Printing speed (mm/s)
+print_speed = 200        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
 layer_height = 3      # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
@@ -76,7 +76,7 @@ z = 0
 z_translation_value = 2*layer_height
 flg = True
 end_height = 4*layer_height
-temp = 0
+height_accumulation = 0
 
 while flg:
     print(f"\n=== Starting new layer at z = {z} ===")
@@ -90,6 +90,8 @@ while flg:
     plc.md_extruder_switch("on")
     print("Extruder ON for perimeter.")
 
+    test_speed = 10
+    woody.set_speed(test_speed)
     # Path 1: X move
     pose[0] = -60 + x_offset
     woody.write_cartesian_position(pose)
@@ -266,7 +268,7 @@ while flg:
 
     plc.travel(Y_RIGHT_MOTION, distance, "mm", "y")
     print("Traveling Y-right 400mm.")
-    temp += layer_height 
+    height_accumulation += layer_height 
     # --- Layer management ---
     if z >= z_translation_value:
         distance = z
@@ -275,7 +277,7 @@ while flg:
         z = 0
         print("Z reset to 0 after vertical translation.")
 
-    if temp >= end_height:
+    if height_accumulation >= end_height:
         flg = False
         print(f"Reached end height {end_height}. Stopping print loop.")
 
