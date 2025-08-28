@@ -31,7 +31,7 @@ print("PLC and Robot connections established.")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 200        # Printing speed (mm/s)
+print_speed = 10        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
 layer_height = 3      # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
@@ -73,9 +73,9 @@ time.sleep(3)
 
 # === Printing loop ===
 z = 0
-z_translation_value = 2*layer_height
+z_translation_value = 4*layer_height
 flg = True
-end_height = 4*layer_height
+end_height = 12*layer_height
 height_accumulation = 0
 
 while flg:
@@ -90,8 +90,8 @@ while flg:
     plc.md_extruder_switch("on")
     print("Extruder ON for perimeter.")
 
-    test_speed = 10
-    woody.set_speed(test_speed)
+    # test_speed = 25
+    # woody.set_speed(test_speed)
     # Path 1: X move
     pose[0] = -60 + x_offset
     woody.write_cartesian_position(pose)
@@ -184,7 +184,7 @@ while flg:
     woody.set_speed(print_speed)
     plc.md_extruder_switch("on")
     print("Extruder ON for return pass.")
-    time.sleep(2)
+    time.sleep(1)
 
     pose[0] = 100
     woody.write_cartesian_position(pose)
