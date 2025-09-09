@@ -104,6 +104,9 @@ class PyPLCConnection:
             return distance*304.8
         else:
             return distance
+        
+    def read_current_distance(self):
+        return self.read_single_register(3)
 
     def calculate_pulse_per_second(self,speed_mm_min, steps_per_rev, lead_mm_rev, axis):
         """
@@ -275,7 +278,7 @@ if __name__ == "__main__":
 
 
     # plc.travel(Z_DOWN_MOTION, 4,"mm","z")
-    plc.reset_coils()
+    print(plc.read_current_distance())
 
     # time.sleep()
 
