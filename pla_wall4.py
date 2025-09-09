@@ -39,6 +39,8 @@ x_offset = 13.5         # X-axis offset (mm)
 print_offset = 5        # Vertical offset between passes (mm)
 z_correction = 4          # Small correction in Z for alignment (mm)
 
+
+
 print("Parameters set.")
 
 # === Configure robot and PLC ===
@@ -54,6 +56,30 @@ pose = [-100, 0, z, 0, 90, 0]
 woody.write_cartesian_position(pose)
 print(f"Robot moved to initial pose: {pose}")
 
+def caliberate_height():
+    while True:
+        if plc.read_current_distance()/2 > layer_height:
+            pose[2]-= plc.read_current_distance()/2
+            woody.write_cartesian_position(pose)
+
+        if plc.read_current_distance() > layer_height:
+            print(plc.read_current_distance())
+            pose[2]-= 1
+            woody.write_cartesian_position(pose)
+
+        if plc.read_current_distance() < layer_height:
+            print(plc.read_current_distance())
+            pose[2]+= 1
+            woody.write_cartesian_position(pose)
+
+        if plc.read_current_distance() == layer_height:
+            z = woody.read_current_cartesian_pose()[2]
+            nozzle_height= plc.read_current_distance()
+            print(f"nozzle_height_above_bed is {nozzle_height} mm")
+            print(f"Starting z value is {z} mm")
+            break
+    return pose, z
+
 # === Safe start ===
 plc.md_extruder_switch("off")
 print("Extruder OFF for safe start.")
@@ -67,31 +93,7 @@ for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
 print("Safety check complete.")
 time.sleep(1)
 
-tolerance = 0.1  # mm
-
-while True:
-    current_distance = plc.read_current_distance()
-
-    if current_distance / 2 > layer_height:
-        pose[2] -= current_distance / 2
-        woody.write_cartesian_position(pose)
-
-    elif current_distance > layer_height + tolerance:
-        print(current_distance)
-        pose[2] -= 1
-        woody.write_cartesian_position(pose)
-
-    elif current_distance < layer_height - tolerance:
-        print(current_distance)
-        pose[2] += 1
-        woody.write_cartesian_position(pose)
-
-    else:  # within tolerance range
-        z = woody.read_current_cartesian_pose()[2]
-        nozzle_height = current_distance
-        print(f"Nozzle height above bed is {nozzle_height:.3f} mm")
-        print(f"Starting Z value is {z:.3f} mm")
-        break
+pose, z = caliberate_height()
 
 # # === Print setup ===
 # plc.md_extruder_switch("on")

@@ -106,7 +106,7 @@ class PyPLCConnection:
             return distance
         
     def read_current_distance(self):
-        return self.read_single_register(3)
+        return self.read_single_register(DISTANCE_DATA_ADDRESS)
 
     def calculate_pulse_per_second(self,speed_mm_min, steps_per_rev, lead_mm_rev, axis):
         """
