@@ -4,14 +4,14 @@ import os
 import time
 import threading
 
-# === Path setup ===
+# === Path Setup ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
 src_path = os.path.normpath(
     os.path.join(current_dir, "fanuc_ethernet_ip_drivers", "src")
 )
 sys.path.append(src_path)
 
-# === Custom libraries ===
+# === Custom Libraries ===
 from robot_controller import robot
 from PyPLCConnection import (
     PyPLCConnection,
@@ -21,7 +21,7 @@ from PyPLCConnection import (
     Y_LEFT_MOTION, Y_RIGHT_MOTION,
     Z_DOWN_MOTION, Z_UP_MOTION,
     DISTANCE_SENSOR_IN,
-    PLC_IP, ROBOT_IP
+    PLC_IP, ROBOT_IP,
 )
 
 print("=== Program initialized ===")
@@ -29,18 +29,19 @@ print("=== Program initialized ===")
 # === Initialize PLC and Robot ===
 plc = PyPLCConnection(PLC_IP)
 woody = robot(ROBOT_IP)
+
 print("PLC and Robot connections established.")
 plc.reset_coils()
 
 # === Parameters ===
-speed = 200             # Robot travel speed (mm/s)
-print_speed = 10        # Printing speed (mm/s)
-inside_offset = 6       # Offset for inner infill moves (mm)
-layer_height = 4        # Vertical step per layer (mm)
-z_offset = 20           # Safe Z offset for travel moves (mm)
-x_offset = 13.5         # X-axis offset (mm)
-print_offset = 5        # Vertical offset between passes (mm)
-z_correction = 4        # Small correction in Z for alignment (mm)
+speed = 200            # Robot travel speed (mm/s)
+print_speed = 10       # Printing speed (mm/s)
+inside_offset = 6      # Offset for inner infill moves (mm)
+layer_height = 4       # Vertical step per layer (mm)
+z_offset = 20          # Safe Z offset for travel moves (mm)
+x_offset = 13.5        # X-axis offset (mm)
+print_offset = 5       # Vertical offset between passes (mm)
+z_correction = 4       # Fine Z correction for alignment (mm)
 
 current_distance = plc.read_current_distance()
 flg = True
@@ -49,19 +50,33 @@ flg = True
 # === Functions ===
 def check_height(layer_height: float):
     """
-    Check the current nozzle height relative to the print bed.
-    Returns (current_distance, z).
+    Check the nozzle height relative to the print bed.
+
+    Args:
+        layer_height (float): Target layer height (mm).
+
+    Returns:
+        tuple: (current_distance, z_position).
     """
     z = woody.read_current_cartesian_pose()[2]
-    print(f"[Check] Current distance: {current_distance:.2f} mm | "
-          f"Target: {layer_height:.2f} mm | Z: {z:.2f} mm")
+    print(
+        f"[Check] Current distance: {current_distance:.2f} mm | "
+        f"Target: {layer_height:.2f} mm | Z: {z:.2f} mm"
+    )
     return current_distance, z
 
 
 def calibrate_height(pose, layer_height: float):
     """
-    Calibrate nozzle height relative to the print bed using PLC distance feedback.
-    Adjusts robot Z until the target layer height is reached.
+    Calibrate nozzle height using PLC distance sensor feedback.
+    Adjusts the robot Z position until the target layer height is reached.
+
+    Args:
+        pose (list): Current Cartesian pose of the robot [x, y, z, ...].
+        layer_height (float): Target layer height (mm).
+
+    Returns:
+        tuple: (adjusted_pose, z_position).
     """
     while flg:
         current_distance = plc.read_current_distance()
@@ -86,27 +101,60 @@ def calibrate_height(pose, layer_height: float):
         else:
             # Correct height reached
             z = woody.read_current_cartesian_pose()[2]
-            print(f"[Calibration] Nozzle height: {current_distance:.2f} mm | "
-                  f"Starting Z: {z:.2f} mm")
+            print(
+                f"[Calibration] Nozzle height set: {current_distance:.2f} mm | "
+                f"Starting Z: {z:.2f} mm"
+            )
             break
-            
-    return pose, z       
+
+    return pose, z
 
 
+def monitor_distance_sensor(layer_height: float, tolerance: float = 1):
+    """
+    Continuously monitor the distance sensor and adjust Z position if needed.
 
+    Args:
+        layer_height (float): Target layer height (mm).
+        tolerance (float): Allowable deviation (± mm) before correction.
+    """
+    while flg:
+        current_distance = plc.read_current_distance()
+        max_threshold = layer_height + tolerance
+        min_threshold = layer_height - tolerance
 
+        if current_distance > max_threshold:
+            # Too high → move down
+            diff = current_distance - layer_height
+            plc.travel(Z_DOWN_MOTION, diff, "mm", "z")
+            print(f"[Monitor] Adjusting down by {diff:.2f} mm (distance {current_distance:.2f})")
 
-def monitor_distance_sensor(layer_height):
+        elif current_distance < min_threshold:
+            # Too low → move up
+            diff = layer_height - current_distance
+            plc.travel(Z_UP_MOTION, diff, "mm", "z")
+            print(f"[Monitor] Adjusting up by {diff:.2f} mm (distance {current_distance:.2f})")
+
+        else:
+            # Within tolerance band
+            z = woody.read_current_cartesian_pose()[2]
+            print(
+                f"[Monitor] Nozzle height stable: {current_distance:.2f} mm "
+                f"(layer_height: {layer_height:.2f} mm)"
+            )
+
+        time.sleep(1)
+
+def z_difference(layer_height, current_z, tol):
     current_distance = plc.read_current_distance()
-    max_threshold = layer_height + 0
-    min_threshold = layer_height - 0
-
+    max_threshold = layer_height+tol
+    min_threshold = layer_height-tol
     if current_distance > max_threshold:
-        diff = current_distance - max_threshold
-        plc.travel(Z_DOWN_MOTION, diff, "mm", "z")
-
+        diff = current_distance - current_z
+        z_value -= diff
     elif current_distance < min_threshold:
-        diff = min_threshold - current_distance
-        plc.travel(Z_UP_MOTION, diff, "mm", "z")
-    time.sleep(1)
+        diff = current_z-current_distance
+        z_value += diff
+    else:
+        print(f"z value is within bounds. z_value = {z}, current_distance = {current_distance}")
 
