@@ -6,7 +6,9 @@ import threading
 
 # === Path setup ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
-src_path = os.path.normpath(os.path.join(current_dir, "fanuc_ethernet_ip_drivers", "src"))
+src_path = os.path.normpath(
+    os.path.join(current_dir, "fanuc_ethernet_ip_drivers", "src")
+)
 sys.path.append(src_path)
 
 # === Custom libraries ===
@@ -27,85 +29,79 @@ print("=== Program initialized ===")
 # === Initialize PLC and Robot ===
 plc = PyPLCConnection(PLC_IP)
 woody = robot(ROBOT_IP)
-
 print("PLC and Robot connections established.")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
 print_speed = 10        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
-layer_height = 4      # Vertical step per layer (mm)
+layer_height = 4        # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
 x_offset = 13.5         # X-axis offset (mm)
 print_offset = 5        # Vertical offset between passes (mm)
-z_correction = 4          # Small correction in Z for alignment (mm)
+z_correction = 4        # Small correction in Z for alignment (mm)
+
 current_distance = plc.read_current_distance()
 
 
-
-def check_height(layer_height):
-    """Check current nozzle height relative to the print bed."""
+# === Functions ===
+def check_height(layer_height: float):
+    """
+    Check the current nozzle height relative to the print bed.
+    Returns (current_distance, z).
+    """
     z = woody.read_current_cartesian_pose()[2]
-
-    print(f"[Check] Current distance: {current_distance:.2f} mm | Target: {layer_height:.2f} mm | Z: {z:.2f} mm")
-
+    print(f"[Check] Current distance: {current_distance:.2f} mm | "
+          f"Target: {layer_height:.2f} mm | Z: {z:.2f} mm")
     return current_distance, z
 
-def calibrate_height(pose, robot, plc, layer_height):
-    """Calibrate nozzle height relative to the print bed using PLC distance feedback."""
 
+def calibrate_height(pose, robot, plc, layer_height: float):
+    """
+    Calibrate nozzle height relative to the print bed using PLC distance feedback.
+    Adjusts robot Z until the target layer height is reached.
+    """
     while True:
         current_distance = plc.read_current_distance()
 
-        # Overshoot by more than half the layer height → move down proportionally
         if current_distance / 2 > layer_height:
+            # Overshoot → move down proportionally
             pose[2] -= current_distance / 2
-            woody.write_cartesian_position(pose)
+            robot.write_cartesian_position(pose)
 
-        # Too high → move down incrementally
         elif current_distance > layer_height:
-            print(f"Distance too high: {current_distance:.2f} mm")
+            # Too high → move down incrementally
+            print(f"[Calibration] Distance too high: {current_distance:.2f} mm")
             pose[2] -= 1
-            woody.write_cartesian_position(pose)
+            robot.write_cartesian_position(pose)
 
-        # Too low → move up incrementally
         elif current_distance < layer_height:
-            print(f"Distance too low: {current_distance:.2f} mm")
+            # Too low → move up incrementally
+            print(f"[Calibration] Distance too low: {current_distance:.2f} mm")
             pose[2] += 1
-            woody.write_cartesian_position(pose)
+            robot.write_cartesian_position(pose)
 
-        # Correct height reached
         else:
-            z = woody.read_current_cartesian_pose()[2]
-            nozzle_height = current_distance
-            print(f"Nozzle height above bed: {nozzle_height:.2f} mm")
-            print(f"Starting Z value: {z:.2f} mm")
-            break
+            # Correct height reached
+            z = robot.read_current_cartesian_pose()[2]
+            print(f"[Calibration] Nozzle height: {current_distance:.2f} mm | "
+                  f"Starting Z: {z:.2f} mm")
+            return pose, z
 
-    return pose, z
 
-# === Distance Sensor Monitoring Thread ===
-stop_monitoring = False  # flag to stop the thread cleanly
-
-def monitor_distance_sensor(layer_height):
+def monitor_distance_sensor(layer_height: float):
     """
-    Continuously read distance sensor value from PLC.
-    Takes action if value > threshold.
+    Monitor distance sensor and correct Z position if deviation exceeds ±2 mm.
+    This function should be run in a separate thread if continuous monitoring is required.
     """
-    max_threshold = layer_height+2
-    min_threshold = layer_height-2
+    current_distance = plc.read_current_distance()
+    max_threshold = layer_height + 2
+    min_threshold = layer_height - 2
+
     if current_distance > max_threshold:
-        #Take the difference between the current distance and layer height
-        difference= current_distance - max_threshold
-        #Translate robot arm by distance
-        plc.travel(Z_DOWN_MOTION, difference, "mm", "z")
+        diff = current_distance - max_threshold
+        plc.travel(Z_DOWN_MOTION, diff, "mm", "z")
 
-    if current_distance < min_threshold:
-        #Take the difference between the current distance and layer height
-        difference= current_distance - min_threshold
-        #Translate robot arm by distance
-        plc.travel(Z_UP_MOTION, difference, "mm", "z")
-
-
-
-
+    elif current_distance < min_threshold:
+        diff = min_threshold - current_distance
+        plc.travel(Z_UP_MOTION, diff, "mm", "z")
