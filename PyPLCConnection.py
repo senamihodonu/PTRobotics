@@ -14,7 +14,7 @@ Z_DOWN_MOTION = 2
 DISTANCE_SENSOR_IN = 5
 DISTANCE_DATA_ADDRESS = 6
 PPS_Y_ADDRESS = 10
-PPS_Z_ADDRESS = 7
+PPS_Z_ADDRESS = 12
 PLC_IP = "192.168.1.25"
 ROBOT_IP = '192.168.1.101' #Woody
 MD_EXTRUDER_ADDRESS = 13
@@ -53,6 +53,7 @@ class PyPLCConnection:
 
         # pymodbus built in write coil function
         result = self.client.write_coil(coil_address, value)
+        # time.sleep(1)
         self.close_connection()
 
         return result
@@ -88,6 +89,29 @@ class PyPLCConnection:
         print("register " + str(register_address) + " is " + str(result[0]))
         self.close_connection()
         return result[0]
+    # def read_single_register(self, register_address):
+    #     """Read a single Modbus holding register safely."""
+    #     try:
+    #         # Ensure connection is alive
+    #         if not self.client or not self.client.is_socket_open():
+    #             self.connect_to_plc()
+    #             if not self.client.is_socket_open():
+    #                 raise ConnectionError("Unable to connect to PLC.")
+
+    #         # Perform read (count=1 for a single register)
+    #         response = self.client.read_holding_registers(register_address - 1, count=1)
+
+    #         if response.isError():
+    #             raise Exception(f"PLC read error at register {register_address}: {response}")
+
+    #         value = response.registers[0]
+    #         print(f"Register {register_address} = {value}")
+    #         return value
+
+    #     except Exception as e:
+    #         print(f"[PLC ERROR] Failed to read register {register_address}: {e}")
+    #         return None
+
     
     def write_single_register(self, register_address, value):
         print("writing " + str(value) + " to register " + str(register_address))
@@ -246,7 +270,7 @@ class PyPLCConnection:
         while remaining > 0:
             sys.stdout.write(f"\rTime remaining: {remaining:.1f} s")
             sys.stdout.flush()
-            time.sleep(1)
+            time.sleep(2)
             remaining -= 1
 
         sys.stdout.write("\rTime remaining: 0.0 s\n")

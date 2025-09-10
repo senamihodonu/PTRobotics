@@ -24,15 +24,9 @@ from PyPLCConnection import (
 )
 
 print("=== Program initialized ===")
-
-# # === Initialize utils.plc and Robot ===
-# utils.plc = PyPLCConnection(PLC_IP)
-# utils.woody = robot(ROBOT_IP)
-print("utils.plc and Robot connections established.")
-
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 10        # Printing speed (mm/s)
+print_speed = 30        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
 layer_height = 4      # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
@@ -70,11 +64,11 @@ for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
 print("Safety check complete.")
 time.sleep(1)
 
-distance = 10
+distance = 3
 utils.plc.travel(Z_UP_MOTION, distance, "mm", "z")
 
 # === Height Calibration ===
-pose, z = utils.calibrate_height(pose, utils.woody, utils.plc, layer_height)
+pose, z = utils.calibrate_height(pose, layer_height)
 
 # === Print Parameters ===
 z_translation_value = 4 * layer_height
@@ -95,7 +89,7 @@ while flg:
     pose = [-100, 0, z, 0, 90, 0]
     utils.woody.write_cartesian_position(pose)
     print(f"Moved to start pose: {pose}")
-    utils.monitor_distance_sensor(layer_height)
+    utils.calibrate_height(pose, layer_height)
 
     # --- Perimeter Path ---
     utils.woody.set_speed(print_speed)
@@ -106,77 +100,81 @@ while flg:
     pose[0] = -60
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along X: {pose}")
-    utils.monitor_distance_sensor(layer_height)
+    time.sleep(1)
+    utils.calibrate_height(pose, layer_height)
+
 
     # Path 2: Y forward
     pose[1] = 300
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along Y forward: {pose}")
-    utils.monitor_distance_sensor(layer_height)
+    utils.calibrate_height(pose, layer_height)
+    # utils.monitor_distance_sensor(layer_height, True)
 
     # Path 3: X forward
     pose[0] = 100
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along X forward: {pose}")
-    utils.monitor_distance_sensor(layer_height)
-
+    utils.calibrate_height(pose, layer_height)
+    
     # Path 4: Y back
     pose[1] = 0
     utils.woody.write_cartesian_position(pose)
-    utils.monitor_distance_sensor(layer_height)
+    utils.calibrate_height(pose, layer_height)
     print(f"Moving along Y back: {pose}")
-    time.sleep(2)
 
-    # --- Travel Move (Lift + Y-shift) ---
-    utils.plc.md_extruder_switch("off")
-    utils.woody.set_speed(speed)
-    pose[2] += 20
-    pose[1] = 250
-    utils.woody.write_cartesian_position(pose)
-    print(f"Traveling to Y-left prep: {pose}")
+    flg = False
 
-    distance = 250
-    utils.plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
-    print(f"Traveling Y-left {distance}mm.")
-    time.sleep(2)
+#     # --- Travel Move (Lift + Y-shift) ---
+#     utils.plc.md_extruder_switch("off")
+#     utils.woody.set_speed(speed)
+#     pose[2] += 20
+#     pose[1] = 250
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Traveling to Y-left prep: {pose}")
 
-    # --- Lower Back to Print Height ---
-    pose[2] -= 20
-    utils.woody.write_cartesian_position(pose)
-    print(f"Lowered back to print Z: {pose[2]}")
+#     distance = 50
+#     utils.plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
+#     print(f"Traveling Y-left {distance}mm.")
+#     time.sleep(2)
 
-    # --- Return Paths ---
-    utils.woody.set_speed(print_speed)
-    utils.plc.md_extruder_switch("on")
-    time.sleep(2)
-    pose[1] = -175
-    utils.woody.write_cartesian_position(pose)
-    utils.monitor_distance_sensor(layer_height)
-    print(f"Return path Y=0: {pose}")
+#     # --- Lower Back to Print Height ---
+#     pose[2] -= 20
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Lowered back to print Z: {pose[2]}")
 
-    pose[0] = -60
-    utils.woody.write_cartesian_position(pose)
-    utils.monitor_distance_sensor(layer_height)
-    print(f"Return path X back: {pose}")
+#     # --- Return Paths ---
+#     utils.woody.set_speed(print_speed)
+#     utils.plc.md_extruder_switch("on")
+#     time.sleep(2)
+#     pose[1] = -175
+#     utils.woody.write_cartesian_position(pose)
+#     # utils.monitor_distance_sensor(layer_height, True)
+#     print(f"Return path Y=0: {pose}")
 
-    pose[1] = 250
-    utils.woody.write_cartesian_position(pose)
-    print(f"Return path final Y forward: {pose}")
-    utils.monitor_distance_sensor(layer_height)
-    time.sleep(2)
-    utils.woody.set_speed(speed)
-    utils.plc.md_extruder_switch("off")
+#     pose[0] = -60
+#     utils.woody.write_cartesian_position(pose)
+#     # utils.monitor_distance_sensor(layer_height, True)
+#     print(f"Return path X back: {pose}")
 
-    # --- Increment Z for Next Layer ---
-    z += layer_height
-    pose = [-100, 0, z, 0, 90, 0]
-    utils.woody.write_cartesian_position(pose)
-    print(f"Incremented Z by {layer_height}. New z = {z}")
+#     pose[1] = 250
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Return path final Y forward: {pose}")
+#     # utils.monitor_distance_sensor(layer_height, True)
+#     time.sleep(2)
+#     utils.woody.set_speed(speed)
+#     utils.plc.md_extruder_switch("off")
 
-    # --- Travel Back ---
-    print("Travel back")
-    utils.plc.travel(Y_RIGHT_MOTION, distance, "mm", "y")
+#     # --- Increment Z for Next Layer ---
+#     z += layer_height
+#     pose = [-100, 0, z, 0, 90, 0]
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Incremented Z by {layer_height}. New z = {z}")
+
+#     # --- Travel Back ---
+#     print("Travel back")
+#     utils.plc.travel(Y_RIGHT_MOTION, distance, "mm", "y")
 
 
 
-print("=== Print job complete ===")
+# print("=== Print job complete ===")
