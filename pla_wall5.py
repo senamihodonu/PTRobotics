@@ -104,7 +104,7 @@ while flg:
     print(f"Moving along X: {pose}")
 
     # Path 2: Y forward
-    pose[1] = 175
+    pose[1] = 300
     woody.write_cartesian_position(pose)
     print(f"Moving along Y forward: {pose}")
 
@@ -117,8 +117,11 @@ while flg:
     pose[1] = 0
     woody.write_cartesian_position(pose)
     print(f"Moving along Y back: {pose}")
+    time.sleep(2)
 
     # --- Travel Move (Lift + Y-shift) ---
+    plc.md_extruder_switch("off")
+    woody.set_speed(speed)
     pose[2] += 20
     pose[1] = 250
     woody.write_cartesian_position(pose)
@@ -127,6 +130,7 @@ while flg:
     distance = 250
     plc.travel(Y_LEFT_MOTION, distance, "mm", "y")
     print(f"Traveling Y-left {distance}mm.")
+    time.sleep(2)
 
     # --- Lower Back to Print Height ---
     pose[2] -= 20
@@ -134,6 +138,9 @@ while flg:
     print(f"Lowered back to print Z: {pose[2]}")
 
     # --- Return Paths ---
+    woody.set_speed(print_speed)
+    plc.md_extruder_switch("on")
+    time.sleep(2)
     pose[1] = -175
     woody.write_cartesian_position(pose)
     print(f"Return path Y=0: {pose}")
@@ -145,12 +152,20 @@ while flg:
     pose[1] = 250
     woody.write_cartesian_position(pose)
     print(f"Return path final Y forward: {pose}")
-
-    # --- Travel Back ---
-    plc.travel(Y_RIGHT_MOTION, -distance, "mm", "y")
+    time.sleep(2)
+    woody.set_speed(speed)
+    plc.md_extruder_switch("off")
 
     # --- Increment Z for Next Layer ---
     z += layer_height
+    pose = [-100, 0, z, 0, 90, 0]
+    woody.write_cartesian_position(pose)
     print(f"Incremented Z by {layer_height}. New z = {z}")
+
+    # --- Travel Back ---
+    print("Travel back")
+    plc.travel(Y_RIGHT_MOTION, distance, "mm", "y")
+
+
 
 print("=== Print job complete ===")
