@@ -1,6 +1,7 @@
 import time
 from pymodbus.client import ModbusTcpClient 
 import sys
+import math
 
 LEAD_Y_SCREW = 2.54 #mm
 LEAD_Z_SCREW = 5 #mm
@@ -130,7 +131,14 @@ class PyPLCConnection:
             return distance
         
     def read_current_distance(self):
-        return self.read_single_register(DISTANCE_DATA_ADDRESS)
+    # Convert degrees to radians before calculating cosine
+        angle_degrees = 21.65
+        angle_radians_from_degrees = math.radians(angle_degrees)
+        angle_distance = self.read_single_register(DISTANCE_DATA_ADDRESS)
+        vertical_distance = angle_distance*math.cos(angle_radians_from_degrees)
+        print(f"The cosine of {angle_degrees} degrees is: {vertical_distance}")
+
+        return vertical_distance
 
     def calculate_pulse_per_second(self,speed_mm_min, steps_per_rev, lead_mm_rev, axis):
         """
