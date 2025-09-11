@@ -154,17 +154,17 @@ def z_difference(layer_height, current_z, tol):
     max_threshold = layer_height + tol
     min_threshold = layer_height - tol
 
-    z = woody.read_current_cartesian_pose()[2]  # start with the current z
+    # z = woody.read_current_cartesian_pose()[2]  # start with the current z
 
     if current_distance > max_threshold:
         diff = current_distance - layer_height
-        z -= diff
+        current_z -= diff
     elif current_distance < min_threshold:
         diff = layer_height - current_distance
-        z += diff
+        current_z += diff
     else:
-        print(f"Z is within bounds. z_value = {z}, current_distance = {current_distance}")
+        print(f"Z is within bounds. z_value = {current_z}, current_distance = {current_distance}")
 
-    return z
+    return current_z
 
 

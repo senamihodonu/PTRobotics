@@ -9,14 +9,14 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 30        # Printing speed (mm/s)
+print_speed = 15        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
 layer_height = 4        # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
 x_offset = 13.5         # X-axis offset (mm)
 print_offset = 5        # Vertical offset between passes (mm)
 z_correction = 4        # Small correction in Z for alignment (mm)
-tolerance = 2
+tolerance = 1
 
 print("Parameters set.")
 
@@ -50,7 +50,7 @@ print("Safety check complete.")
 time.sleep(1)
 
 # Raise Z to safe height
-utils.plc.travel(utils.Z_UP_MOTION, 3, "mm", "z")
+# utils.plc.travel(utils.Z_UP_MOTION, 3, "mm", "z")
 
 # === Height Calibration ===
 pose, z = utils.calibrate_height(pose, layer_height)
@@ -116,6 +116,15 @@ while flg:
         pose[2] = corrected_z
         utils.woody.write_cartesian_position(pose)  # update robot Z only
 
+    pose[1] = 150
+    utils.woody.write_cartesian_position(pose)
+    print(f"Moving along Y back: {pose}")
+    # utils.calibrate_height(pose, layer_height)
+    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
+    if corrected_z != pose[2]:
+        pose[2] = corrected_z
+        utils.woody.write_cartesian_position(pose)  # update robot Z only
+
     # Path 4: Y back
     pose[1] = 0
     utils.woody.write_cartesian_position(pose)
@@ -127,6 +136,7 @@ while flg:
         utils.woody.write_cartesian_position(pose)  # update robot Z only
 
     # End after one loop (debug mode)
+    utils.plc.md_extruder_switch("off")
     flg = False
 
 
