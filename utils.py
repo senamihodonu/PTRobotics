@@ -146,15 +146,25 @@ def monitor_distance_sensor(layer_height: float, tolerance: float = 1):
         time.sleep(1)
 
 def z_difference(layer_height, current_z, tol):
+    """
+    Adjusts the Z value based on distance sensor reading.
+    Returns the corrected z_value.
+    """
     current_distance = plc.read_current_distance()
-    max_threshold = layer_height+tol
-    min_threshold = layer_height-tol
+    max_threshold = layer_height + tol
+    min_threshold = layer_height - tol
+
+    z = woody.read_current_cartesian_pose()[2]  # start with the current z
+
     if current_distance > max_threshold:
-        diff = current_distance - current_z
-        z_value -= diff
+        diff = current_distance - layer_height
+        z -= diff
     elif current_distance < min_threshold:
-        diff = current_z-current_distance
-        z_value += diff
+        diff = layer_height - current_distance
+        z += diff
     else:
-        print(f"z value is within bounds. z_value = {z}, current_distance = {current_distance}")
+        print(f"Z is within bounds. z_value = {z}, current_distance = {current_distance}")
+
+    return z
+
 
