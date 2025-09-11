@@ -138,7 +138,7 @@ class PyPLCConnection:
         vertical_distance = angle_distance*math.cos(angle_radians_from_degrees)
         print(f"The cosine of {angle_degrees} degrees is: {vertical_distance}")
 
-        return vertical_distance
+        return math.ceil(vertical_distance)
 
     def calculate_pulse_per_second(self,speed_mm_min, steps_per_rev, lead_mm_rev, axis):
         """

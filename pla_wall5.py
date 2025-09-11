@@ -116,7 +116,34 @@ while flg:
         pose[2] = corrected_z
         utils.woody.write_cartesian_position(pose)  # update robot Z only
 
+    pose[1] = 200
+    utils.woody.write_cartesian_position(pose)
+    print(f"Moving along Y back: {pose}")
+    # utils.calibrate_height(pose, layer_height)
+    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
+    if corrected_z != pose[2]:
+        pose[2] = corrected_z
+        utils.woody.write_cartesian_position(pose)  # update robot Z only
+
     pose[1] = 150
+    utils.woody.write_cartesian_position(pose)
+    print(f"Moving along Y back: {pose}")
+    # utils.calibrate_height(pose, layer_height)
+    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
+    if corrected_z != pose[2]:
+        pose[2] = corrected_z
+        utils.woody.write_cartesian_position(pose)  # update robot Z only
+
+    pose[1] = 100
+    utils.woody.write_cartesian_position(pose)
+    print(f"Moving along Y back: {pose}")
+    # utils.calibrate_height(pose, layer_height)
+    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
+    if corrected_z != pose[2]:
+        pose[2] = corrected_z
+        utils.woody.write_cartesian_position(pose)  # update robot Z only
+
+    pose[1] = 50
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along Y back: {pose}")
     # utils.calibrate_height(pose, layer_height)
@@ -137,7 +164,11 @@ while flg:
 
     # End after one loop (debug mode)
     utils.plc.md_extruder_switch("off")
-    flg = False
+    z+=4
+    layer_height+=layer_height
+    if z > 12:
+        flg = False
+
 
 
 #     # --- Travel Move (Lift + Y-shift) ---
