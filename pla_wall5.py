@@ -16,7 +16,7 @@ z_offset = 20           # Safe Z offset for travel moves (mm)
 x_offset = 13.5         # X-axis offset (mm)
 print_offset = 5        # Vertical offset between passes (mm)
 z_correction = 4        # Small correction in Z for alignment (mm)
-tolerance = 1
+tolerance = 0
 
 print("Parameters set.")
 
@@ -57,8 +57,8 @@ for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
 print("Safety check complete.")
 time.sleep(1)
 
-# Raise Z to safe height
-# utils.plc.travel(utils.Z_UP_MOTION, 3, "mm", "z")
+# # Raise Z to safe height
+# # utils.plc.travel(utils.Z_UP_MOTION, 3, "mm", "z")
 
 # === Height Calibration ===
 pose, z = utils.calibrate_height(pose, layer_height)
@@ -102,7 +102,9 @@ while flg:
     corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
     if corrected_z != pose[2]:
         pose[2] = corrected_z
+        utils.plc.md_extruder_switch("off")
         utils.woody.write_cartesian_position(pose)  # update robot Z only
+        utils.plc.md_extruder_switch("on")
 
     # Path 2: Y forward
     pose[1] = 300
@@ -112,7 +114,9 @@ while flg:
     corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
     if corrected_z != pose[2]:
         pose[2] = corrected_z
+        utils.plc.md_extruder_switch("off")
         utils.woody.write_cartesian_position(pose)  # update robot Z only
+        utils.plc.md_extruder_switch("on")
 
     # Path 3: X forward
     pose[0] = 100
@@ -122,7 +126,9 @@ while flg:
     corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
     if corrected_z != pose[2]:
         pose[2] = corrected_z
+        utils.plc.md_extruder_switch("off")
         utils.woody.write_cartesian_position(pose)  # update robot Z only
+        utils.plc.md_extruder_switch("on")
 
     pose[1] = 200
     utils.woody.write_cartesian_position(pose)
@@ -131,7 +137,9 @@ while flg:
     corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
     if corrected_z != pose[2]:
         pose[2] = corrected_z
+        utils.plc.md_extruder_switch("off")
         utils.woody.write_cartesian_position(pose)  # update robot Z only
+        utils.plc.md_extruder_switch("on")
 
     pose[1] = 150
     utils.woody.write_cartesian_position(pose)
@@ -140,7 +148,9 @@ while flg:
     corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
     if corrected_z != pose[2]:
         pose[2] = corrected_z
+        utils.plc.md_extruder_switch("off")
         utils.woody.write_cartesian_position(pose)  # update robot Z only
+        utils.plc.md_extruder_switch("on")
 
     pose[1] = 100
     utils.woody.write_cartesian_position(pose)
@@ -149,7 +159,9 @@ while flg:
     corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
     if corrected_z != pose[2]:
         pose[2] = corrected_z
+        utils.plc.md_extruder_switch("off")
         utils.woody.write_cartesian_position(pose)  # update robot Z only
+        utils.plc.md_extruder_switch("on")
 
     pose[1] = 50
     utils.woody.write_cartesian_position(pose)
@@ -158,7 +170,9 @@ while flg:
     corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
     if corrected_z != pose[2]:
         pose[2] = corrected_z
+        utils.plc.md_extruder_switch("off")
         utils.woody.write_cartesian_position(pose)  # update robot Z only
+        utils.plc.md_extruder_switch("on")
 
     # Path 4: Y back
     pose[1] = 0
@@ -168,7 +182,9 @@ while flg:
     corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
     if corrected_z != pose[2]:
         pose[2] = corrected_z
+        utils.plc.md_extruder_switch("off")
         utils.woody.write_cartesian_position(pose)  # update robot Z only
+        utils.plc.md_extruder_switch("on")
 
     # End after one loop (debug mode)
     utils.plc.md_extruder_switch("off")

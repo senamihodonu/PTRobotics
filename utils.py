@@ -228,4 +228,7 @@ def z_difference(layer_height, current_z, tol):
 
     return current_z
 
+if __name__ == "__main__":
+    plc.reset_coils()
+
 
