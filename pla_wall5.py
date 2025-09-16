@@ -20,6 +20,14 @@ tolerance = 1
 
 print("Parameters set.")
 
+# === Optional Machine Vision Mode ===
+# Pass “mv” or “machinevision” as a CLI argument to enable cameras.
+if len(sys.argv) > 1 and sys.argv[1].lower() in ("mv", "machinevision"):
+    utils.open_all_cameras()
+    print("Machine vision mode: cameras opened.")
+else:
+    print("Machine vision mode OFF (no cameras opened).")
+
 # === Robot & PLC Setup ===
 utils.woody.set_speed(speed)
 utils.woody.set_robot_speed_percent(100)

@@ -3,6 +3,8 @@ import sys
 import os
 import time
 import threading
+import cv2
+
 
 # === Path Setup ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,6 +25,8 @@ from PyPLCConnection import (
     DISTANCE_SENSOR_IN,
     PLC_IP, ROBOT_IP,
 )
+
+
 
 print("=== Program initialized ===")
 
@@ -45,6 +49,63 @@ z_correction = 4       # Fine Z correction for alignment (mm)
 
 current_distance = plc.read_current_distance()
 flg = True
+
+def open_all_cameras(camera_indices=[0, 1], window_name="All Cameras"):
+    """
+    Open all cameras specified by camera_indices and show them in one frame.
+
+    Args:
+        camera_indices (list): List of integer camera IDs (0,1,2…).
+        window_name (str): Name of the display window.
+    """
+    # Open each camera
+    caps = []
+    for idx in camera_indices:
+        cap = cv2.VideoCapture(idx)
+        if not cap.isOpened():
+            print(f"[Camera] Could not open camera {idx}")
+        else:
+            print(f"[Camera] Opened camera {idx}")
+            caps.append(cap)
+
+    if not caps:
+        print("[Camera] No cameras opened.")
+        return
+
+    while True:
+        frames = []
+        for cap in caps:
+            ret, frame = cap.read()
+            if not ret:
+                frames.append(None)
+                continue
+            # Resize to same height for stacking
+            frame = cv2.resize(frame, (320, 240))
+            frames.append(frame)
+
+        # Only stack non-None frames
+        frames = [f for f in frames if f is not None]
+        if not frames:
+            break
+
+        # Horizontally stack all feeds in one window
+        combined = cv2.hconcat(frames)
+        cv2.imshow(window_name, combined)
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == 27 or key == ord("q"):  # ESC or q to quit
+            break
+
+    for cap in caps:
+        cap.release()
+    cv2.destroyAllWindows()
+
+camera_thread = threading.Thread(
+    target=open_all_cameras, 
+    args=([0, 1],),   # change list to your available camera IDs
+    daemon=True
+)
+camera_thread.start()
 
 
 # === Functions ===
