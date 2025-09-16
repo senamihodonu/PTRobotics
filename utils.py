@@ -4,6 +4,7 @@ import os
 import time
 import threading
 import cv2
+import numpy as np
 
 
 # === Path Setup ===
@@ -31,11 +32,11 @@ from PyPLCConnection import (
 print("=== Program initialized ===")
 
 # === Initialize PLC and Robot ===
-plc = PyPLCConnection(PLC_IP)
-woody = robot(ROBOT_IP)
+# plc = PyPLCConnection(PLC_IP)
+# woody = robot(ROBOT_IP)
 
 print("PLC and Robot connections established.")
-plc.reset_coils()
+# plc.reset_coils()
 
 # === Parameters ===
 speed = 200            # Robot travel speed (mm/s)
@@ -47,7 +48,7 @@ x_offset = 13.5        # X-axis offset (mm)
 print_offset = 5       # Vertical offset between passes (mm)
 z_correction = 4       # Fine Z correction for alignment (mm)
 
-current_distance = plc.read_current_distance()
+# current_distance = plc.read_current_distance()
 flg = True
 
 def open_all_cameras(camera_indices=[0, 1], window_name="All Cameras"):
@@ -228,7 +229,56 @@ def z_difference(layer_height, current_z, tol):
 
     return current_z
 
+# Modern OpenCV (4.7+)
+import cv2
+import numpy as np
+import sys
+
+# === ArUco Setup ===
+ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+ARUCO_PARAMS = cv2.aruco.DetectorParameters()
+DETECTOR = cv2.aruco.ArucoDetector(ARUCO_DICT, ARUCO_PARAMS)
+
+
+def detect_aruco(frame):
+    """
+    Returns:
+      detected: list of dicts: [{'id': int, 'corners': np.array(4,2), 'center_px': (u,v)}...]
+    """
+    if len(frame.shape) == 3:  # Color image (H, W, 3)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    else:  # Already grayscale (H, W)
+        gray = frame
+
+    corners, ids, _ = DETECTOR.detectMarkers(gray)
+    out = []
+    if ids is None:
+        return out
+    for c, i in zip(corners, ids.flatten()):
+        c = c.reshape((4, 2))  # 4 corners
+        cx, cy = float(c[:, 0].mean()), float(c[:, 1].mean())
+        out.append({'id': int(i), 'corners': c, 'center_px': (cx, cy)})
+    return out
+
+
 if __name__ == "__main__":
-    plc.reset_coils()
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # force DirectShow on Windows
+    if not cap.isOpened():
+        print("[Camera] Could not open camera 0")
+        sys.exit(1)
+
+    ret, frame = cap.read()
+    if ret:
+        detections = detect_aruco(frame)
+        print(detections)
+        # optional: draw detections
+        if detections:
+            for d in detections:
+                cv2.aruco.drawDetectedMarkers(frame, [d['corners']], np.array([d['id']]))
+            cv2.imshow("ArUco", frame)
+            cv2.waitKey(0)
+
+    cap.release()
+    cv2.destroyAllWindows()
 
 
