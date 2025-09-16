@@ -17,11 +17,23 @@ x_offset = 13.5         # X-axis offset (mm)
 print_offset = 5        # Vertical offset between passes (mm)
 z_correction = 4        # Small correction in Z for alignment (mm)
 tolerance = 0
+z_increment = layer_height
 
 print("Parameters set.")
 
+
+# === Helper Function ===
+def apply_z_correction(pose, layer_height, tolerance):
+    """Check and apply Z correction safely (extruder OFF during adjustment)."""
+    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
+    if corrected_z != pose[2]:
+        pose[2] = corrected_z
+        utils.plc.md_extruder_switch("off")
+        utils.woody.write_cartesian_position(pose)  # update robot Z only
+        utils.plc.md_extruder_switch("on")
+    return pose
+
 # === Optional Machine Vision Mode ===
-# Pass “mv” or “machinevision” as a CLI argument to enable cameras.
 if len(sys.argv) > 1 and sys.argv[1].lower() in ("mv", "machinevision"):
     utils.open_all_cameras()
     print("Machine vision mode: cameras opened.")
@@ -45,20 +57,15 @@ print(f"Robot moved to initial pose: {pose}")
 utils.plc.md_extruder_switch("off")
 print("Extruder OFF for safe start.")
 
-# Safety check: ensure coils 8, 9, 14 are inactive
 while any(utils.plc.read_modbus_coils(c) for c in (8, 9, 14)):
     print("Safety check: coils active, moving Z down and Y right...")
     for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
         utils.plc.write_modbus_coils(coil, True)
 
-# Reset coil states
 for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
     utils.plc.write_modbus_coils(coil, False)
 print("Safety check complete.")
 time.sleep(1)
-
-# # Raise Z to safe height
-# # utils.plc.travel(utils.Z_UP_MOTION, 3, "mm", "z")
 
 # === Height Calibration ===
 pose, z = utils.calibrate_height(pose, layer_height)
@@ -69,7 +76,6 @@ end_height = 12 * layer_height
 height_accumulation = 0
 flg = True
 
-# Turn extruder ON
 utils.plc.md_extruder_switch("on")
 print("Extruder ON, starting print sequence...")
 time.sleep(3)
@@ -82,11 +88,7 @@ while flg:
     pose = [-100, 0, z, 0, 90, 0]
     utils.woody.write_cartesian_position(pose)
     print(f"Moved to start pose: {pose}")
-    # utils.calibrate_height(pose, layer_height)
-    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
-    if corrected_z != pose[2]:
-        pose[2] = corrected_z
-        utils.woody.write_cartesian_position(pose)  # update robot Z only
+    pose = apply_z_correction(pose, layer_height, tolerance)
 
     # --- Perimeter Path ---
     utils.woody.set_speed(print_speed)
@@ -97,99 +99,37 @@ while flg:
     pose[0] = -60
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along X: {pose}")
-    time.sleep(1)
-    # utils.calibrate_height(pose, layer_height)
-    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
-    if corrected_z != pose[2]:
-        pose[2] = corrected_z
-        utils.plc.md_extruder_switch("off")
-        utils.woody.write_cartesian_position(pose)  # update robot Z only
-        utils.plc.md_extruder_switch("on")
+    pose = apply_z_correction(pose, layer_height, tolerance)
 
     # Path 2: Y forward
     pose[1] = 300
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along Y forward: {pose}")
-    # utils.calibrate_height(pose, layer_height)
-    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
-    if corrected_z != pose[2]:
-        pose[2] = corrected_z
-        utils.plc.md_extruder_switch("off")
-        utils.woody.write_cartesian_position(pose)  # update robot Z only
-        utils.plc.md_extruder_switch("on")
+    pose = apply_z_correction(pose, layer_height, tolerance)
 
     # Path 3: X forward
     pose[0] = 100
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along X forward: {pose}")
-    # utils.calibrate_height(pose, layer_height)
-    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
-    if corrected_z != pose[2]:
-        pose[2] = corrected_z
-        utils.plc.md_extruder_switch("off")
-        utils.woody.write_cartesian_position(pose)  # update robot Z only
-        utils.plc.md_extruder_switch("on")
+    pose = apply_z_correction(pose, layer_height, tolerance)
 
-    pose[1] = 200
-    utils.woody.write_cartesian_position(pose)
-    print(f"Moving along Y back: {pose}")
-    # utils.calibrate_height(pose, layer_height)
-    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
-    if corrected_z != pose[2]:
-        pose[2] = corrected_z
-        utils.plc.md_extruder_switch("off")
-        utils.woody.write_cartesian_position(pose)  # update robot Z only
-        utils.plc.md_extruder_switch("on")
-
-    pose[1] = 150
-    utils.woody.write_cartesian_position(pose)
-    print(f"Moving along Y back: {pose}")
-    # utils.calibrate_height(pose, layer_height)
-    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
-    if corrected_z != pose[2]:
-        pose[2] = corrected_z
-        utils.plc.md_extruder_switch("off")
-        utils.woody.write_cartesian_position(pose)  # update robot Z only
-        utils.plc.md_extruder_switch("on")
-
-    pose[1] = 100
-    utils.woody.write_cartesian_position(pose)
-    print(f"Moving along Y back: {pose}")
-    # utils.calibrate_height(pose, layer_height)
-    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
-    if corrected_z != pose[2]:
-        pose[2] = corrected_z
-        utils.plc.md_extruder_switch("off")
-        utils.woody.write_cartesian_position(pose)  # update robot Z only
-        utils.plc.md_extruder_switch("on")
-
-    pose[1] = 50
-    utils.woody.write_cartesian_position(pose)
-    print(f"Moving along Y back: {pose}")
-    # utils.calibrate_height(pose, layer_height)
-    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
-    if corrected_z != pose[2]:
-        pose[2] = corrected_z
-        utils.plc.md_extruder_switch("off")
-        utils.woody.write_cartesian_position(pose)  # update robot Z only
-        utils.plc.md_extruder_switch("on")
-
-    # Path 4: Y back
-    pose[1] = 0
-    utils.woody.write_cartesian_position(pose)
-    print(f"Moving along Y back: {pose}")
-    # utils.calibrate_height(pose, layer_height)
-    corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
-    if corrected_z != pose[2]:
-        pose[2] = corrected_z
-        utils.plc.md_extruder_switch("off")
-        utils.woody.write_cartesian_position(pose)  # update robot Z only
-        utils.plc.md_extruder_switch("on")
+    # Path 4+: Y back in steps
+    for y in [200, 150, 100, 50, 0]:
+        pose[1] = y
+        utils.woody.write_cartesian_position(pose)
+        print(f"Moving along Y back: {pose}")
+        pose = apply_z_correction(pose, layer_height, tolerance)
 
     # End after one loop (debug mode)
     utils.plc.md_extruder_switch("off")
-    z+=4
-    layer_height+=layer_height
+
+    # z goes up by fixed 4 mm
+    z += z_increment
+
+    # layer_height doubles each loop
+    layer_height += layer_height
+
+    # stop when z exceeds 12 mm
     if z > 12:
         flg = False
 
