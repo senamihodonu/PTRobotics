@@ -9,7 +9,7 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 15        # Printing speed (mm/s)
+print_speed = 200        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
 layer_height = 4        # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
@@ -72,7 +72,7 @@ pose, z = utils.calibrate_height(pose, layer_height)
 
 # === Print Setup ===
 z_translation_value = 4 * layer_height
-end_height = 12 * layer_height
+
 height_accumulation = 0
 flg = True
 
@@ -82,6 +82,7 @@ time.sleep(3)
 
 # === Printing Loop ===
 while flg:
+    layers = 1
     print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
 
     # --- Move to Start Pose ---
@@ -89,49 +90,55 @@ while flg:
     utils.woody.write_cartesian_position(pose)
     print(f"Moved to start pose: {pose}")
     pose = apply_z_correction(pose, layer_height, tolerance)
+    print(f"Z is{z}")
 
     # --- Perimeter Path ---
     utils.woody.set_speed(print_speed)
     utils.plc.md_extruder_switch("on")
     print("Extruder ON for perimeter path.")
+    print(f"Z is{z}")
 
     # Path 1: X move
     pose[0] = -60
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along X: {pose}")
     pose = apply_z_correction(pose, layer_height, tolerance)
+    print(f"Z is{z}")
 
     # Path 2: Y forward
     pose[1] = 300
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along Y forward: {pose}")
     pose = apply_z_correction(pose, layer_height, tolerance)
+    print(f"Z is{z}")
 
     # Path 3: X forward
     pose[0] = 100
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along X forward: {pose}")
     pose = apply_z_correction(pose, layer_height, tolerance)
+    print(f"Z is{z}")
 
     # Path 4+: Y back in steps
-    for y in [200, 150, 100, 50, 0]:
+    for y in [200]:#, 150, 100, 50, 0]:
         pose[1] = y
         utils.woody.write_cartesian_position(pose)
         print(f"Moving along Y back: {pose}")
         pose = apply_z_correction(pose, layer_height, tolerance)
+        print(f"Z is{z}")
 
     # End after one loop (debug mode)
     utils.plc.md_extruder_switch("off")
 
-    # z goes up by fixed 4 mm
-    z += z_increment
-
-    # layer_height doubles each loop
-    layer_height += layer_height
+    # === Increment Z and update layer height ===
+    z += z_increment        # fixed increment
+    layer_height += 4       # increase layer_height by 4 each loop
+    layers += 1
 
     # stop when z exceeds 12 mm
-    if z > 12:
+    if layers >= 2:
         flg = False
+
 
 
 
