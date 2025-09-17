@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 
 
+
 # === Path Setup ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
 src_path = os.path.normpath(
@@ -32,8 +33,8 @@ from PyPLCConnection import (
 print("=== Program initialized ===")
 
 # === Initialize PLC and Robot ===
-plc = PyPLCConnection(PLC_IP)
-woody = robot(ROBOT_IP)
+# plc = PyPLCConnection(PLC_IP)
+# woody = robot(ROBOT_IP)
 
 print("PLC and Robot connections established.")
 # plc.reset_coils()
@@ -48,65 +49,107 @@ x_offset = 13.5        # X-axis offset (mm)
 print_offset = 5       # Vertical offset between passes (mm)
 z_correction = 4       # Fine Z correction for alignment (mm)
 
-current_distance = plc.read_current_distance()
+# current_distance = plc.read_current_distance()
 flg = True
 
-def open_all_cameras(camera_indices=[0, 1], window_name="All Cameras"):
-    """
-    Open all cameras specified by camera_indices and show them in one frame.
+import cv2
 
+def open_all_cameras(max_cameras=5):
+    """
+    Detects and opens all available cameras up to max_cameras.
+    
     Args:
-        camera_indices (list): List of integer camera IDs (0,1,2…).
-        window_name (str): Name of the display window.
+        max_cameras (int): Maximum number of camera indices to check.
+        
+    Returns:
+        cameras (dict): Dictionary of {camera_index: cv2.VideoCapture object}.
     """
-    # Open each camera
-    caps = []
-    for idx in camera_indices:
-        cap = cv2.VideoCapture(idx)
-        if not cap.isOpened():
-            print(f"[Camera] Could not open camera {idx}")
+    cameras = {}
+    for index in range(max_cameras):
+        cap = cv2.VideoCapture(index, cv2.CAP_DSHOW)  # Use DirectShow on Windows for stability
+        if cap is not None and cap.isOpened():
+            print(f"[Camera] Opened camera {index}")
+            cameras[index] = cap
         else:
-            print(f"[Camera] Opened camera {idx}")
-            caps.append(cap)
+            print(f"[Camera] No camera detected at index {index}")
+            cap.release()  # Ensure proper release if not opened
 
-    if not caps:
-        print("[Camera] No cameras opened.")
-        return
+    if not cameras:
+        print("[Camera] No cameras found!")
+    return cameras
 
-    while True:
-        frames = []
-        for cap in caps:
-            ret, frame = cap.read()
-            if not ret:
-                frames.append(None)
-                continue
-            # Resize to same height for stacking
-            frame = cv2.resize(frame, (320, 240))
-            frames.append(frame)
 
-        # Only stack non-None frames
-        frames = [f for f in frames if f is not None]
-        if not frames:
-            break
+# === Example usage ===
+cameras = open_all_cameras(max_cameras=5)
 
-        # Horizontally stack all feeds in one window
-        combined = cv2.hconcat(frames)
-        cv2.imshow(window_name, combined)
+# Read a frame from each camera
+for idx, cap in cameras.items():
+    ret, frame = cap.read()
+    if ret:
+        cv2.imshow(f"Camera {idx}", frame)
+        cv2.waitKey(500)  # Show each camera for 0.5 seconds
 
-        key = cv2.waitKey(1) & 0xFF
-        if key == 27 or key == ord("q"):  # ESC or q to quit
-            break
+# Release all cameras
+for cap in cameras.values():
+    cap.release()
+cv2.destroyAllWindows()
 
-    for cap in caps:
-        cap.release()
-    cv2.destroyAllWindows()
+# def open_all_cameras(camera_indices=[0, 1], window_name="All Cameras"):
+#     """
+#     Open all cameras specified by camera_indices and show them in one frame.
 
-camera_thread = threading.Thread(
-    target=open_all_cameras, 
-    args=([0, 1],),   # change list to your available camera IDs
-    daemon=True
-)
-camera_thread.start()
+#     Args:
+#         camera_indices (list): List of integer camera IDs (0,1,2…).
+#         window_name (str): Name of the display window.
+#     """
+#     # Open each camera
+#     caps = []
+#     for idx in camera_indices:
+#         cap = cv2.VideoCapture(idx)
+#         if not cap.isOpened():
+#             print(f"[Camera] Could not open camera {idx}")
+#         else:
+#             print(f"[Camera] Opened camera {idx}")
+#             caps.append(cap)
+
+#     if not caps:
+#         print("[Camera] No cameras opened.")
+#         return
+
+#     while True:
+#         frames = []
+#         for cap in caps:
+#             ret, frame = cap.read()
+#             if not ret:
+#                 frames.append(None)
+#                 continue
+#             # Resize to same height for stacking
+#             frame = cv2.resize(frame, (320, 240))
+#             frames.append(frame)
+
+#         # Only stack non-None frames
+#         frames = [f for f in frames if f is not None]
+#         if not frames:
+#             break
+
+#         # Horizontally stack all feeds in one window
+#         combined = cv2.hconcat(frames)
+#         cv2.imshow(window_name, combined)
+
+#         key = cv2.waitKey(1) & 0xFF
+#         if key == 27 or key == ord("q"):  # ESC or q to quit
+#             break
+
+#     for cap in caps:
+#         cap.release()
+#     cv2.destroyAllWindows()
+
+# camera_thread = threading.Thread(
+#     target=open_all_cameras, 
+#     args=([0, 1],),   # change list to your available camera IDs
+#     daemon=True
+# )
+# camera_thread.start()
 
 
 # === Functions ===
@@ -229,110 +272,101 @@ def z_difference(layer_height, current_z, tol):
 
     return current_z
 
-# Modern OpenCV (4.7+)
-import cv2
-import numpy as np
-import sys
 
-# === ArUco Setup ===
-ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
-ARUCO_PARAMS = cv2.aruco.DetectorParameters()
-DETECTOR = cv2.aruco.ArucoDetector(ARUCO_DICT, ARUCO_PARAMS)
-
-
-def detect_aruco(frame):
+def detect_red_dot_and_distances_mm(image_path, px_per_mm=None, draw=True):
     """
+    Detects the largest red dot in an image and computes distances to edges in pixels and mm.
+    
+    Args:
+        image_path (str): Path to the input image.
+        px_per_mm (float): Pixels per millimeter scale. If None, returns only pixels.
+        draw (bool): Whether to draw circles, lines, and labels on the image.
+
     Returns:
-      detected: list of dicts: [{'id': int, 'corners': np.array(4,2), 'center_px': (u,v)}...]
+        distances_px (dict): Distances from the red dot to edges in pixels.
+        distances_mm (dict or None): Distances in mm if px_per_mm is provided.
+        center (tuple): (x, y) pixel coordinates of the red dot.
+        frame (np.array): Image with drawings (only if draw=True).
     """
-    if len(frame.shape) == 3:  # Color image (H, W, 3)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    else:  # Already grayscale (H, W)
-        gray = frame
+    frame = cv2.imread(image_path)
+    if frame is None:
+        raise FileNotFoundError(f"Image not found: {image_path}")
+    
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    corners, ids, _ = DETECTOR.detectMarkers(gray)
-    out = []
-    if ids is None:
-        return out
-    for c, i in zip(corners, ids.flatten()):
-        c = c.reshape((4, 2))  # 4 corners
-        cx, cy = float(c[:, 0].mean()), float(c[:, 1].mean())
-        out.append({'id': int(i), 'corners': c, 'center_px': (cx, cy)})
-    return out
+    # Red HSV ranges
+    lower_red1 = np.array([0, 120, 70])
+    upper_red1 = np.array([10, 255, 255])
+    lower_red2 = np.array([170, 120, 70])
+    upper_red2 = np.array([180, 255, 255])
 
-import cv2
-import numpy as np
+    mask = cv2.inRange(hsv, lower_red1, upper_red1) | cv2.inRange(hsv, lower_red2, upper_red2)
 
-# === Load your test image ===
-frame = cv2.imread("c1_20250916-171447.jpg")
+    # Find contours
+    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not cnts:
+        return None, None, None, frame  # No red dot found
 
-# Convert to HSV (good for color filtering)
-hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-# Red has two ranges in HSV (low and high)
-lower_red1 = np.array([0, 120, 70])
-upper_red1 = np.array([10, 255, 255])
-lower_red2 = np.array([170, 120, 70])
-upper_red2 = np.array([180, 255, 255])
-
-mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
-mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-mask = mask1 | mask2
-
-# Find contours of red regions
-cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-if cnts:
-    # Pick largest red contour (assume it's the dot)
+    # Largest red contour
     c = max(cnts, key=cv2.contourArea)
     (x, y), radius = cv2.minEnclosingCircle(c)
     center = (int(x), int(y))
 
-    # Draw the detected dot
-    cv2.circle(frame, center, int(radius), (0, 255, 0), 2)
-    cv2.circle(frame, center, 5, (0, 0, 255), -1)
-
-    # === Calculate distances to image edges ===
     h, w = frame.shape[:2]
-    dist_left = x
-    dist_right = w - x
-    dist_top = y
-    dist_bottom = h - y
-    min_dist = min(dist_left, dist_right, dist_top, dist_bottom)
+    distances_px = {
+        "Left": x,
+        "Right": w - x,
+        "Top": y,
+        "Bottom": h - y
+    }
 
-    print(f"Red dot at: ({x:.1f}, {y:.1f}) px")
-    print(f"Distances -> Left: {dist_left:.1f}, Right: {dist_right:.1f}, "
-          f"Top: {dist_top:.1f}, Bottom: {dist_bottom:.1f}")
-    print(f"Closest edge distance: {min_dist:.1f} px")
+    distances_mm = None
+    if px_per_mm is not None:
+        distances_mm = {edge: dist / px_per_mm for edge, dist in distances_px.items()}
 
-    # Put text on image
-    cv2.putText(frame, f"Closest edge: {min_dist:.1f}px",
-                (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+    if draw:
+        # Draw the detected dot
+        cv2.circle(frame, center, int(radius), (0, 255, 0), 2)
+        cv2.circle(frame, center, 5, (0, 0, 255), -1)
 
-# Show result
-cv2.imshow("Red Dot Detection", frame)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+        # Draw lines and labels
+        edge_points = {
+            "Left": (0, int(y)),
+            "Right": (w, int(y)),
+            "Top": (int(x), 0),
+            "Bottom": (int(x), h)
+        }
 
+        for edge, point in edge_points.items():
+            cv2.line(frame, center, point, (255, 0, 255), 2)
+            mid_x = (center[0] + point[0]) // 2
+            mid_y = (center[1] + point[1]) // 2
+            label = f"{distances_px[edge]:.0f}px"
+            if distances_mm:
+                label += f" / {distances_mm[edge]:.1f}mm"
+            cv2.putText(frame, label, (mid_x + 5, mid_y - 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
-# if __name__ == "__main__":
-#     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # force DirectShow on Windows
-#     if not cap.isOpened():
-#         print("[Camera] Could not open camera 0")
-#         sys.exit(1)
-
-#     ret, frame = cap.read()
-#     if ret:
-#         detections = detect_aruco(frame)
-#         print(detections)
-#         # optional: draw detections
-#         if detections:
-#             for d in detections:
-#                 cv2.aruco.drawDetectedMarkers(frame, [d['corners']], np.array([d['id']]))
-#             cv2.imshow("ArUco", frame)
-#             cv2.waitKey(0)
-
-#     cap.release()
-#     cv2.destroyAllWindows()
+    return distances_px, distances_mm, center, frame
 
 
+# === Example usage ===
+image_path = "c1_20250916-171447.jpg"
+
+# Example: 5 pixels per mm (replace with your actual calibration)
+px_per_mm = 5.0
+
+distances_px, distances_mm, center, output_frame = detect_red_dot_and_distances_mm(image_path, px_per_mm)
+
+if distances_px:
+    print(f"Red dot at: {center} px")
+    print("Distances (px / mm):")
+    for edge in distances_px.keys():
+        print(f"{edge}: {distances_px[edge]:.1f}px / {distances_mm[edge]:.1f}mm")
+
+    # Show image
+    cv2.imshow("Red Dot to Edges", output_frame)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+else:
+    print("No red dot detected.")
