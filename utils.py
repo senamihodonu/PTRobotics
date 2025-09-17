@@ -33,8 +33,8 @@ from PyPLCConnection import (
 print("=== Program initialized ===")
 
 # === Initialize PLC and Robot ===
-# plc = PyPLCConnection(PLC_IP)
-# woody = robot(ROBOT_IP)
+plc = PyPLCConnection(PLC_IP)
+woody = robot(ROBOT_IP)
 
 print("PLC and Robot connections established.")
 # plc.reset_coils()
@@ -79,20 +79,20 @@ def open_all_cameras(max_cameras=5):
     return cameras
 
 
-# === Example usage ===
-cameras = open_all_cameras(max_cameras=5)
+# # === Example usage ===
+# cameras = open_all_cameras(max_cameras=5)
 
-# Read a frame from each camera
-for idx, cap in cameras.items():
-    ret, frame = cap.read()
-    if ret:
-        cv2.imshow(f"Camera {idx}", frame)
-        cv2.waitKey(500)  # Show each camera for 0.5 seconds
+# # Read a frame from each camera
+# for idx, cap in cameras.items():
+#     ret, frame = cap.read()
+#     if ret:
+#         cv2.imshow(f"Camera {idx}", frame)
+#         cv2.waitKey(500)  # Show each camera for 0.5 seconds
 
-# Release all cameras
-for cap in cameras.values():
-    cap.release()
-cv2.destroyAllWindows()
+# # Release all cameras
+# for cap in cameras.values():
+#     cap.release()
+# cv2.destroyAllWindows()
 
 # def open_all_cameras(camera_indices=[0, 1], window_name="All Cameras"):
 #     """
@@ -273,99 +273,94 @@ def z_difference(layer_height, current_z, tol):
     return current_z
 
 
-def detect_red_dot_and_distances_mm(image_path, px_per_mm=None, draw=True):
-    """
-    Detects the largest red dot in an image and computes distances to edges in pixels and mm.
-    
-    Args:
-        image_path (str): Path to the input image.
-        px_per_mm (float): Pixels per millimeter scale. If None, returns only pixels.
-        draw (bool): Whether to draw circles, lines, and labels on the image.
+import cv2
+import numpy as np
 
-    Returns:
-        distances_px (dict): Distances from the red dot to edges in pixels.
-        distances_mm (dict or None): Distances in mm if px_per_mm is provided.
-        center (tuple): (x, y) pixel coordinates of the red dot.
-        frame (np.array): Image with drawings (only if draw=True).
+def detect_red_dot_adaptive(image_path, px_per_mm=None, draw=True):
+    """
+    Detects a red dot robustly even under lighting/color variations.
+    Falls back to the brightest/highest-saturation blob if red is not obvious.
     """
     frame = cv2.imread(image_path)
     if frame is None:
         raise FileNotFoundError(f"Image not found: {image_path}")
-    
+
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
 
-    # Red HSV ranges
-    lower_red1 = np.array([0, 120, 70])
+    # --- Step 1: HSV red mask (wide range) ---
+    lower_red1 = np.array([0, 50, 50])
     upper_red1 = np.array([10, 255, 255])
-    lower_red2 = np.array([170, 120, 70])
+    lower_red2 = np.array([160, 50, 50])
     upper_red2 = np.array([180, 255, 255])
+    mask_hsv = cv2.inRange(hsv, lower_red1, upper_red1) | cv2.inRange(hsv, lower_red2, upper_red2)
 
-    mask = cv2.inRange(hsv, lower_red1, upper_red1) | cv2.inRange(hsv, lower_red2, upper_red2)
+    # --- Step 2: LAB a-channel mask (red-green axis) ---
+    a_channel = lab[:, :, 1]
+    mask_lab = cv2.inRange(a_channel, 150, 200)
 
-    # Find contours
+    # Combine masks
+    mask = cv2.bitwise_or(mask_hsv, mask_lab)
+
+    # Clean small noise
+    kernel = np.ones((3,3), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+    # --- Step 3: Fallback if mask is too small ---
+    if cv2.countNonZero(mask) < 50:
+        # Use brightness * saturation as fallback
+        value = hsv[:, :, 2]
+        saturation = hsv[:, :, 1]
+        combined = cv2.normalize(value.astype(np.float32) * (saturation.astype(np.float32)/255), None, 0, 255, cv2.NORM_MINMAX)
+        _, mask = cv2.threshold(combined.astype(np.uint8), 200, 255, cv2.THRESH_BINARY)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+    # --- Step 4: Find contours and pick largest circular-ish blob ---
     cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if not cnts:
-        return None, None, None, frame  # No red dot found
+        return None, None, None, frame
 
-    # Largest red contour
-    c = max(cnts, key=cv2.contourArea)
+    def circularity(c):
+        perimeter = cv2.arcLength(c, True)
+        area = cv2.contourArea(c)
+        return 4*np.pi*area/(perimeter**2) if perimeter > 0 else 0
+
+    c = max(cnts, key=lambda c: cv2.contourArea(c) * circularity(c))
     (x, y), radius = cv2.minEnclosingCircle(c)
     center = (int(x), int(y))
 
     h, w = frame.shape[:2]
-    distances_px = {
-        "Left": x,
-        "Right": w - x,
-        "Top": y,
-        "Bottom": h - y
-    }
-
-    distances_mm = None
-    if px_per_mm is not None:
-        distances_mm = {edge: dist / px_per_mm for edge, dist in distances_px.items()}
+    distances_px = {"Left": x, "Right": w-x, "Top": y, "Bottom": h-y}
+    distances_mm = {edge: dist/px_per_mm for edge, dist in distances_px.items()} if px_per_mm else None
 
     if draw:
-        # Draw the detected dot
-        cv2.circle(frame, center, int(radius), (0, 255, 0), 2)
-        cv2.circle(frame, center, 5, (0, 0, 255), -1)
-
-        # Draw lines and labels
-        edge_points = {
-            "Left": (0, int(y)),
-            "Right": (w, int(y)),
-            "Top": (int(x), 0),
-            "Bottom": (int(x), h)
-        }
-
-        for edge, point in edge_points.items():
-            cv2.line(frame, center, point, (255, 0, 255), 2)
-            mid_x = (center[0] + point[0]) // 2
-            mid_y = (center[1] + point[1]) // 2
+        cv2.circle(frame, center, int(radius), (0,255,0), 2)
+        cv2.circle(frame, center, 5, (0,0,255), -1)
+        for edge, point in {"Left":(0,int(y)), "Right":(w,int(y)), "Top":(int(x),0), "Bottom":(int(x),h)}.items():
+            cv2.line(frame, center, point, (255,0,255), 2)
+            mid_x, mid_y = (center[0]+point[0])//2, (center[1]+point[1])//2
             label = f"{distances_px[edge]:.0f}px"
             if distances_mm:
                 label += f" / {distances_mm[edge]:.1f}mm"
-            cv2.putText(frame, label, (mid_x + 5, mid_y - 5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+            cv2.putText(frame, label, (mid_x+5, mid_y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0),2)
 
     return distances_px, distances_mm, center, frame
 
 
 # === Example usage ===
-image_path = "c1_20250916-171447.jpg"
-
-# Example: 5 pixels per mm (replace with your actual calibration)
+image_path = "c1_20250916-184418.jpg"
 px_per_mm = 5.0
 
-distances_px, distances_mm, center, output_frame = detect_red_dot_and_distances_mm(image_path, px_per_mm)
+distances_px, distances_mm, center, output_frame = detect_red_dot_adaptive(image_path, px_per_mm)
 
 if distances_px:
     print(f"Red dot at: {center} px")
     print("Distances (px / mm):")
     for edge in distances_px.keys():
         print(f"{edge}: {distances_px[edge]:.1f}px / {distances_mm[edge]:.1f}mm")
-
-    # Show image
-    cv2.imshow("Red Dot to Edges", output_frame)
+    cv2.imshow("Red Dot Adaptive", output_frame)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 else:

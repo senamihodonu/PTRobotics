@@ -11,7 +11,7 @@ print("=== Program initialized ===")
 speed = 200             # Robot travel speed (mm/s)
 print_speed = 200        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
-layer_height = 4        # Vertical step per layer (mm)
+layer_height = 6        # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
 x_offset = 13.5         # X-axis offset (mm)
 print_offset = 5        # Vertical offset between passes (mm)
@@ -113,6 +113,12 @@ while flg:
     print(f"Moving along Y forward: {pose}")
     pose = apply_z_correction(pose, layer_height, tolerance)
     print(f"Z is{z}")
+
+    utils.plc.travel(utils.Y_LEFT_MOTION, 400, 'mm', 'y')  # Travel right
+
+    pose[1] = -400
+    utils.woody.write_cartesian_position(pose)
+    print(f"Moving along Y forward: {pose}")
 
     flg = False
 
