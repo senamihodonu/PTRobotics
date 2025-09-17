@@ -32,8 +32,8 @@ from PyPLCConnection import (
 print("=== Program initialized ===")
 
 # === Initialize PLC and Robot ===
-# plc = PyPLCConnection(PLC_IP)
-# woody = robot(ROBOT_IP)
+plc = PyPLCConnection(PLC_IP)
+woody = robot(ROBOT_IP)
 
 print("PLC and Robot connections established.")
 # plc.reset_coils()
@@ -48,7 +48,7 @@ x_offset = 13.5        # X-axis offset (mm)
 print_offset = 5       # Vertical offset between passes (mm)
 z_correction = 4       # Fine Z correction for alignment (mm)
 
-# current_distance = plc.read_current_distance()
+current_distance = plc.read_current_distance()
 flg = True
 
 def open_all_cameras(camera_indices=[0, 1], window_name="All Cameras"):
@@ -260,25 +260,79 @@ def detect_aruco(frame):
         out.append({'id': int(i), 'corners': c, 'center_px': (cx, cy)})
     return out
 
+import cv2
+import numpy as np
 
-if __name__ == "__main__":
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # force DirectShow on Windows
-    if not cap.isOpened():
-        print("[Camera] Could not open camera 0")
-        sys.exit(1)
+# === Load your test image ===
+frame = cv2.imread("c1_20250916-171447.jpg")
 
-    ret, frame = cap.read()
-    if ret:
-        detections = detect_aruco(frame)
-        print(detections)
-        # optional: draw detections
-        if detections:
-            for d in detections:
-                cv2.aruco.drawDetectedMarkers(frame, [d['corners']], np.array([d['id']]))
-            cv2.imshow("ArUco", frame)
-            cv2.waitKey(0)
+# Convert to HSV (good for color filtering)
+hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    cap.release()
-    cv2.destroyAllWindows()
+# Red has two ranges in HSV (low and high)
+lower_red1 = np.array([0, 120, 70])
+upper_red1 = np.array([10, 255, 255])
+lower_red2 = np.array([170, 120, 70])
+upper_red2 = np.array([180, 255, 255])
+
+mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
+mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+mask = mask1 | mask2
+
+# Find contours of red regions
+cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+if cnts:
+    # Pick largest red contour (assume it's the dot)
+    c = max(cnts, key=cv2.contourArea)
+    (x, y), radius = cv2.minEnclosingCircle(c)
+    center = (int(x), int(y))
+
+    # Draw the detected dot
+    cv2.circle(frame, center, int(radius), (0, 255, 0), 2)
+    cv2.circle(frame, center, 5, (0, 0, 255), -1)
+
+    # === Calculate distances to image edges ===
+    h, w = frame.shape[:2]
+    dist_left = x
+    dist_right = w - x
+    dist_top = y
+    dist_bottom = h - y
+    min_dist = min(dist_left, dist_right, dist_top, dist_bottom)
+
+    print(f"Red dot at: ({x:.1f}, {y:.1f}) px")
+    print(f"Distances -> Left: {dist_left:.1f}, Right: {dist_right:.1f}, "
+          f"Top: {dist_top:.1f}, Bottom: {dist_bottom:.1f}")
+    print(f"Closest edge distance: {min_dist:.1f} px")
+
+    # Put text on image
+    cv2.putText(frame, f"Closest edge: {min_dist:.1f}px",
+                (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+# Show result
+cv2.imshow("Red Dot Detection", frame)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+
+# if __name__ == "__main__":
+#     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # force DirectShow on Windows
+#     if not cap.isOpened():
+#         print("[Camera] Could not open camera 0")
+#         sys.exit(1)
+
+#     ret, frame = cap.read()
+#     if ret:
+#         detections = detect_aruco(frame)
+#         print(detections)
+#         # optional: draw detections
+#         if detections:
+#             for d in detections:
+#                 cv2.aruco.drawDetectedMarkers(frame, [d['corners']], np.array([d['id']]))
+#             cv2.imshow("ArUco", frame)
+#             cv2.waitKey(0)
+
+#     cap.release()
+#     cv2.destroyAllWindows()
 
 

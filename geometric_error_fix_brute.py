@@ -70,6 +70,8 @@ time.sleep(1)
 # === Height Calibration ===
 pose, z = utils.calibrate_height(pose, layer_height)
 
+temp = z
+
 # === Print Setup ===
 z_translation_value = 4 * layer_height
 
@@ -106,38 +108,41 @@ while flg:
     print(f"Z is{z}")
 
     # Path 2: Y forward
-    pose[1] = 300
+    pose[1] = 400
     utils.woody.write_cartesian_position(pose)
     print(f"Moving along Y forward: {pose}")
     pose = apply_z_correction(pose, layer_height, tolerance)
     print(f"Z is{z}")
 
-    # Path 3: X forward
-    pose[0] = 100
-    utils.woody.write_cartesian_position(pose)
-    print(f"Moving along X forward: {pose}")
-    pose = apply_z_correction(pose, layer_height, tolerance)
-    print(f"Z is{z}")
+    flg = False
 
-    # Path 4+: Y back in steps
-    for y in [200]:#, 150, 100, 50, 0]:
-        pose[1] = y
-        utils.woody.write_cartesian_position(pose)
-        print(f"Moving along Y back: {pose}")
-        pose = apply_z_correction(pose, layer_height, tolerance)
-        print(f"Z is{z}")
+    # # Path 3: X forward
+    # pose[0] = 100
+    # utils.woody.write_cartesian_position(pose)
+    # print(f"Moving along X forward: {pose}")
+    # pose = apply_z_correction(pose, layer_height, tolerance)
+    # print(f"Z is{z}")
 
-    # End after one loop (debug mode)
-    utils.plc.md_extruder_switch("off")
+    # # Path 4+: Y back in steps
+    # for y in [200]:#, 150, 100, 50, 0]:
+    #     pose[1] = y
+    #     utils.woody.write_cartesian_position(pose)
+    #     print(f"Moving along Y back: {pose}")
+    #     pose = apply_z_correction(pose, layer_height, tolerance)
+    #     print(f"Z is{z}")
 
-    # === Increment Z and update layer height ===
-    z += z_increment        # fixed increment
-    layer_height += 4       # increase layer_height by 4 each loop
-    layers += 1
+    # # End after one loop (debug mode)
+    # utils.plc.md_extruder_switch("off")
 
-    # stop when z exceeds 12 mm
-    if layers >= 2:
-        flg = False
+    # # === Increment Z and update layer height ===
+    # z += z_increment        # fixed increment
+    # layer_height += 4       # increase layer_height by 4 each loop
+    # layers += 1
+
+    # # stop when z exceeds 12 mm
+    # if abs(z-temp) > 8:
+    #     print(z-temp)
+    #     flg = False
 
 
 
