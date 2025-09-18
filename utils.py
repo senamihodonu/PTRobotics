@@ -401,61 +401,61 @@ def detect_red_dot_to_tape_edge(image_path, px_per_mm=None, draw=True):
         area = cv2.contourArea(c)
         return 4*np.pi*area/(perimeter**2) if perimeter > 0 else 0
 
-    c_red = max(cnts_red, key=lambda c: cv2.contourArea(c) * circularity(c))
-    (x, y), radius = cv2.minEnclosingCircle(c_red)
-    red_center = np.array([x, y])
+#     c_red = max(cnts_red, key=lambda c: cv2.contourArea(c) * circularity(c))
+#     (x, y), radius = cv2.minEnclosingCircle(c_red)
+#     red_center = np.array([x, y])
 
-    # === Mask Black Tape (neutral & dark) ===
-    B, G, R = cv2.split(frame)
-    s = hsv[:,:,1]
-    mask_black = (B < 40) & (G < 40) & (R < 40) & (s < 40)
-    mask_black = mask_black.astype(np.uint8)*255
-    mask_black = cv2.morphologyEx(mask_black, cv2.MORPH_OPEN, kernel, iterations=2)
-    mask_black = cv2.morphologyEx(mask_black, cv2.MORPH_CLOSE, kernel, iterations=2)
+#     # === Mask Black Tape (neutral & dark) ===
+#     B, G, R = cv2.split(frame)
+#     s = hsv[:,:,1]
+#     mask_black = (B < 40) & (G < 40) & (R < 40) & (s < 40)
+#     mask_black = mask_black.astype(np.uint8)*255
+#     mask_black = cv2.morphologyEx(mask_black, cv2.MORPH_OPEN, kernel, iterations=2)
+#     mask_black = cv2.morphologyEx(mask_black, cv2.MORPH_CLOSE, kernel, iterations=2)
 
-    cnts_black, _ = cv2.findContours(mask_black, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if not cnts_black:
-        return None, None, tuple(red_center.astype(int)), None, frame
+#     cnts_black, _ = cv2.findContours(mask_black, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#     if not cnts_black:
+#         return None, None, tuple(red_center.astype(int)), None, frame
 
-    c_black = max(cnts_black, key=cv2.contourArea)
+#     c_black = max(cnts_black, key=cv2.contourArea)
 
-    # --- Safely stack contour points into Nx2 array ---
-    all_points = np.vstack(c_black).reshape(-1, 2)
+#     # --- Safely stack contour points into Nx2 array ---
+#     all_points = np.vstack(c_black).reshape(-1, 2)
 
-    # compute nearest point
-    distances = np.linalg.norm(all_points - red_center, axis=1)
-    idx = np.argmin(distances)
-    nearest_point = tuple(all_points[idx])
-    distance_px = distances[idx]
-    distance_mm = distance_px/px_per_mm if px_per_mm else None
+#     # compute nearest point
+#     distances = np.linalg.norm(all_points - red_center, axis=1)
+#     idx = np.argmin(distances)
+#     nearest_point = tuple(all_points[idx])
+#     distance_px = distances[idx]
+#     distance_mm = distance_px/px_per_mm if px_per_mm else None
 
-    if draw:
-        out = frame.copy()
-        cv2.circle(out, tuple(red_center.astype(int)), int(radius), (0,255,0), 2)
-        cv2.circle(out, tuple(red_center.astype(int)), 5, (0,0,255), -1)
-        cv2.drawContours(out, [c_black], -1, (0,255,255), 2)
-        cv2.circle(out, nearest_point, 5, (255,0,0), -1)
-        label = f"{distance_px:.1f}px"
-        if px_per_mm:
-            label += f" / {distance_mm:.2f}mm"
-        cv2.putText(out, label, (int(red_center[0])+10,int(red_center[1])-10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0), 2)
-        return distance_px, distance_mm, tuple(red_center.astype(int)), nearest_point, out
-    else:
-        return distance_px, distance_mm, tuple(red_center.astype(int)), nearest_point, frame
+#     if draw:
+#         out = frame.copy()
+#         cv2.circle(out, tuple(red_center.astype(int)), int(radius), (0,255,0), 2)
+#         cv2.circle(out, tuple(red_center.astype(int)), 5, (0,0,255), -1)
+#         cv2.drawContours(out, [c_black], -1, (0,255,255), 2)
+#         cv2.circle(out, nearest_point, 5, (255,0,0), -1)
+#         label = f"{distance_px:.1f}px"
+#         if px_per_mm:
+#             label += f" / {distance_mm:.2f}mm"
+#         cv2.putText(out, label, (int(red_center[0])+10,int(red_center[1])-10),
+#                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0), 2)
+#         return distance_px, distance_mm, tuple(red_center.astype(int)), nearest_point, out
+#     else:
+#         return distance_px, distance_mm, tuple(red_center.astype(int)), nearest_point, frame
 
 
-image_path = "c1_20250916-184912.jpg"
-px_per_mm = 5.0  # your calibration
-distance_px, distance_mm, red_center, nearest_point, out_frame = detect_red_dot_to_tape_edge(image_path, px_per_mm)
+# image_path = "c1_20250916-184912.jpg"
+# px_per_mm = 5.0  # your calibration
+# distance_px, distance_mm, red_center, nearest_point, out_frame = detect_red_dot_to_tape_edge(image_path, px_per_mm)
 
-if distance_px:
-    print(f"Distance to tape: {distance_px:.1f}px / {distance_mm:.1f}mm")
-    cv2.imshow("Result", out_frame)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-else:
-    print("Could not detect red dot or tape.")
+# if distance_px:
+#     print(f"Distance to tape: {distance_px:.1f}px / {distance_mm:.1f}mm")
+#     cv2.imshow("Result", out_frame)
+#     cv2.waitKey(0)
+#     cv2.destroyAllWindows()
+# else:
+#     print("Could not detect red dot or tape.")
 
 
 
