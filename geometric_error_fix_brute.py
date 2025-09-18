@@ -191,7 +191,7 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 200       # Printing speed (mm/s)
+print_speed = 12       # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
 layer_height = 4        # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
@@ -295,6 +295,10 @@ while flg:
     pose = move_to_pose(pose)
 
     # Y forward
+    pose[1] = 200
+    pose = move_to_pose(pose)
+
+    # Y forward
     pose[1] = 400
     pose = move_to_pose(pose)
 
@@ -306,13 +310,18 @@ while flg:
     pose = sweep_y_positions(pose, [300, 200, 150, 100, 50, 0])
     # --- End Inlined Perimeter Path ---
 
+    pose[0] = 140
+    pose = move_to_pose(pose)
+
     # Lift and travel left
     pose = lift_and_travel(pose, 400, utils.Y_LEFT_MOTION)
 
     # Move forward to start sweeps
-    pose[1] = 400
+    pose[0] = 100
+    pose[1] = 405
     pose = move_to_pose(pose)
     utils.plc.md_extruder_switch("on")
+    utils.woody.set_speed(print_speed)
     time.sleep(1)
 
     # Sweeps forward/back
