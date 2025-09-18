@@ -115,21 +115,72 @@ while flg:
     pose = apply_z_correction(pose, layer_height, tolerance)
     print(f"Z is{z}")
 
-#     # Path 2: Y forward
-#     pose[0] = 100
-#     utils.woody.write_cartesian_position(pose)
-#     print(f"Moving along Y forward: {pose}")
-#     pose = apply_z_correction(pose, layer_height, tolerance)
-#     print(f"Z is{z}")
+    # Path 2: Y forward
+    pose[0] = 100
+    utils.woody.write_cartesian_position(pose)
+    print(f"Moving along Y forward: {pose}")
+    pose = apply_z_correction(pose, layer_height, tolerance)
+    print(f"Z is{z}")
+
+    for y in [300, 200, 150, 100, 50, 0]:
+        pose[1] = y
+        utils.woody.write_cartesian_position(pose)
+        print(f"Moving along Y back: {pose}")
+        pose = apply_z_correction(pose, layer_height, tolerance)
+        print(f"Z is{z}")
+    
+    time.sleep(2)
+    utils.plc.md_extruder_switch("off")
+    utils.woody.set_speed(speed)
+    pose[2] += 20
+    utils.woody.write_cartesian_position(pose)
+
+    distance = 400
+    utils.plc.travel(utils.Y_LEFT_MOTION, distance, 'mm', 'y')  # Travel right
 
 
-#     pose[1] = 0
-#     utils.woody.write_cartesian_position(pose)
-#     print(f"Moving along Y forward: {pose}")
-#     pose = apply_z_correction(pose, layer_height, tolerance)
-#     print(f"Z is{z}")
+    pose[1] = 400
+    utils.woody.write_cartesian_position(pose)
+    print(f"Moving along Y forward: {pose}")
+    pose = apply_z_correction(pose, layer_height, tolerance)
+    print(f"Z is{z}")
+    utils.plc.md_extruder_switch("on")
+    time.sleep(1)
 
-#     utils.plc.md_extruder_switch("off")
+    for y in [300, 200, 100, 0, -100, -200, -300, -400]:
+        pose[1] = y
+        utils.woody.write_cartesian_position(pose)
+        print(f"Moving along Y back: {pose}")
+        pose = apply_z_correction(pose, layer_height, tolerance)
+        print(f"Z is{z}")
+
+    pose[0] = -60
+    utils.woody.write_cartesian_position(pose)
+    print(f"Moving along Y forward: {pose}")
+    pose = apply_z_correction(pose, layer_height, tolerance)
+
+    for y in [-300, -200, -100, 0, 100, 200, 300, 400]:
+        pose[1] = y
+        utils.woody.write_cartesian_position(pose)
+        print(f"Moving along Y back: {pose}")
+        pose = apply_z_correction(pose, layer_height, tolerance)
+        print(f"Z is{z}")
+    
+    time.sleep(1)
+    utils.plc.md_extruder_switch("off")
+    utils.woody.set_speed(speed)
+    pose[2] += 20
+    utils.woody.write_cartesian_position(pose)
+
+    # --- Travel Back ---
+    print("Travel back")
+    utils.plc.travel(utils.Y_RIGHT_MOTION, distance, "mm", "y")
+
+    flg = False
+
+
+
+
 
 
 #     utils.woody.set_speed(speed)
