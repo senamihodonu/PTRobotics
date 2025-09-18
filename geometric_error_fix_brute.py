@@ -191,11 +191,11 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 12       # Printing speed (mm/s)
+print_speed = 10      # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
 layer_height = 4        # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
-x_offset = 13.5         # X-axis offset (mm)
+x_offset = 9         # X-axis offset (mm)
 print_offset = 5        # Vertical offset between passes (mm)
 z_correction = 4        # Small correction in Z for alignment (mm)
 tolerance = 0
@@ -281,59 +281,84 @@ time.sleep(5)
 
 # === Printing Loop ===
 while flg:
-    print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
-    pose = [-100, 0, z, 0, 90, 0]
+    
+    #Perimeter
+    pose = [-110, -400, z, 0, 90, 0]
     pose = move_to_pose(pose)
 
-    # --- Inlined Perimeter Path ---
     utils.woody.set_speed(print_speed)
     utils.plc.md_extruder_switch("on")
-    print("Extruder ON for perimeter path.")
-
-    # X move
-    pose[0] = -60
-    pose = move_to_pose(pose)
-
-    # Y forward
-    pose[1] = 200
-    pose = move_to_pose(pose)
-
-    # Y forward
-    pose[1] = 400
-    pose = move_to_pose(pose)
-
-    # X move
-    pose[0] = 100
-    pose = move_to_pose(pose)
-
-    # Y back sweeps
-    pose = sweep_y_positions(pose, [300, 200, 150, 100, 50, 0])
-    # --- End Inlined Perimeter Path ---
-
-    pose[0] = 140
-    pose = move_to_pose(pose)
-
-    # Lift and travel left
-    pose = lift_and_travel(pose, 400, utils.Y_LEFT_MOTION)
-
-    # Move forward to start sweeps
-    pose[0] = 100
-    pose[1] = 405
-    pose = move_to_pose(pose)
-    utils.plc.md_extruder_switch("on")
-    utils.woody.set_speed(print_speed)
-    time.sleep(1)
-
-    # Sweeps forward/back
-    pose = sweep_y_positions(pose, [300, 200, 100, 0, -100, -200, -300, -400])
-
-    pose[0] = -60
-    pose = move_to_pose(pose)
     pose = sweep_y_positions(pose, [-300, -200, -100, 0, 100, 200, 300, 400])
+    utils.plc.md_extruder_switch("off")
 
-    # Lift and travel back
-    pose = lift_and_travel(pose, 400, utils.Y_RIGHT_MOTION)
-    print("Travel back complete.")
+    utils.woody.set_speed(speed)
+    pose[0] = 150
+    pose = move_to_pose(pose)
+    utils.woody.set_speed(print_speed)
+    utils.plc.md_extruder_switch("on")
+
+    pose = sweep_y_positions(pose, [300, 200, 100, 0, -100, -200, -300, -400])
+    utils.plc.md_extruder_switch("off")
+
+    utils.woody.set_speed(speed)
+    pose[2] += 20
+    pose = move_to_pose(pose)
+
+
+
+    # print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
+    # pose = [-100, 0, z, 0, 90, 0]
+    # pose = move_to_pose(pose)
+
+    # # --- Inlined Perimeter Path ---
+    # utils.woody.set_speed(print_speed)
+    # utils.plc.md_extruder_switch("on")
+    # print("Extruder ON for perimeter path.")
+
+    # # X move
+    # pose[0] = -60
+    # pose = move_to_pose(pose)
+
+    # # Y forward
+    # pose[1] = 200
+    # pose = move_to_pose(pose)
+
+    # # Y forward
+    # pose[1] = 400
+    # pose = move_to_pose(pose)
+
+    # # X move
+    # pose[0] = 100
+    # pose = move_to_pose(pose)
+
+    # # Y back sweeps
+    # pose = sweep_y_positions(pose, [300, 200, 150, 100, 50, 0])
+    # # --- End Inlined Perimeter Path ---
+
+    # pose[0] = 140
+    # pose = move_to_pose(pose)
+
+    # # Lift and travel left
+    # pose = lift_and_travel(pose, 400, utils.Y_LEFT_MOTION)
+
+    # # Move forward to start sweeps
+    # pose[0] = 100-x_offset
+    # pose[1] = 405
+    # pose = move_to_pose(pose)
+    # utils.plc.md_extruder_switch("on")
+    # utils.woody.set_speed(print_speed)
+    # time.sleep(2)
+
+    # # Sweeps forward/back
+    # pose = sweep_y_positions(pose, [300, 200, 100, 0, -100, -200, -300, -400])
+
+    # pose[0] = -60-x_offset
+    # pose = move_to_pose(pose)
+    # pose = sweep_y_positions(pose, [-300, -200, -100, 0, 100, 200, 300, 400])
+
+    # # Lift and travel back
+    # pose = lift_and_travel(pose, 400, utils.Y_RIGHT_MOTION)
+    # print("Travel back complete.")
 
     # End loop for now
     flg = False
