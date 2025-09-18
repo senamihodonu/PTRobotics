@@ -214,6 +214,7 @@ class PyPLCConnection:
         print(f"Turning MD pellet extruder {status.strip().upper()}")
 
 
+
     def travel(self, coil_address, distance, unit, axis):
         """
         Move stepper motor a given distance at axis-specific pulse rate,
@@ -226,14 +227,15 @@ class PyPLCConnection:
         :return: Travel time in seconds
         """
 
-        # Axis-specific settings
-        if axis.lower() == "z":
-            pulse_rate = self.read_single_register(PPS_Z_ADDRESS)         # pulses per second
+        # === Axis-specific settings ===
+        axis = axis.lower()
+        if axis == "z":
+            pulse_rate = self.read_single_register(PPS_Z_ADDRESS)   # pulses per second
             pulses_per_rev = DIP_SWITCH_SETTING_Z
             lead_mm = LEAD_Z_SCREW
-            gear_ratio = 20
-        elif axis.lower() == "y":
-            pulse_rate = self.read_single_register(PPS_Y_ADDRESS)          # pulses per second
+            gear_ratio = 20  # example: 20:1 reduction
+        elif axis == "y":
+            pulse_rate = self.read_single_register(PPS_Y_ADDRESS)
             pulses_per_rev = DIP_SWITCH_SETTING_Y
             lead_mm = LEAD_Y_SCREW
             gear_ratio = 1
@@ -241,12 +243,12 @@ class PyPLCConnection:
             print(f"Error: Unsupported axis '{axis}'")
             return 0
 
-        # Validate inputs
+        # === Validate inputs ===
         if distance <= 0:
             print("Error: Distance must be positive.")
             return 0
 
-        # Convert distance to mm
+        # === Convert distance to mm ===
         unit = unit.lower()
         if unit in ("inches", "in"):
             distance *= 25.4
@@ -256,8 +258,9 @@ class PyPLCConnection:
             print(f"Error: Unsupported unit '{unit}'")
             return 0
 
-        # Calculate motion parameters
-        pulses_per_screw_rev = pulses_per_rev * gear_ratio
+        # === Calculate motion parameters ===
+        # If gear_ratio = 20 means motor turns 20 revs per 1 screw rev → divide
+        pulses_per_screw_rev = pulses_per_rev / gear_ratio
         pulses_per_mm = pulses_per_screw_rev / lead_mm
         speed_mm_per_sec = pulse_rate / pulses_per_mm
         travel_time = distance / speed_mm_per_sec
@@ -268,28 +271,27 @@ class PyPLCConnection:
             f"Travel time: {travel_time:.2f} s"
         )
 
-        # Turn on motor
+        # === Run motor (coil on) ===
         self.connect_to_plc()
         self.write_modbus_coils(coil_address, True)
-        self.close_connection()
 
         # Countdown loop
-        remaining = travel_time
+        remaining = int(round(travel_time))
         while remaining > 0:
-            sys.stdout.write(f"\rTime remaining: {remaining:.1f} s")
+            sys.stdout.write(f"\rTime remaining: {remaining} s")
             sys.stdout.flush()
-            time.sleep(2)
+            time.sleep(1)
             remaining -= 1
 
-        sys.stdout.write("\rTime remaining: 0.0 s\n")
+        sys.stdout.write("\rTime remaining: 0 s\n")
         sys.stdout.flush()
 
-        # Turn off motor
-        self.connect_to_plc()
+        # === Stop motor (coil off) ===
         self.write_modbus_coils(coil_address, False)
         self.close_connection()
 
         return travel_time
+
 
 
 

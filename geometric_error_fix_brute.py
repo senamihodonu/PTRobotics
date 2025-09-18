@@ -9,9 +9,9 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 speed = 200             # Robot travel speed (mm/s)
-print_speed = 200        # Printing speed (mm/s)
+print_speed = 15        # Printing speed (mm/s)
 inside_offset = 6       # Offset for inner infill moves (mm)
-layer_height = 6        # Vertical step per layer (mm)
+layer_height = 4        # Vertical step per layer (mm)
 z_offset = 20           # Safe Z offset for travel moves (mm)
 x_offset = 13.5         # X-axis offset (mm)
 print_offset = 5        # Vertical offset between passes (mm)
@@ -67,6 +67,8 @@ for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
 print("Safety check complete.")
 time.sleep(1)
 
+utils.plc.travel(utils.Y_LEFT_MOTION, 2, 'in', 'y') 
+
 # === Height Calibration ===
 pose, z = utils.calibrate_height(pose, layer_height)
 
@@ -78,49 +80,97 @@ z_translation_value = 4 * layer_height
 height_accumulation = 0
 flg = True
 
-utils.plc.md_extruder_switch("on")
-print("Extruder ON, starting print sequence...")
-time.sleep(3)
+# utils.plc.md_extruder_switch("on")
+# print("Extruder ON, starting print sequence...")
+# time.sleep(5)
 
 # === Printing Loop ===
-while flg:
-    layers = 1
-    print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
+# while flg:
+#     layers = 1
+#     print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
 
-    # --- Move to Start Pose ---
-    pose = [-100, 0, z, 0, 90, 0]
-    utils.woody.write_cartesian_position(pose)
-    print(f"Moved to start pose: {pose}")
-    pose = apply_z_correction(pose, layer_height, tolerance)
-    print(f"Z is{z}")
+#     # --- Move to Start Pose ---
+#     pose = [-100, 0, z, 0, 90, 0]
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Moved to start pose: {pose}")
+#     pose = apply_z_correction(pose, layer_height, tolerance)
+#     print(f"Z is{z}")
 
-    # --- Perimeter Path ---
-    utils.woody.set_speed(print_speed)
-    utils.plc.md_extruder_switch("on")
-    print("Extruder ON for perimeter path.")
-    print(f"Z is{z}")
+#     # --- Perimeter Path ---
+#     utils.woody.set_speed(print_speed)
+#     utils.plc.md_extruder_switch("on")
+#     print("Extruder ON for perimeter path.")
+#     print(f"Z is{z}")
 
-    # Path 1: X move
-    pose[0] = -60
-    utils.woody.write_cartesian_position(pose)
-    print(f"Moving along X: {pose}")
-    pose = apply_z_correction(pose, layer_height, tolerance)
-    print(f"Z is{z}")
+#     # Path 1: X move
+#     pose[0] = -60
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Moving along X: {pose}")
+#     pose = apply_z_correction(pose, layer_height, tolerance)
+#     print(f"Z is{z}")
 
-    # Path 2: Y forward
-    pose[1] = 400
-    utils.woody.write_cartesian_position(pose)
-    print(f"Moving along Y forward: {pose}")
-    pose = apply_z_correction(pose, layer_height, tolerance)
-    print(f"Z is{z}")
+#     # Path 2: Y forward
+#     pose[1] = 400
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Moving along Y forward: {pose}")
+#     pose = apply_z_correction(pose, layer_height, tolerance)
+#     print(f"Z is{z}")
 
-    utils.plc.travel(utils.Y_LEFT_MOTION, 400, 'mm', 'y')  # Travel right
+#     # Path 2: Y forward
+#     pose[0] = 100
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Moving along Y forward: {pose}")
+#     pose = apply_z_correction(pose, layer_height, tolerance)
+#     print(f"Z is{z}")
 
-    pose[1] = -400
-    utils.woody.write_cartesian_position(pose)
-    print(f"Moving along Y forward: {pose}")
 
-    flg = False
+#     pose[1] = 0
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Moving along Y forward: {pose}")
+#     pose = apply_z_correction(pose, layer_height, tolerance)
+#     print(f"Z is{z}")
+
+#     utils.plc.md_extruder_switch("off")
+
+
+#     utils.woody.set_speed(speed)
+#     pose[2] += 20
+#     utils.woody.write_cartesian_position(pose)
+
+#     print(f"Moving along Y forward: {pose}")
+
+#     utils.plc.travel(utils.Y_LEFT_MOTION, 400, 'mm', 'y')  # Travel right
+    
+#     # pose = apply_z_correction(pose, layer_height, tolerance)
+    
+    
+#     pose[1] = 400
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Moving along Y forward: {pose}")
+#     pose = apply_z_correction(pose, layer_height, tolerance)
+
+#     utils.plc.md_extruder_switch("on")
+#     utils.woody.set_speed(print_speed)
+
+#     pose[1] = -400
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Moving along Y forward: {pose}")
+#     pose = apply_z_correction(pose, layer_height, tolerance)
+   
+
+#     pose[0] = -60
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Moving along Y forward: {pose}")
+#     pose = apply_z_correction(pose, layer_height, tolerance)
+
+
+#     pose[1] = 400
+#     utils.woody.write_cartesian_position(pose)
+#     print(f"Moving along Y forward: {pose}")
+#     pose = apply_z_correction(pose, layer_height, tolerance)
+#     utils.plc.md_extruder_switch("off")
+
+#     flg = False
 
     # # Path 3: X forward
     # pose[0] = 100

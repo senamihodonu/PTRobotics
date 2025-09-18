@@ -33,11 +33,11 @@ from PyPLCConnection import (
 print("=== Program initialized ===")
 
 # === Initialize PLC and Robot ===
-# plc = PyPLCConnection(PLC_IP)
-# woody = robot(ROBOT_IP)
+plc = PyPLCConnection(PLC_IP)
+woody = robot(ROBOT_IP)
 
 print("PLC and Robot connections established.")
-# plc.reset_coils()
+plc.reset_coils()
 
 # === Parameters ===
 speed = 200            # Robot travel speed (mm/s)
