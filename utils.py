@@ -49,7 +49,7 @@ x_offset = 13.5        # X-axis offset (mm)
 print_offset = 5       # Vertical offset between passes (mm)
 z_correction = 4       # Fine Z correction for alignment (mm)
 
-# current_distance = plc.read_current_distance()
+current_distance = plc.read_current_distance()
 flg = True
 
 import cv2
@@ -214,6 +214,30 @@ def calibrate_height(pose, layer_height: float):
 
     return pose, z
 
+def apply_z_correction_gantry(layer_height, tolerance=0.1):
+    """
+    Apply Z correction using gantry PLC travel.
+    
+    Compares the current measured distance with the desired layer height
+    and adjusts Z accordingly.
+    """
+    current_dist = plc.read_current_distance()
+    z_pose = woody.read_current_cartesian_pose()[2]
+    diff = current_dist - layer_height
+
+    if abs(diff) > tolerance:
+        direction = Z_DOWN_MOTION if diff > 0 else Z_UP_MOTION
+        plc.travel(direction, abs(diff), 'mm', 'z')
+        print(f"[Calibration] Adjusted Z by {diff:.2f} mm | New Z: {z_pose:.2f} mm")
+    else:
+        print(
+            f"[Calibration] No correction needed | "
+            f"Nozzle height: {current_dist:.2f} mm | "
+            f"Target: {layer_height:.2f} mm"
+        )
+
+
+
 
 def monitor_distance_sensor(layer_height: float, tolerance: float = 1):
     """
@@ -361,9 +385,6 @@ def detect_red_dot_adaptive(image_path, px_per_mm=None, draw=True):
 #     cv2.destroyAllWindows()
 # else:
 #     print("No red dot detected.")
-
-import cv2
-import numpy as np
 
 def detect_red_dot_to_tape_edge(image_path, px_per_mm=None, draw=True):
     """
