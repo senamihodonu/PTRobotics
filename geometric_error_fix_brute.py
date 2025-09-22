@@ -190,9 +190,9 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 SPEED = 200            # Robot travel speed (mm/s)
-PRINT_SPEED = 10       # Printing speed (mm/s)
+PRINT_SPEED = 200       # Printing speed (mm/s)
 INSIDE_OFFSET = 6      # Offset for inner infill moves (mm)
-LAYER_HEIGHT = 4       # Vertical step per layer (mm)
+LAYER_HEIGHT = 6       # Vertical step per layer (mm)
 Z_OFFSET = 20          # Safe Z offset for travel moves (mm)
 X_OFFSET = 9           # X-axis offset (mm)
 PRINT_OFFSET = 5       # Vertical offset between passes (mm)
@@ -300,13 +300,13 @@ time.sleep(4)
 flg = True
 while flg:
     # Perimeter path
-    pose = [-110, -400, z, 0, 90, 0]
+    pose = [-110, 0, z, 0, 90, 0]
     pose = move_to_pose(pose)
 
-    utils.woody.set_speed(PRINT_SPEED)
-    utils.plc.md_extruder_switch("on")
-    pose = sweep_y_positions(pose, [-300, -200, -100, 0, 100, 200, 300, 400], extruding=True)
-    utils.plc.md_extruder_switch("off")
+    # utils.woody.set_speed(PRINT_SPEED)
+    # utils.plc.md_extruder_switch("on")
+    # pose = sweep_y_positions(pose, [-300, -200, -100, 0, 100, 200, 300, 400], extruding=True)
+    # utils.plc.md_extruder_switch("off")
 
     # Move to opposite X, then print back
     utils.woody.set_speed(SPEED)
@@ -315,69 +315,85 @@ while flg:
 
     utils.woody.set_speed(PRINT_SPEED)
     utils.plc.md_extruder_switch("on")
-    pose = sweep_y_positions(pose, [300, 200, 100, 0, -100, -200, -300, -400], extruding=True)
+    pose[1] = 400
+    pose = move_to_pose(pose)
+    # pose = sweep_y_positions(pose, [300, 200, 100, 0, -100, -200, -300, -400], extruding=True)
+    utils.plc.md_extruder_switch("off")
+    
+    
+    # Lift and travel left
+    pose = lift_and_travel(pose, 400, utils.Y_LEFT_MOTION)
     utils.plc.md_extruder_switch("off")
 
-    # Raise Z before next pass
-    utils.woody.set_speed(SPEED)
-    pose[2] += 20
-    utils.woody.write_cartesian_position(pose)
+    pose[1] = -400
+    pose = move_to_pose(pose)
+
+
+
+    # # Raise Z before next pass
+    # utils.woody.set_speed(SPEED)
+    # pose[2] += 20
+    # utils.woody.write_cartesian_position(pose)
 
 
 
     # print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
     # pose = [-100, 0, z, 0, 90, 0]
-    # pose = move_to_pose(pose)
+    # pose = move_to_pose(pose, extruding=False)
 
     # # --- Inlined Perimeter Path ---
-    # utils.woody.set_speed(print_speed)
+    # utils.woody.set_speed(PRINT_SPEED)
     # utils.plc.md_extruder_switch("on")
     # print("Extruder ON for perimeter path.")
 
     # # X move
     # pose[0] = -60
-    # pose = move_to_pose(pose)
+    # pose = move_to_pose(pose,True)
 
     # # Y forward
     # pose[1] = 200
-    # pose = move_to_pose(pose)
+    # pose = move_to_pose(pose,True)
 
     # # Y forward
     # pose[1] = 400
-    # pose = move_to_pose(pose)
+    # pose = move_to_pose(pose,True)
 
     # # X move
     # pose[0] = 100
-    # pose = move_to_pose(pose)
+    # pose = move_to_pose(pose,True)
 
     # # Y back sweeps
-    # pose = sweep_y_positions(pose, [300, 200, 150, 100, 50, 0])
+    # pose = sweep_y_positions(pose, [300, 200, 150, 100, 50, 0],True)
     # # --- End Inlined Perimeter Path ---
 
     # pose[0] = 140
-    # pose = move_to_pose(pose)
+    # pose = move_to_pose(pose,True)
 
     # # Lift and travel left
     # pose = lift_and_travel(pose, 400, utils.Y_LEFT_MOTION)
+    # utils.plc.md_extruder_switch("off")
+    
 
     # # Move forward to start sweeps
-    # pose[0] = 100-x_offset
+    # pose[0] = 100
     # pose[1] = 405
     # pose = move_to_pose(pose)
     # utils.plc.md_extruder_switch("on")
-    # utils.woody.set_speed(print_speed)
+    # utils.woody.set_speed(PRINT_SPEED)
     # time.sleep(2)
 
     # # Sweeps forward/back
-    # pose = sweep_y_positions(pose, [300, 200, 100, 0, -100, -200, -300, -400])
+    # pose = sweep_y_positions(pose, [300, 200, 100, 0, -100, -200, -300, -400],True)
 
-    # pose[0] = -60-x_offset
+    # pose[0] = -60
     # pose = move_to_pose(pose)
-    # pose = sweep_y_positions(pose, [-300, -200, -100, 0, 100, 200, 300, 400])
+    # pose = sweep_y_positions(pose, [-300, -200, -100, 0, 100, 200, 300, 400], True)
+    # utils.plc.md_extruder_switch("off")
+
 
     # # Lift and travel back
     # pose = lift_and_travel(pose, 400, utils.Y_RIGHT_MOTION)
     # print("Travel back complete.")
 
-    # End loop for now
+    # # End loop for now
     flg = False
