@@ -179,7 +179,6 @@
 #     flg = False
 
 
-
 # === Imports ===
 import sys
 import os
@@ -190,60 +189,79 @@ import utils
 print("=== Program initialized ===")
 
 # === Parameters ===
-speed = 200             # Robot travel speed (mm/s)
-print_speed = 10      # Printing speed (mm/s)
-inside_offset = 6       # Offset for inner infill moves (mm)
-layer_height = 4        # Vertical step per layer (mm)
-z_offset = 20           # Safe Z offset for travel moves (mm)
-x_offset = 9         # X-axis offset (mm)
-print_offset = 5        # Vertical offset between passes (mm)
-z_correction = 4        # Small correction in Z for alignment (mm)
-tolerance = 0
-z_increment = layer_height
+SPEED = 200            # Robot travel speed (mm/s)
+PRINT_SPEED = 10       # Printing speed (mm/s)
+INSIDE_OFFSET = 6      # Offset for inner infill moves (mm)
+LAYER_HEIGHT = 4       # Vertical step per layer (mm)
+Z_OFFSET = 20          # Safe Z offset for travel moves (mm)
+X_OFFSET = 9           # X-axis offset (mm)
+PRINT_OFFSET = 5       # Vertical offset between passes (mm)
+Z_CORRECTION = 4       # Small correction in Z for alignment (mm)
+TOLERANCE = 0
+Z_INCREMENT = LAYER_HEIGHT
+
 print("Parameters set.")
 
 # === Helper Functions ===
-def apply_z_correction(pose, layer_height, tolerance):
-    """Check and apply Z correction safely (extruder OFF during adjustment)."""
+def apply_z_correction(pose, layer_height, tolerance, extruding=False):
+    """
+    Check and apply Z correction safely.
+    The extruder is turned OFF during adjustment.
+    """
     corrected_z = utils.z_difference(layer_height, pose[2], tolerance)
     if corrected_z != pose[2]:
         pose[2] = corrected_z
-        utils.plc.md_extruder_switch("off")
+        if extruding:
+            utils.plc.md_extruder_switch("off")
         utils.woody.write_cartesian_position(pose)
-        utils.plc.md_extruder_switch("on")
+        if extruding:
+            utils.plc.md_extruder_switch("on")
     return pose
 
+
 def safety_check():
-    """Handle coils before starting."""
+    """
+    Ensure no safety coils are active before starting.
+    Moves Z down and Y right if coils are active.
+    """
     while any(utils.plc.read_modbus_coils(c) for c in (8, 9, 14)):
         print("Safety check: coils active, moving Z down and Y right...")
         for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
             utils.plc.write_modbus_coils(coil, True)
+
+    # Turn off safety coils
     for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
         utils.plc.write_modbus_coils(coil, False)
+
     print("Safety check complete.")
     time.sleep(1)
 
-def move_to_pose(pose):
-    """Move robot to given pose with Z correction."""
-    utils.woody.write_cartesian_position(pose)
-    return apply_z_correction(pose, layer_height, tolerance)
 
-def sweep_y_positions(pose, y_positions):
+def move_to_pose(pose, extruding=False):
+    """Move robot to a given pose with Z correction."""
+    utils.woody.write_cartesian_position(pose)
+    return apply_z_correction(pose, LAYER_HEIGHT, TOLERANCE, extruding)
+
+
+def sweep_y_positions(pose, y_positions, extruding=False):
     """Sweep through a list of Y positions at the current X."""
     for y in y_positions:
         pose[1] = y
-        pose = move_to_pose(pose)
+        pose = move_to_pose(pose, extruding)
     return pose
 
+
 def lift_and_travel(pose, travel_distance, direction):
-    """Lift Z and travel in PLC motion."""
+    """Lift Z and travel using PLC motion."""
     utils.plc.md_extruder_switch("off")
-    utils.woody.set_speed(speed)
-    pose[2] += z_offset
+    utils.woody.set_speed(SPEED)
+
+    pose[2] += Z_OFFSET
     utils.woody.write_cartesian_position(pose)
+
     utils.plc.travel(direction, travel_distance, 'mm', 'y')
     return pose
+
 
 # === Machine Vision Mode ===
 if len(sys.argv) > 1 and sys.argv[1].lower() in ("mv", "machinevision"):
@@ -253,7 +271,7 @@ else:
     print("Machine vision mode OFF (no cameras opened).")
 
 # === Robot & PLC Setup ===
-utils.woody.set_speed(speed)
+utils.woody.set_speed(SPEED)
 utils.woody.set_robot_speed_percent(100)
 utils.plc.reset_coils()
 time.sleep(2)
@@ -271,38 +289,39 @@ print("Extruder OFF for safe start.")
 safety_check()
 
 # === Height Calibration ===
-pose, z = utils.calibrate_height(pose, layer_height)
+pose, z = utils.calibrate_height(pose, LAYER_HEIGHT)
 
 # === Print Setup ===
-flg = True
 utils.plc.md_extruder_switch("on")
 print("Extruder ON, starting print sequence...")
-time.sleep(5)
+time.sleep(4)
 
 # === Printing Loop ===
+flg = True
 while flg:
-    
-    #Perimeter
+    # Perimeter path
     pose = [-110, -400, z, 0, 90, 0]
     pose = move_to_pose(pose)
 
-    utils.woody.set_speed(print_speed)
+    utils.woody.set_speed(PRINT_SPEED)
     utils.plc.md_extruder_switch("on")
-    pose = sweep_y_positions(pose, [-300, -200, -100, 0, 100, 200, 300, 400])
+    pose = sweep_y_positions(pose, [-300, -200, -100, 0, 100, 200, 300, 400], extruding=True)
     utils.plc.md_extruder_switch("off")
 
-    utils.woody.set_speed(speed)
+    # Move to opposite X, then print back
+    utils.woody.set_speed(SPEED)
     pose[0] = 150
     pose = move_to_pose(pose)
-    utils.woody.set_speed(print_speed)
-    utils.plc.md_extruder_switch("on")
 
-    pose = sweep_y_positions(pose, [300, 200, 100, 0, -100, -200, -300, -400])
+    utils.woody.set_speed(PRINT_SPEED)
+    utils.plc.md_extruder_switch("on")
+    pose = sweep_y_positions(pose, [300, 200, 100, 0, -100, -200, -300, -400], extruding=True)
     utils.plc.md_extruder_switch("off")
 
-    utils.woody.set_speed(speed)
+    # Raise Z before next pass
+    utils.woody.set_speed(SPEED)
     pose[2] += 20
-    pose = move_to_pose(pose)
+    utils.woody.write_cartesian_position(pose)
 
 
 
