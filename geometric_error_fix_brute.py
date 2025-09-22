@@ -319,10 +319,11 @@ while flg:
     pose = move_to_pose(pose)
     # pose = sweep_y_positions(pose, [300, 200, 100, 0, -100, -200, -300, -400], extruding=True)
     utils.plc.md_extruder_switch("off")
+    time.sleep(4)
     
     
     # Lift and travel left
-    pose = lift_and_travel(pose, 400, utils.Y_LEFT_MOTION)
+    pose = lift_and_travel(pose, 50, utils.Y_LEFT_MOTION)
     utils.plc.md_extruder_switch("off")
 
     pose[1] = -400
