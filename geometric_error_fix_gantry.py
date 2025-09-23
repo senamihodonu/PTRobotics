@@ -218,7 +218,7 @@ while flg:
     print("Extruder ON for perimeter path.")
 
     # Start background Z correction while extruding
-    z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=0.1, interval=3)
+    z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=3)
     z_thread.start()
 
     # X move
