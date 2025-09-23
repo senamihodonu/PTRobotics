@@ -136,8 +136,7 @@ class PyPLCConnection:
         angle_radians_from_degrees = math.radians(angle_degrees)
         angle_distance = self.read_single_register(DISTANCE_DATA_ADDRESS)
         vertical_distance = angle_distance*math.cos(angle_radians_from_degrees)
-        print(f"The cosine of {angle_degrees} degrees is: {vertical_distance}")
-
+        # print(f"The cosine of {angle_degrees} degrees is: {vertical_distance}")
         return math.ceil(vertical_distance)
 
     def calculate_pulse_per_second(self,speed_mm_min, steps_per_rev, lead_mm_rev, axis):
@@ -230,14 +229,14 @@ class PyPLCConnection:
         # === Axis-specific settings ===
         axis = axis.lower()
         if axis == "z":
-            # pulse_rate = self.read_single_register(PPS_Z_ADDRESS)   # pulses per second
-            pulse_rate = 60000
+            pulse_rate = self.read_single_register(PPS_Z_ADDRESS)   # pulses per second
+            # pulse_rate = 60000
             pulses_per_rev = DIP_SWITCH_SETTING_Z
             lead_mm = LEAD_Z_SCREW
             gear_ratio = 20  # example: 20:1 reduction
         elif axis == "y":
-            # pulse_rate = self.read_single_register(PPS_Y_ADDRESS)
-            pulse_rate = 40000
+            pulse_rate = self.read_single_register(PPS_Y_ADDRESS)
+            # pulse_rate = 40000
             pulses_per_rev = DIP_SWITCH_SETTING_Y
             lead_mm = LEAD_Y_SCREW
             gear_ratio = 1

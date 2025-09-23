@@ -9,7 +9,7 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 10       # Printing speed (mm/s)
+PRINT_SPEED = 15       # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -237,11 +237,56 @@ while flg:
     # Y forward
     pose[1] = 0
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+
+    # Y forward
+    pose[0] = 140
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
     utils.plc.md_extruder_switch("off")
 
     # Stop correction when done with path
     z_thread.stop()
     z_thread.join()
+
+    utils.woody.set_speed(SPEED)
+    distance = 400
+    lift_and_travel(pose, distance, utils.Y_LEFT_MOTION)
+    time.sleep(1)
+    utils.plc.md_extruder_switch("on")
+    pose[0] = 100
+    pose[1] = distance
+    pose[2] -= Z_OFFSET
+    pose = move_to_pose(pose, extruding=False, z_correct=z_flag)
+    utils.woody.set_speed(PRINT_SPEED)
+
+    # Start background Z correction while extruding
+    z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=3)
+    z_thread.start()
+
+    pose[1] = 0
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+
+    pose[0] = -60
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+
+    pose[1] = distance-2
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    time.sleep(2)
+
+    utils.plc.md_extruder_switch("off")
+
+    # Stop correction when done with path
+    z_thread.stop()
+    z_thread.join()
+
+    lift_and_travel(pose, distance, utils.Y_RIGHT_MOTION)
+
+
+
+
+
+
+
+
 
 
    
