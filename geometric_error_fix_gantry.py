@@ -9,9 +9,9 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 200       # Printing speed (mm/s)
+PRINT_SPEED = 15       # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
-LAYER_HEIGHT = 6        # Vertical step per layer (mm)
+LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
 X_OFFSET = 9            # X-axis offset (mm)
 PRINT_OFFSET = 5        # Vertical offset between passes (mm)
@@ -118,12 +118,13 @@ print(f"Robot moved to initial pose: {pose}")
 utils.plc.md_extruder_switch("off")
 print("Extruder OFF for safe start.")
 safety_check()
-
+# time.sleep(2)
 utils.plc.travel(utils.Z_UP_MOTION, 5, 'mm', 'z')
 
 
 # === Height Calibration ===
 pose, z = utils.calibrate_height(pose, LAYER_HEIGHT)
+time.sleep(2)
 
 
 
@@ -150,27 +151,33 @@ while flg:
     # X move
     pose[0] = -60
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    # time.sleep(2)
     utils.apply_z_correction_gantry(LAYER_HEIGHT, tolerance=0.1)
 
     # Y forward
     pose[1] = 200
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    # time.sleep(2)
     utils.apply_z_correction_gantry(LAYER_HEIGHT, tolerance=0.1)
 
     # Y forward
     pose[1] = 400
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    # time.sleep(2)
     utils.apply_z_correction_gantry(LAYER_HEIGHT, tolerance=0.1)
 
     # X move
     pose[0] = 100
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    # time.sleep(2)
     utils.apply_z_correction_gantry(LAYER_HEIGHT, tolerance=0.1)
 
     # Y forward
-    pose[1] = 100
+    pose[1] = 300
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    # time.sleep(2)
     utils.apply_z_correction_gantry(LAYER_HEIGHT, tolerance=0.1)
+    utils.plc.md_extruder_switch("off")
 
     # # Y back sweeps
     # pose = sweep_y_positions(pose, [300, 200, 150, 100, 50, 0], extruding=True, z_correct=z_flag)

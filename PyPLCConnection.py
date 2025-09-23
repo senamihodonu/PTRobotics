@@ -230,12 +230,14 @@ class PyPLCConnection:
         # === Axis-specific settings ===
         axis = axis.lower()
         if axis == "z":
-            pulse_rate = self.read_single_register(PPS_Z_ADDRESS)   # pulses per second
+            # pulse_rate = self.read_single_register(PPS_Z_ADDRESS)   # pulses per second
+            pulse_rate = 60000
             pulses_per_rev = DIP_SWITCH_SETTING_Z
             lead_mm = LEAD_Z_SCREW
             gear_ratio = 20  # example: 20:1 reduction
         elif axis == "y":
-            pulse_rate = self.read_single_register(PPS_Y_ADDRESS)
+            # pulse_rate = self.read_single_register(PPS_Y_ADDRESS)
+            pulse_rate = 40000
             pulses_per_rev = DIP_SWITCH_SETTING_Y
             lead_mm = LEAD_Y_SCREW
             gear_ratio = 1
@@ -260,7 +262,7 @@ class PyPLCConnection:
 
         # === Calculate motion parameters ===
         # If gear_ratio = 20 means motor turns 20 revs per 1 screw rev → divide
-        pulses_per_screw_rev = pulses_per_rev / gear_ratio
+        pulses_per_screw_rev = pulses_per_rev * gear_ratio
         pulses_per_mm = pulses_per_screw_rev / lead_mm
         speed_mm_per_sec = pulse_rate / pulses_per_mm
         travel_time = distance / speed_mm_per_sec
