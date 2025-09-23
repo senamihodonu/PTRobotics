@@ -243,8 +243,7 @@ while flg:
     z_thread.stop()
     z_thread.join()
 
-    layer+=1
 
    
 
-    if layer==2: flg = False
+    flg = False
