@@ -240,11 +240,12 @@ while flg:
     # Y forward
     pose[1] = 300
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    utils.plc.md_extruder_switch("off")
 
     # Stop correction when done with path
     z_thread.stop()
     z_thread.join()
 
-    utils.plc.md_extruder_switch("off")
+   
 
     flg = False
