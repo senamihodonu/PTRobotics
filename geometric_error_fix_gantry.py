@@ -181,7 +181,7 @@ time.sleep(4)
 
 # === Z Correction Thread ===
 class ZCorrectionThread(threading.Thread):
-    def __init__(self, layer_height, tolerance=0.1, interval=0.5):
+    def __init__(self, layer_height, tolerance=0.1, interval=3):
         super().__init__()
         self.layer_height = layer_height
         self.tolerance = tolerance
@@ -218,7 +218,7 @@ while flg:
     print("Extruder ON for perimeter path.")
 
     # Start background Z correction while extruding
-    z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=0.1, interval=2)
+    z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=0.1, interval=3)
     z_thread.start()
 
     # X move
