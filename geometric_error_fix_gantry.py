@@ -9,7 +9,7 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 15       # Printing speed (mm/s)
+PRINT_SPEED = 10       # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -205,6 +205,7 @@ class ZCorrectionThread(threading.Thread):
 
 # === Printing Loop ===
 flg = True
+layer = 0
 while flg:
     z_flag = False
     print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
@@ -226,10 +227,6 @@ while flg:
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
     # Y forward
-    pose[1] = 200
-    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-
-    # Y forward
     pose[1] = 400
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
@@ -238,7 +235,7 @@ while flg:
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
     # Y forward
-    pose[1] = 300
+    pose[1] = 0
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
     utils.plc.md_extruder_switch("off")
 
@@ -246,6 +243,8 @@ while flg:
     z_thread.stop()
     z_thread.join()
 
+    layer+=1
+
    
 
-    flg = False
+    if layer==2: flg = False
