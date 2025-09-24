@@ -9,7 +9,7 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 25       # Printing speed (mm/s)
+PRINT_SPEED = 15       # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -216,6 +216,7 @@ while flg:
     # --- Start perimeter path ---
     utils.woody.set_speed(PRINT_SPEED)
     utils.plc.md_extruder_switch("on")
+    time.sleep(3)
     print("Extruder ON for perimeter path.")
 
     # Start background Z correction while extruding
@@ -227,20 +228,40 @@ while flg:
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
     # Y forward
-    pose[1] = 400
+    pose[1] = 200
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    time.sleep(1)
 
     # X move
-    pose[0] = 100
-    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-
-    # Y forward
+    pose[0] = -20
     pose[1] = 0
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
     # Y forward
-    pose[0] = 140
+    pose[1] = 200
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    time.sleep(1)
+
+    # X move
+    pose[0] = 50
+    pose[1] = 0
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+
+    # Y forward
+    pose[1] = 200
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    time.sleep(1)
+
+    # X move
+    pose[0] = 100
+    pose[1] = 0
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+
+    # Y forward
+    pose[1] = 200
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    time.sleep(1)
+
     utils.plc.md_extruder_switch("off")
 
     # Stop correction when done with path
@@ -248,7 +269,7 @@ while flg:
     z_thread.join()
 
     utils.woody.set_speed(SPEED)
-    distance = 400
+    distance = 300
     lift_and_travel(pose, distance, utils.Y_LEFT_MOTION)
     time.sleep(1)
     utils.plc.md_extruder_switch("on")
@@ -262,15 +283,41 @@ while flg:
     z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=3)
     z_thread.start()
 
-    pose[1] = 0
-    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-
     pose[0] = -60
+    pose[1] = 200
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
-    pose[1] = distance+10
+    pose[1] = distance+5
     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-    time.sleep(2)
+    time.sleep(1)
+
+    # X move
+    pose[0] = -20
+    pose[1] = 200
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+
+    pose[1] = distance+5
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    time.sleep(1)
+
+    # X move
+    pose[0] = 50
+    pose[1] = 200
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+
+    pose[1] = distance+5
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    time.sleep(1)
+
+    # X move
+    pose[0] = 100
+    pose[1] = 200
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+
+    pose[1] = distance+5
+    pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    time.sleep(1)
+
 
     utils.plc.md_extruder_switch("off")
 

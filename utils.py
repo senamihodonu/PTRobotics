@@ -29,6 +29,8 @@ from PyPLCConnection import (
 )
 
 
+PLC_IP = "192.168.1.25"
+ROBOT_IP = '192.168.1.101' #Woody
 
 print("=== Program initialized ===")
 
