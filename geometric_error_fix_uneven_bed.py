@@ -213,10 +213,10 @@ while flg:
 
     # Example X/Y moves for perimeter
     pose[0] = -60; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-    pose[1] = 400; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    pose[1] = 500; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
     pose[0] = 100; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-    pose[1] = -400; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    pose[1] = -500; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
     pose[0] = -60; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
     pose[1] = 0; pose = move_to_pose(pose, extruding=True, z_correct=z_flag); time.sleep(1)
