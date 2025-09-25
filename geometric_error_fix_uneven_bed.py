@@ -140,7 +140,7 @@ time.sleep(4)
 
 # === Z Correction Thread ===
 class ZCorrectionThread(threading.Thread):
-    def __init__(self, layer_height, tolerance=0.1, interval=3, csv_path=None):
+    def __init__(self, layer_height, tolerance=0.1, interval=3, csv_path=None, z_correction=False):
         super().__init__()
         self.layer_height = layer_height
         self.tolerance = tolerance
@@ -149,13 +149,15 @@ class ZCorrectionThread(threading.Thread):
         self._running = threading.Event()
         self._running.set()
         self.samples = []
+        self.z_correction = z_correction
 
     def run(self):
         print("[ZCorrection] Thread started")
         while self._running.is_set():
             try:
-                # Perform gantry Z correction
-                utils.apply_z_correction_gantry(self.layer_height, tolerance=self.tolerance)
+                if self.z_correction:
+                    # Perform gantry Z correction
+                    utils.apply_z_correction_gantry(self.layer_height, tolerance=self.tolerance)
 
                 # Record current position and sensor height
                 pose = utils.woody.read_current_cartesian_pose()
