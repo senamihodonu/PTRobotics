@@ -172,6 +172,9 @@ def check_height(layer_height: float):
     )
     return current_distance, z
 
+def read_current_z_distance():
+    return plc.read_current_distance()
+
 
 def calibrate_height(pose, layer_height: float):
     """

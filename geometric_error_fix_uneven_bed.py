@@ -11,7 +11,7 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 15        # Printing speed (mm/s)
+PRINT_SPEED = 10        # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -158,9 +158,9 @@ class ZCorrectionThread(threading.Thread):
                 utils.apply_z_correction_gantry(self.layer_height, tolerance=self.tolerance)
 
                 # Record current position and sensor height
-                pose = utils.woody.get_cartesian_position()
+                pose = utils.woody.read_current_cartesian_pose()
                 x, y, z = pose[0], pose[1], pose[2]
-                current_height = utils.read_height_sensor()
+                current_height = utils.read_current_z_distance()
 
                 self.samples.append({
                     'x': x,
@@ -197,7 +197,7 @@ while flg:
     print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
 
     pose = [-100, 0, z, 0, 90, 0]
-    pose = move_to_pose(pose, extruding=False, z_correct=z_flag)
+    pose = move_to_pose(pose)
 
     # Start perimeter path
     utils.woody.set_speed(PRINT_SPEED)
@@ -206,22 +206,23 @@ while flg:
     print("Extruder ON for perimeter path.")
 
     # Start Z correction in background
-    z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=3)
+    z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=2, csv_path="samples1.csv")
     z_thread.start()
 
     # Example X/Y moves for perimeter
-    pose[0] = -60; pose = move_to_pose(pose, extruding=True, z_correct=z_flag); time.sleep(1)
+    pose[0] = -60; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
     pose[1] = 400; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
-    pose[0] = 100; pose[1] = 0; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    pose[0] = 100; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
     pose[1] = -400; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
     pose[0] = -60; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-    pose[1] = 0; pose = move_to_pose(pose, extruding=True, z_correct=z_flag); time.sleep(2)
+    pose[1] = 0; pose = move_to_pose(pose, extruding=True, z_correct=z_flag); time.sleep(1)
 
     utils.plc.md_extruder_switch("off")
 
     # Stop Z correction thread
     z_thread.stop(); z_thread.join()
+    pose[2] += 20; pose = move_to_pose(pose)
 
     flg = False  # stop after one loop for now
