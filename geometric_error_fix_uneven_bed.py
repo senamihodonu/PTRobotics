@@ -208,7 +208,7 @@ while flg:
     print("Extruder ON for perimeter path.")
 
     # Start Z correction in background
-    z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=2, csv_path="samples1.csv")
+    z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=2, csv_path="z_correction1.csv", z_correction=True)
     z_thread.start()
 
     # Example X/Y moves for perimeter

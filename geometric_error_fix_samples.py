@@ -134,51 +134,6 @@ print("Extruder ON, starting print sequence...")
 time.sleep(4)
 
 
-# === Printing Loop ===
-# flg = True
-# while flg:
-#     z_flag = False
-#     print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
-
-#     pose = [-100, 0, z, 0, 90, 0]
-#     pose = move_to_pose(pose, extruding=False, z_correct=z_flag)
-
-#     # --- Inlined Perimeter Path ---
-#     utils.woody.set_speed(PRINT_SPEED)
-#     utils.plc.md_extruder_switch("on")
-#     print("Extruder ON for perimeter path.")
-
-#     # X move
-#     pose[0] = -60
-#     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-#     # time.sleep(2)
-#     utils.apply_z_correction_gantry(LAYER_HEIGHT, tolerance=0.1)
-
-#     # Y forward
-#     pose[1] = 200
-#     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-#     # time.sleep(2)
-#     utils.apply_z_correction_gantry(LAYER_HEIGHT, tolerance=0.1)
-
-#     # Y forward
-#     pose[1] = 400
-#     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-#     # time.sleep(2)
-#     utils.apply_z_correction_gantry(LAYER_HEIGHT, tolerance=0.1)
-
-#     # X move
-#     pose[0] = 100
-#     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-#     # time.sleep(2)
-#     utils.apply_z_correction_gantry(LAYER_HEIGHT, tolerance=0.1)
-
-#     # Y forward
-#     pose[1] = 300
-#     pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-#     # time.sleep(2)
-#     utils.apply_z_correction_gantry(LAYER_HEIGHT, tolerance=0.1)
-#     utils.plc.md_extruder_switch("off")
-
 # === Z Correction Thread ===
 class ZCorrectionThread(threading.Thread):
     def __init__(self, layer_height, tolerance=0.1, interval=3):

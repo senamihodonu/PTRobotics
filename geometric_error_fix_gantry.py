@@ -280,15 +280,4 @@ while flg:
 
     lift_and_travel(pose, distance, utils.Y_RIGHT_MOTION)
 
-
-
-
-
-
-
-
-
-
-   
-
     flg = False
