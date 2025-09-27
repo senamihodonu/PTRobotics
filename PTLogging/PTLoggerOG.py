@@ -24,7 +24,7 @@ connection_status_var = tk.StringVar(value="Disconnected")
 
 # Add 0 for the local webcam (default device index)
 CAMERA_SOURCES = [
-    0,  # Local webcam
+    0,1  # Local webcam
     # "http://172.29.149.105:8080/video",
     # "http://172.29.179.38:8080/video"
 ]
