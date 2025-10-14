@@ -5,7 +5,7 @@ import time
 import threading
 import cv2
 import numpy as np
-import detect_aruco
+
 
 
 
@@ -230,6 +230,14 @@ def z_difference(layer_height, current_z, tol):
 import cv2
 import time
 import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_path = os.path.normpath(
+    os.path.join(current_dir, "ArucoMarkers")
+)
+sys.path.append(src_path)
+
+from detect_aruco import *
 
 def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples"):
     """
