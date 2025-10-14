@@ -5,6 +5,7 @@ import time
 import threading
 import cv2
 import numpy as np
+import detect_aruco
 
 
 
@@ -79,79 +80,6 @@ def open_all_cameras(max_cameras=5):
     if not cameras:
         print("[Camera] No cameras found!")
     return cameras
-
-
-# # === Example usage ===
-# cameras = open_all_cameras(max_cameras=5)
-
-# # Read a frame from each camera
-# for idx, cap in cameras.items():
-#     ret, frame = cap.read()
-#     if ret:
-#         cv2.imshow(f"Camera {idx}", frame)
-#         cv2.waitKey(500)  # Show each camera for 0.5 seconds
-
-# # Release all cameras
-# for cap in cameras.values():
-#     cap.release()
-# cv2.destroyAllWindows()
-
-# def open_all_cameras(camera_indices=[0, 1], window_name="All Cameras"):
-#     """
-#     Open all cameras specified by camera_indices and show them in one frame.
-
-#     Args:
-#         camera_indices (list): List of integer camera IDs (0,1,2…).
-#         window_name (str): Name of the display window.
-#     """
-#     # Open each camera
-#     caps = []
-#     for idx in camera_indices:
-#         cap = cv2.VideoCapture(idx)
-#         if not cap.isOpened():
-#             print(f"[Camera] Could not open camera {idx}")
-#         else:
-#             print(f"[Camera] Opened camera {idx}")
-#             caps.append(cap)
-
-#     if not caps:
-#         print("[Camera] No cameras opened.")
-#         return
-
-#     while True:
-#         frames = []
-#         for cap in caps:
-#             ret, frame = cap.read()
-#             if not ret:
-#                 frames.append(None)
-#                 continue
-#             # Resize to same height for stacking
-#             frame = cv2.resize(frame, (320, 240))
-#             frames.append(frame)
-
-#         # Only stack non-None frames
-#         frames = [f for f in frames if f is not None]
-#         if not frames:
-#             break
-
-#         # Horizontally stack all feeds in one window
-#         combined = cv2.hconcat(frames)
-#         cv2.imshow(window_name, combined)
-
-#         key = cv2.waitKey(1) & 0xFF
-#         if key == 27 or key == ord("q"):  # ESC or q to quit
-#             break
-
-#     for cap in caps:
-#         cap.release()
-#     cv2.destroyAllWindows()
-
-# camera_thread = threading.Thread(
-#     target=open_all_cameras, 
-#     args=([0, 1],),   # change list to your available camera IDs
-#     daemon=True
-# )
-# camera_thread.start()
 
 
 # === Functions ===
@@ -241,9 +169,6 @@ def apply_z_correction_gantry(layer_height, tolerance=0.1):
             f"Target: {layer_height:.2f} mm"
         )
 
-
-
-
 def monitor_distance_sensor(layer_height: float, tolerance: float = 1):
     """
     Continuously monitor the distance sensor and adjust Z position if needed.
@@ -301,187 +226,101 @@ def z_difference(layer_height, current_z, tol):
 
     return current_z
 
-def detect_red_dot_adaptive(image_path, px_per_mm=None, draw=True):
+
+import cv2
+import time
+import os
+
+def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples"):
     """
-    Detects a red dot robustly even under lighting/color variations.
-    Falls back to the brightest/highest-saturation blob if red is not obvious.
+    Perform camera-to-motion calibration using marker distances and OpenCV capture.
+
+    Args:
+        calibration_distance (float): Distance to move between positions A and B (in mm).
+        base_pose (dict): The starting robot pose (e.g., {"x":0, "y":100, "z":50}).
+        move_axis (str): Axis to move for calibration ('x', 'y', or 'z').
+        camera_index (int): Index of the camera for cv2.VideoCapture (default 0).
+        save_dir (str): Directory to save captured sample images.
+
+    Returns:
+        dict: Comparison results showing measured and expected distance differences.
     """
-    frame = cv2.imread(image_path)
-    if frame is None:
-        raise FileNotFoundError(f"Image not found: {image_path}")
 
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+    print("🔹 Starting calibration procedure...")
+    print(f"  Move axis: {move_axis.upper()} | Distance: {calibration_distance} mm")
 
-    # --- Step 1: HSV red mask (wide range) ---
-    lower_red1 = np.array([0, 50, 50])
-    upper_red1 = np.array([10, 255, 255])
-    lower_red2 = np.array([160, 50, 50])
-    upper_red2 = np.array([180, 255, 255])
-    mask_hsv = cv2.inRange(hsv, lower_red1, upper_red1) | cv2.inRange(hsv, lower_red2, upper_red2)
+    # Ensure save directory exists
+    os.makedirs(save_dir, exist_ok=True)
 
-    # --- Step 2: LAB a-channel mask (red-green axis) ---
-    a_channel = lab[:, :, 1]
-    mask_lab = cv2.inRange(a_channel, 150, 200)
+    # --- Initialize camera
+    cap = cv2.VideoCapture(camera_index)
+    if not cap.isOpened():
+        raise RuntimeError("❌ Could not open camera.")
 
-    # Combine masks
-    mask = cv2.bitwise_or(mask_hsv, mask_lab)
+    # --- Step 1: Move to position A and capture image
+    print("➡️ Moving to position A...")
+    woody.write_cartesian_position(base_pose)
+    time.sleep(2)  # Wait for robot to stabilize
 
-    # Clean small noise
-    kernel = np.ones((3,3), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    ret, image_A = cap.read()
+    if not ret:
+        raise RuntimeError("❌ Failed to capture image at position A.")
 
-    # --- Step 3: Fallback if mask is too small ---
-    if cv2.countNonZero(mask) < 50:
-        # Use brightness * saturation as fallback
-        value = hsv[:, :, 2]
-        saturation = hsv[:, :, 1]
-        combined = cv2.normalize(value.astype(np.float32) * (saturation.astype(np.float32)/255), None, 0, 255, cv2.NORM_MINMAX)
-        _, mask = cv2.threshold(combined.astype(np.uint8), 200, 255, cv2.THRESH_BINARY)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    img_A_path = os.path.join(save_dir, "sample_A.jpg")
+    cv2.imwrite(img_A_path, image_A)
+    print(f"📸 Image A saved to {img_A_path}")
 
-    # --- Step 4: Find contours and pick largest circular-ish blob ---
-    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if not cnts:
-        return None, None, None, frame
+    # Detect marker and measure distances
+    distances_A = detect_aruco.detect_from_image(image_A)
+    print(f"🧭 Distances at A: {distances_A}")
 
-    def circularity(c):
-        perimeter = cv2.arcLength(c, True)
-        area = cv2.contourArea(c)
-        return 4*np.pi*area/(perimeter**2) if perimeter > 0 else 0
+    # # --- Step 2: Move to position B and capture image
+    # pose_B = base_pose.copy()
+    # pose_B[move_axis] += calibration_distance
 
-    c = max(cnts, key=lambda c: cv2.contourArea(c) * circularity(c))
-    (x, y), radius = cv2.minEnclosingCircle(c)
-    center = (int(x), int(y))
+    # print("➡️ Moving to position B...")
+    # woody.write_cartesian_position(pose_B)
+    # time.sleep(2)
 
-    h, w = frame.shape[:2]
-    distances_px = {"Left": x, "Right": w-x, "Top": y, "Bottom": h-y}
-    distances_mm = {edge: dist/px_per_mm for edge, dist in distances_px.items()} if px_per_mm else None
+    # ret, image_B = cap.read()
+    # if not ret:
+    #     raise RuntimeError("❌ Failed to capture image at position B.")
 
-    if draw:
-        cv2.circle(frame, center, int(radius), (0,255,0), 2)
-        cv2.circle(frame, center, 5, (0,0,255), -1)
-        for edge, point in {"Left":(0,int(y)), "Right":(w,int(y)), "Top":(int(x),0), "Bottom":(int(x),h)}.items():
-            cv2.line(frame, center, point, (255,0,255), 2)
-            mid_x, mid_y = (center[0]+point[0])//2, (center[1]+point[1])//2
-            label = f"{distances_px[edge]:.0f}px"
-            if distances_mm:
-                label += f" / {distances_mm[edge]:.1f}mm"
-            cv2.putText(frame, label, (mid_x+5, mid_y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0),2)
+    # img_B_path = os.path.join(save_dir, "sample_B.jpg")
+    # cv2.imwrite(img_B_path, image_B)
+    # print(f"📸 Image B saved to {img_B_path}")
 
-    return distances_px, distances_mm, center, frame
+    # distances_B = detect_aruco.detect_from_image(image_B)
+    # print(f"🧭 Distances at B: {distances_B}")
 
+    # # --- Step 3: Compare results
+    # diffs = {side: distances_B[side] - distances_A[side] for side in distances_A}
+    # measured_motion = sum(abs(v) for v in diffs.values()) / len(diffs)
+    # offset_error = calibration_distance - measured_motion
 
-# === Example usage ===
-# image_path = "c1_20250916-184418.jpg"
-# px_per_mm = 5.0
+    # results = {
+    #     "image_A": img_A_path,
+    #     "image_B": img_B_path,
+    #     "distances_A": distances_A,
+    #     "distances_B": distances_B,
+    #     "differences": diffs,
+    #     "expected_move": calibration_distance,
+    #     "measured_move": measured_motion,
+    #     "offset_error": offset_error
+    # }
 
-# distances_px, distances_mm, center, output_frame = detect_red_dot_adaptive(image_path, px_per_mm)
+    # # --- Clean up
+    # cap.release()
+    # cv2.destroyAllWindows()
 
-# if distances_px:
-#     print(f"Red dot at: {center} px")
-#     print("Distances (px / mm):")
-#     for edge in distances_px.keys():
-#         print(f"{edge}: {distances_px[edge]:.1f}px / {distances_mm[edge]:.1f}mm")
-#     cv2.imshow("Red Dot Adaptive", output_frame)
-#     cv2.waitKey(0)
-#     cv2.destroyAllWindows()
-# else:
-#     print("No red dot detected.")
+    # print("✅ Calibration complete.")
+    # print(f"  Expected move: {calibration_distance:.3f} mm")
+    # print(f"  Measured move: {measured_motion:.3f} mm")
+    # print(f"  Offset error: {offset_error:+.3f} mm")
 
-def detect_red_dot_to_tape_edge(image_path, px_per_mm=None, draw=True):
-    """
-    Detect a red dot and compute the shortest distance to the blackest tape edge.
-    Returns: (distance_px, distance_mm, red_center, nearest_point, out_frame)
-    """
-    frame = cv2.imread(image_path)
-    if frame is None:
-        raise FileNotFoundError(f"Image not found: {image_path}")
+    # return results
 
-    # === Detect Red Dot (same as before) ===
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
-
-    lower_red1 = np.array([0, 50, 50])
-    upper_red1 = np.array([10, 255, 255])
-    lower_red2 = np.array([160, 50, 50])
-    upper_red2 = np.array([180, 255, 255])
-    mask_hsv = cv2.inRange(hsv, lower_red1, upper_red1) | cv2.inRange(hsv, lower_red2, upper_red2)
-
-    a_channel = lab[:, :, 1]
-    mask_lab = cv2.inRange(a_channel, 150, 200)
-    mask_red = cv2.bitwise_or(mask_hsv, mask_lab)
-
-    kernel = np.ones((3,3), np.uint8)
-    mask_red = cv2.morphologyEx(mask_red, cv2.MORPH_OPEN, kernel)
-    mask_red = cv2.morphologyEx(mask_red, cv2.MORPH_CLOSE, kernel)
-
-    cnts_red, _ = cv2.findContours(mask_red, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if not cnts_red:
-        return None, None, None, None, frame
-
-    def circularity(c):
-        perimeter = cv2.arcLength(c, True)
-        area = cv2.contourArea(c)
-        return 4*np.pi*area/(perimeter**2) if perimeter > 0 else 0
-
-#     c_red = max(cnts_red, key=lambda c: cv2.contourArea(c) * circularity(c))
-#     (x, y), radius = cv2.minEnclosingCircle(c_red)
-#     red_center = np.array([x, y])
-
-#     # === Mask Black Tape (neutral & dark) ===
-#     B, G, R = cv2.split(frame)
-#     s = hsv[:,:,1]
-#     mask_black = (B < 40) & (G < 40) & (R < 40) & (s < 40)
-#     mask_black = mask_black.astype(np.uint8)*255
-#     mask_black = cv2.morphologyEx(mask_black, cv2.MORPH_OPEN, kernel, iterations=2)
-#     mask_black = cv2.morphologyEx(mask_black, cv2.MORPH_CLOSE, kernel, iterations=2)
-
-#     cnts_black, _ = cv2.findContours(mask_black, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-#     if not cnts_black:
-#         return None, None, tuple(red_center.astype(int)), None, frame
-
-#     c_black = max(cnts_black, key=cv2.contourArea)
-
-#     # --- Safely stack contour points into Nx2 array ---
-#     all_points = np.vstack(c_black).reshape(-1, 2)
-
-#     # compute nearest point
-#     distances = np.linalg.norm(all_points - red_center, axis=1)
-#     idx = np.argmin(distances)
-#     nearest_point = tuple(all_points[idx])
-#     distance_px = distances[idx]
-#     distance_mm = distance_px/px_per_mm if px_per_mm else None
-
-#     if draw:
-#         out = frame.copy()
-#         cv2.circle(out, tuple(red_center.astype(int)), int(radius), (0,255,0), 2)
-#         cv2.circle(out, tuple(red_center.astype(int)), 5, (0,0,255), -1)
-#         cv2.drawContours(out, [c_black], -1, (0,255,255), 2)
-#         cv2.circle(out, nearest_point, 5, (255,0,0), -1)
-#         label = f"{distance_px:.1f}px"
-#         if px_per_mm:
-#             label += f" / {distance_mm:.2f}mm"
-#         cv2.putText(out, label, (int(red_center[0])+10,int(red_center[1])-10),
-#                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0), 2)
-#         return distance_px, distance_mm, tuple(red_center.astype(int)), nearest_point, out
-#     else:
-#         return distance_px, distance_mm, tuple(red_center.astype(int)), nearest_point, frame
-
-
-# image_path = "c1_20250916-184912.jpg"
-# px_per_mm = 5.0  # your calibration
-# distance_px, distance_mm, red_center, nearest_point, out_frame = detect_red_dot_to_tape_edge(image_path, px_per_mm)
-
-# if distance_px:
-#     print(f"Distance to tape: {distance_px:.1f}px / {distance_mm:.1f}mm")
-#     cv2.imshow("Result", out_frame)
-#     cv2.waitKey(0)
-#     cv2.destroyAllWindows()
-# else:
-#     print("Could not detect red dot or tape.")
-
-
-
+if __name__ == "__main__":
+    calibration_distance = 100
+    base_pose = [200, 0, 0, 0, 90, 0]
+    calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")

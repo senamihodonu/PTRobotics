@@ -39,12 +39,6 @@ def apply_z_correction_brute(pose, layer_height, tolerance, extruding=False):
             utils.plc.md_extruder_switch("on")
     return pose
 
-
-def apply_z_correction_gantry():
-    """Placeholder for gantry-based Z correction."""
-    pass
-
-
 def safety_check():
     """
     Ensure no safety coils are active before starting.
@@ -190,6 +184,40 @@ class ZCorrectionThread(threading.Thread):
             except Exception as e:
                 print(f"[ZCorrection] Error appending CSV: {e}")
 
+# === Helper Functions ===
+def start_z_correction(csv_path, z_correction=False):
+    """
+    Starts Z correction in a background thread.
+    """
+    z_thread = ZCorrectionThread(
+        LAYER_HEIGHT,
+        tolerance=1,
+        interval=2,
+        csv_path=csv_path,
+        z_correction=z_correction
+    )
+    z_thread.start()
+    print("✅ Z correction thread started.")
+    return z_thread
+
+
+def stop_z_correction(z_thread):
+    """
+    Stops the Z correction thread safely and provides feedback.
+    """
+    if z_thread is None:
+        print("⚠️  No Z correction thread to stop.")
+        return
+
+    if z_thread.is_alive():
+        print("🟡 Stopping Z correction thread...")
+        z_thread.stop()
+        z_thread.join()
+        print("✅ Z correction thread stopped successfully.")
+    else:
+        print("ℹ️  Z correction thread is not running.")
+
+
 
 # === Printing Loop (single-layer example) ===
 flg = True
@@ -207,9 +235,11 @@ while flg:
     time.sleep(3)
     print("Extruder ON for perimeter path.")
 
-    # Start Z correction in background
-    z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=2, csv_path="z_correction1.csv", z_correction=True)
-    z_thread.start()
+    # # Start Z correction in background
+    # z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=2, csv_path="z_correction1.csv", z_correction=True)
+    # z_thread.start()
+    csv_path = "z_correction1.csv"
+    z_thread = start_z_correction(csv_path, z_correction=True)
 
     # Example X/Y moves for perimeter
     pose[0] = -60; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
@@ -224,7 +254,8 @@ while flg:
     utils.plc.md_extruder_switch("off")
 
     # Stop Z correction thread
-    z_thread.stop(); z_thread.join()
+    # z_thread.stop(); z_thread.join()
+    stop_z_correction(z_thread)
     pose[2] += 20; pose = move_to_pose(pose)
 
     flg = False  # stop after one loop for now
