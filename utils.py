@@ -5,6 +5,7 @@ import time
 import threading
 import cv2
 import numpy as np
+import csv
 
 
 
@@ -322,8 +323,17 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     marker_data_B_left = marker_data['left_mm']
     marker_data_B_right = marker_data['right_mm']
 
-    print(f"diff left  = {marker_data_B_left - marker_data_A_left:.3f} mm")
-    print(f"diff right = {marker_data_B_right - marker_data_A_right:.3f} mm")
+    diff_left  = marker_data_B_left - marker_data_A_left
+    diff_right = marker_data_B_right - marker_data_A_right
+
+    print(f"diff left  = {diff_left:.3f} mm")
+    print(f"diff right = {diff_right:.3f} mm")
+    import pandas as pd
+
+    new_data = {'Left': [diff_left], 'Right': [diff_right]}
+    new_df = pd.DataFrame(new_data)
+
+    new_df.to_csv('my_data.csv', mode='a', header=False, index=False)
 
     # --- Save results
     results = {
