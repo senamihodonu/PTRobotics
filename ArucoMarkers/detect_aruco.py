@@ -121,7 +121,11 @@ def detect_from_image(path, save_marked=True, return_marked=False, show=False):
     if save_marked:
         folder, filename = os.path.split(abs_path)
         name, ext = os.path.splitext(filename)
-        marked_path = os.path.join(folder, f"{name}_marked{ext}")
+
+        # Add timestamp to filename
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        marked_path = os.path.join(folder, f"{name}_marked_{timestamp}{ext}")
+
         cv2.imwrite(marked_path, annotated)
         print(f"\n🖍️ Marked image saved to: {marked_path}")
 
