@@ -189,27 +189,31 @@ def z_difference(layer_height, current_z, tol):
         print(f"Z is within bounds. z_value = {current_z}, current_distance = {current_distance}")
 
     return current_z
-
 # === ArUco Detection ===
-src_path = os.path.normpath(os.path.join(current_dir, "ArucoMarkers"))
-sys.path.append(src_path)
+aruco_path = os.path.normpath(os.path.join(current_dir, "ArucoMarkers"))
+sys.path.append(aruco_path)
 from detect_aruco import *
 
 # === Calibration Function ===
 def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples"):
     """
-    Perform camera-to-motion calibration using marker distances and OpenCV capture.
+    Perform camera-to-motion calibration using ArUco marker distances.
+    - Moves the robot to two positions (A and B)
+    - Captures images from the camera
+    - Measures marker displacement
+    - Logs results to CSV
     """
-    print("🔹 Starting calibration procedure...")
+    print("\n🔹 Starting calibration procedure...")
     print(f"  Move axis: {move_axis.upper()} | Distance: {calibration_distance} mm")
 
     os.makedirs(save_dir, exist_ok=True)
 
+    # --- Open camera ---
     cap = cv2.VideoCapture(camera_index)
     if not cap.isOpened():
         raise RuntimeError("❌ Could not open camera.")
 
-    # --- Position A ---
+    # === POSITION A ===
     print("➡️ Moving to position A...")
     woody.write_cartesian_position(base_pose)
     time.sleep(2)
@@ -223,18 +227,14 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     print(f"📸 Image A saved to {img_A_path}")
 
     distances_A, marked_A = detect_from_image(img_A_path, return_marked=True)
-    marked_A_path = os.path.join(save_dir, "sample_A_marked.jpg")
-    cv2.imwrite(marked_A_path, marked_A)
-    print(f"🖍️ Marked image A saved to {marked_A_path}")
-
     marker_id = list(distances_A.keys())[0]
-    marker_data = distances_A[marker_id]
-    marker_data_A_left = marker_data['left_mm']
-    marker_data_A_right = marker_data['right_mm']
+    marker_data_A = distances_A[marker_id]
+    A_left = marker_data_A['left_mm']
+    A_right = marker_data_A['right_mm']
 
-    # --- Position B ---
+    # === POSITION B ===
     print("➡️ Moving to position B...")
-    plc.travel(Y_LEFT_MOTION, calibration_distance, "mm", "y")
+    plc.travel(Y_LEFT_MOTION, calibration_distance, "mm", move_axis)
     time.sleep(2)
 
     ret, image_B = cap.read()
@@ -246,55 +246,51 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     print(f"📸 Image B saved to {img_B_path}")
 
     distances_B, marked_B = detect_from_image(img_B_path, return_marked=True)
-    marked_B_path = os.path.join(save_dir, "sample_B_marked.jpg")
-    cv2.imwrite(marked_B_path, marked_B)
-    print(f"🖍️ Marked image B saved to {marked_B_path}")
-
     marker_id = list(distances_B.keys())[0]
-    marker_data = distances_B[marker_id]
-    marker_data_B_left = marker_data['left_mm']
-    marker_data_B_right = marker_data['right_mm']
+    marker_data_B = distances_B[marker_id]
+    B_left = marker_data_B['left_mm']
+    B_right = marker_data_B['right_mm']
 
-    diff_left = marker_data_B_left - marker_data_A_left
-    diff_right = marker_data_B_right - marker_data_A_right
+    # === DIFFERENCE CALCULATION ===
+    diff_left = B_left - A_left
+    diff_right = B_right - A_right
 
     print(f"📏 Diff Left  = {diff_left:.3f} mm")
     print(f"📏 Diff Right = {diff_right:.3f} mm")
 
-    # --- Log results to CSV ---
+    # === LOG RESULTS TO CSV ===
     csv_file = "MarkerData.csv"
     file_exists = os.path.isfile(csv_file)
-    new_data = {
-        'A Left': [marker_data_A_left],
-        'B Left': [marker_data_B_left],
-        'A Right': [marker_data_A_right],
-        'B Right': [marker_data_B_right],
+
+    data = {
+        'A Left': [A_left],
+        'B Left': [B_left],
+        'A Right': [A_right],
+        'B Right': [B_right],
         'Diff Left': [diff_left],
         'Diff Right': [diff_right],
     }
-    new_df = pd.DataFrame(new_data)
-    new_df.to_csv(csv_file, mode='a', header=not file_exists, index=False)
 
-    # --- Finalize ---
-    results = {
+    pd.DataFrame(data).to_csv(csv_file, mode='a', header=not file_exists, index=False)
+
+    # === CLEANUP ===
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("✅ Calibration complete.\n")
+
+    return {
         "image_A": img_A_path,
         "image_B": img_B_path,
-        "marked_A": marked_A_path,
-        "marked_B": marked_B_path,
         "distances_A": distances_A,
         "distances_B": distances_B,
         "expected_move": calibration_distance,
     }
 
-    cap.release()
-    cv2.destroyAllWindows()
-
-    print("✅ Calibration complete.")
-    return results
 
 # === Main Run ===
 if __name__ == "__main__":
-    for x in range(5):
+    for x in range(10):
         safety_check()
         calibration_distance = 400
         woody.set_speed(200)
