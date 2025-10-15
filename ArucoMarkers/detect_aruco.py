@@ -91,23 +91,58 @@ def detect_and_draw(frame):
     return frame, distances_dict
 
 
-def detect_from_image(path):
+def detect_from_image(path, save_marked=True, return_marked=False):
+    """
+    Detect ArUco markers in the given image, draw annotations, and optionally
+    save and/or return the marked image.
+
+    Args:
+        path (str): Path to the input image.
+        save_marked (bool): Whether to save the marked image to disk. Default: True.
+        return_marked (bool): Whether to return the marked image array. Default: False.
+
+    Returns:
+        dict or (dict, np.ndarray): distances, or (distances, marked_image) if return_marked=True
+    """
+    import cv2
+    import os
+
     img = cv2.imread(path)
     if img is None:
         print(f"❌ Could not read image: {path}")
-        return
+        return {} if not return_marked else ({}, None)
+
+    # --- Perform detection and get annotated image + distances
     result, distances = detect_and_draw(img)
+
+    # --- Display results
     cv2.imshow("ArUco Detection", result)
     print("📏 Measured distances (mm):")
-    # print(distances)
+
     for marker_id, data in distances.items():
         print(f"Marker ID: {marker_id}")
-    for key, value in data.items():
-        print(f"  {key:10}: {float(value):.2f} mm")
+        for key, value in data.items():
+            print(f"  {key:10}: {float(value):.2f} mm")
 
+    # --- Save marked image
+    if save_marked:
+        folder, filename = os.path.split(path)
+        name, ext = os.path.splitext(filename)
+        marked_path = os.path.join(folder, f"{name}_marked{ext}")
+        cv2.imwrite(marked_path, result)
+        print(f"🖍️ Marked image saved to: {marked_path}")
+
+    # --- Cleanup
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    return distances
+
+    # --- Return according to requested mode
+    if return_marked:
+        return distances, result
+    else:
+        return distances
+
+
 
 
 if __name__ == "__main__":
