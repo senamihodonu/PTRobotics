@@ -57,6 +57,23 @@ flg = True
 
 import cv2
 
+def safety_check():
+    """
+    Ensure no safety coils are active before starting.
+    Moves Z down and Y right if any safety coil is active.
+    """
+    while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
+        print("Safety check: coils active, moving Z down and Y right...")
+        for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
+            plc.write_modbus_coils(coil, True)
+
+    # Turn off safety coils
+    for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
+        plc.write_modbus_coils(coil, False)
+
+    print("Safety check complete.")
+    time.sleep(1)
+
 def open_all_cameras(max_cameras=5):
     """
     Detects and opens all available cameras up to max_cameras.
@@ -242,16 +259,6 @@ from detect_aruco import *
 def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples"):
     """
     Perform camera-to-motion calibration using marker distances and OpenCV capture.
-
-    Args:
-        calibration_distance (float): Distance to move between positions A and B (in mm).
-        base_pose (dict): The starting robot pose (e.g., {"x":0, "y":100, "z":50}).
-        move_axis (str): Axis to move for calibration ('x', 'y', or 'z').
-        camera_index (int): Index of the camera for cv2.VideoCapture (default 0).
-        save_dir (str): Directory to save captured sample images.
-
-    Returns:
-        dict: Comparison results showing measured and expected distance differences.
     """
 
     print("🔹 Starting calibration procedure...")
@@ -278,57 +285,71 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     cv2.imwrite(img_A_path, image_A)
     print(f"📸 Image A saved to {img_A_path}")
 
-    # Detect marker and measure distances
-    distances_A = detect_aruco.detect_from_image(image_A)
-    print(f"🧭 Distances at A: {distances_A}")
+    # --- Detect markers and save annotated image
+    distances_A, marked_A = detect_from_image(img_A_path, return_marked=True)
+    marked_A_path = os.path.join(save_dir, "sample_A_marked.jpg")
+    cv2.imwrite(marked_A_path, marked_A)
+    print(f"🖍️ Marked image A saved to {marked_A_path}")
 
-    # # --- Step 2: Move to position B and capture image
-    # pose_B = base_pose.copy()
-    # pose_B[move_axis] += calibration_distance
+    # --- Extract key measurements
+    marker_id = list(distances_A.keys())[0]
+    marker_data = distances_A[marker_id]
+    marker_data_A_left = marker_data['left_mm']
+    marker_data_A_right = marker_data['right_mm']
 
-    # print("➡️ Moving to position B...")
-    # woody.write_cartesian_position(pose_B)
-    # time.sleep(2)
+    # --- Step 2: Move to position B and capture image
+    print("➡️ Moving to position B...")
+    plc.travel(Y_LEFT_MOTION, calibration_distance, "mm", "y")
+    time.sleep(2)
 
-    # ret, image_B = cap.read()
-    # if not ret:
-    #     raise RuntimeError("❌ Failed to capture image at position B.")
+    ret, image_B = cap.read()
+    if not ret:
+        raise RuntimeError("❌ Failed to capture image at position B.")
 
-    # img_B_path = os.path.join(save_dir, "sample_B.jpg")
-    # cv2.imwrite(img_B_path, image_B)
-    # print(f"📸 Image B saved to {img_B_path}")
+    img_B_path = os.path.join(save_dir, "sample_B.jpg")
+    cv2.imwrite(img_B_path, image_B)
+    print(f"📸 Image B saved to {img_B_path}")
 
-    # distances_B = detect_aruco.detect_from_image(image_B)
-    # print(f"🧭 Distances at B: {distances_B}")
+    # --- Detect markers and save annotated image
+    distances_B, marked_B = detect_from_image(img_B_path, return_marked=True)
+    marked_B_path = os.path.join(save_dir, "sample_B_marked.jpg")
+    cv2.imwrite(marked_B_path, marked_B)
+    print(f"🖍️ Marked image B saved to {marked_B_path}")
 
-    # # --- Step 3: Compare results
-    # diffs = {side: distances_B[side] - distances_A[side] for side in distances_A}
-    # measured_motion = sum(abs(v) for v in diffs.values()) / len(diffs)
-    # offset_error = calibration_distance - measured_motion
+    # --- Extract and compare
+    marker_id = list(distances_B.keys())[0]
+    marker_data = distances_B[marker_id]
+    marker_data_B_left = marker_data['left_mm']
+    marker_data_B_right = marker_data['right_mm']
 
-    # results = {
-    #     "image_A": img_A_path,
-    #     "image_B": img_B_path,
-    #     "distances_A": distances_A,
-    #     "distances_B": distances_B,
-    #     "differences": diffs,
-    #     "expected_move": calibration_distance,
-    #     "measured_move": measured_motion,
-    #     "offset_error": offset_error
-    # }
+    print(f"diff left  = {marker_data_B_left - marker_data_A_left:.3f} mm")
+    print(f"diff right = {marker_data_B_right - marker_data_A_right:.3f} mm")
 
-    # # --- Clean up
-    # cap.release()
-    # cv2.destroyAllWindows()
+    # --- Save results
+    results = {
+        "image_A": img_A_path,
+        "image_B": img_B_path,
+        "marked_A": marked_A_path,
+        "marked_B": marked_B_path,
+        "distances_A": distances_A,
+        "distances_B": distances_B,
+        "expected_move": calibration_distance,
+    }
 
-    # print("✅ Calibration complete.")
-    # print(f"  Expected move: {calibration_distance:.3f} mm")
-    # print(f"  Measured move: {measured_motion:.3f} mm")
-    # print(f"  Offset error: {offset_error:+.3f} mm")
+    # --- Clean up
+    cap.release()
+    cv2.destroyAllWindows()
 
-    # return results
+    print("✅ Calibration complete.")
+    print(f"  Expected move: {calibration_distance:.3f} mm")
+
+    return results
+
 
 if __name__ == "__main__":
-    calibration_distance = 100
+    safety_check()
+    calibration_distance = 400
+    woody.set_speed(200)
     base_pose = [200, 0, 0, 0, 90, 0]
+
     calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")

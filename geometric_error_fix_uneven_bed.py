@@ -39,22 +39,22 @@ def apply_z_correction_brute(pose, layer_height, tolerance, extruding=False):
             utils.plc.md_extruder_switch("on")
     return pose
 
-def safety_check():
-    """
-    Ensure no safety coils are active before starting.
-    Moves Z down and Y right if any safety coil is active.
-    """
-    while any(utils.plc.read_modbus_coils(c) for c in (8, 9, 14)):
-        print("Safety check: coils active, moving Z down and Y right...")
-        for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
-            utils.plc.write_modbus_coils(coil, True)
+# def safety_check():
+#     """
+#     Ensure no safety coils are active before starting.
+#     Moves Z down and Y right if any safety coil is active.
+#     """
+#     while any(utils.plc.read_modbus_coils(c) for c in (8, 9, 14)):
+#         print("Safety check: coils active, moving Z down and Y right...")
+#         for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
+#             utils.plc.write_modbus_coils(coil, True)
 
-    # Turn off safety coils
-    for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
-        utils.plc.write_modbus_coils(coil, False)
+#     # Turn off safety coils
+#     for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
+#         utils.plc.write_modbus_coils(coil, False)
 
-    print("Safety check complete.")
-    time.sleep(1)
+#     print("Safety check complete.")
+#     time.sleep(1)
 
 
 def move_to_pose(pose, extruding=False, z_correct=False):
@@ -117,7 +117,7 @@ print(f"Robot moved to initial pose: {pose}")
 # === Safe Start & Safety Check ===
 utils.plc.md_extruder_switch("off")
 print("Extruder OFF for safe start.")
-safety_check()
+utils.safety_check()
 utils.plc.travel(utils.Z_UP_MOTION, 5, 'mm', 'z')
 
 
