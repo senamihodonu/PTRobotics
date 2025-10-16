@@ -24,13 +24,23 @@ ARUCO_DICTS = {
     "DICT_ARUCO_ORIGINAL": cv2.aruco.DICT_ARUCO_ORIGINAL,
 }
 
-
-def generate_aruco(dictionary_id, marker_id, size, output_file):
+def generate_aruco(dictionary_id, marker_id, size, output_file, border_thickness=20):
     # Load the dictionary
     aruco_dict = cv2.aruco.getPredefinedDictionary(dictionary_id)
 
     # Generate marker
     marker_img = cv2.aruco.generateImageMarker(aruco_dict, marker_id, size)
+
+    # Add black border
+    bordered_img = cv2.copyMakeBorder(
+        marker_img,
+        top=border_thickness,
+        bottom=border_thickness,
+        left=border_thickness,
+        right=border_thickness,
+        borderType=cv2.BORDER_CONSTANT,
+        value=(128, 128, 128)  # black border
+    )
 
     # Add timestamp to filename
     base, ext = os.path.splitext(output_file)
@@ -38,21 +48,21 @@ def generate_aruco(dictionary_id, marker_id, size, output_file):
     output_file_with_timestamp = f"{base}_{timestamp}{ext}"
 
     # Save marker
-    cv2.imwrite(output_file_with_timestamp, marker_img)
-    print(f"✅ Saved marker ID {marker_id} from {dictionary_id} to {output_file_with_timestamp}")
+    cv2.imwrite(output_file_with_timestamp, bordered_img)
+    print(f"✅ Saved marker ID {marker_id} with border to {output_file_with_timestamp}")
 
     # Show marker
-    cv2.imshow("ArUco Marker", marker_img)
+    cv2.imshow("ArUco Marker with Border", bordered_img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate ArUco marker images")
+    parser = argparse.ArgumentParser(description="Generate ArUco marker images with border")
     parser.add_argument("--dict", type=str, default="DICT_4X4_50",
-                        help="Dictionary name (e.g. DICT_4X4_50, DICT_5X5_100, DICT_6X6_250, DICT_7X7_1000)")
+                        help="Dictionary name (e.g. DICT_4X4_50, DICT_5X5_100, etc.)")
     parser.add_argument("--id", type=int, default=0, help="Marker ID to generate")
     parser.add_argument("--size", type=int, default=300, help="Size of marker image (pixels)")
+    parser.add_argument("--border", type=int, default=20, help="Thickness of black border (pixels)")
     parser.add_argument("--out", type=str, default="aruco_marker.png", help="Output file name")
     args = parser.parse_args()
 
@@ -60,5 +70,4 @@ if __name__ == "__main__":
         print(f"❌ Unknown dictionary {args.dict}")
         print("Available:", ", ".join(ARUCO_DICTS.keys()))
     else:
-        generate_aruco(ARUCO_DICTS[args.dict], args.id, args.size, args.out)
-
+        generate_aruco(ARUCO_DICTS[args.dict], args.id, args.size, args.out, args.border)
