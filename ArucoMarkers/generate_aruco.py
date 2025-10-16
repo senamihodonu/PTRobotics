@@ -1,5 +1,7 @@
 import cv2
 import argparse
+import time
+import os
 
 # Map dictionary name to OpenCV enum
 ARUCO_DICTS = {
@@ -30,9 +32,14 @@ def generate_aruco(dictionary_id, marker_id, size, output_file):
     # Generate marker
     marker_img = cv2.aruco.generateImageMarker(aruco_dict, marker_id, size)
 
+    # Add timestamp to filename
+    base, ext = os.path.splitext(output_file)
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    output_file_with_timestamp = f"{base}_{timestamp}{ext}"
+
     # Save marker
-    cv2.imwrite(output_file, marker_img)
-    print(f"✅ Saved marker ID {marker_id} from {dictionary_id} to {output_file}")
+    cv2.imwrite(output_file_with_timestamp, marker_img)
+    print(f"✅ Saved marker ID {marker_id} from {dictionary_id} to {output_file_with_timestamp}")
 
     # Show marker
     cv2.imshow("ArUco Marker", marker_img)
@@ -48,7 +55,6 @@ if __name__ == "__main__":
     parser.add_argument("--size", type=int, default=300, help="Size of marker image (pixels)")
     parser.add_argument("--out", type=str, default="aruco_marker.png", help="Output file name")
     args = parser.parse_args()
-
 
     if args.dict not in ARUCO_DICTS:
         print(f"❌ Unknown dictionary {args.dict}")
