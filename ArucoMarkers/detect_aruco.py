@@ -20,6 +20,7 @@ MARKER_SIZE_MM = 50  # Actual ArUco marker size in millimeters
 def measure_marker_to_marker_distance(frame, corners, ids, px_per_mm):
     """
     Compute and visualize distances between each pair of detected markers.
+    Marker-to-marker line: yellow, text: black.
     """
     distances = {}
     centers = []
@@ -44,12 +45,12 @@ def measure_marker_to_marker_distance(frame, corners, ids, px_per_mm):
                 "millimeters": round(dist_mm, 2)
             }
 
-            # Draw connecting line and label
+            # Draw connecting line (yellow) and text (black)
             mid_x, mid_y = int((x1 + x2) / 2), int((y1 + y2) / 2)
-            cv2.line(frame, (x1, y1), (x2, y2), (0, 165, 255), 2)
+            cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 255), 2, lineType=cv2.LINE_AA)
             cv2.putText(frame, f"{dist_mm:.1f}mm",
                         (mid_x + 5, mid_y - 5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 165, 255), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, lineType=cv2.LINE_AA)
 
     return distances
 
@@ -117,11 +118,11 @@ def detect_and_draw(frame, measure_between_markers=False):
                 cv2.putText(frame, f"{dist_bottom_mm:.1f}mm", (cx + 5, (cy + h) // 2),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
 
-                # Draw center line
+                # Draw center line (yellow) and distance text (black)
                 cv2.line(frame, frame_center, (cx, cy), (0, 255, 255), 2)
                 cv2.putText(frame, f"{dist_center_mm:.1f}mm",
                             ((cx + frame_center[0]) // 2 + 5, (cy + frame_center[1]) // 2 + 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, lineType=cv2.LINE_AA)
 
                 # Label marker
                 cv2.putText(frame, f"ID:{marker_id}", (cx + 10, cy - 10),

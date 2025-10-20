@@ -226,11 +226,7 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     cv2.imwrite(img_A_path, image_A)
     print(f"📸 Image A saved to {img_A_path}")
 
-    distances_A, marked_A = detect_from_image(img_A_path, return_marked=True)
-    marker_id = list(distances_A.keys())[0]
-    marker_data_A = distances_A[marker_id]
-    A_left = marker_data_A['left_mm']
-    A_right = marker_data_A['right_mm']
+    distances_A, marked_A = detect_from_image(img_A_path, return_marked=True, measure=True)
 
     # === POSITION B ===
     print("➡️ Moving to position B...")
@@ -246,29 +242,20 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     print(f"📸 Image B saved to {img_B_path}")
 
     distances_B, marked_B = detect_from_image(img_B_path, return_marked=True)
-    marker_id = list(distances_B.keys())[0]
-    marker_data_B = distances_B[marker_id]
-    B_left = marker_data_B['left_mm']
-    B_right = marker_data_B['right_mm']
+
 
     # === DIFFERENCE CALCULATION ===
-    diff_left = B_left - A_left
-    diff_right = B_right - A_right
+    x_offset = distances_A - distances_B
 
-    print(f"📏 Diff Left  = {diff_left:.3f} mm")
-    print(f"📏 Diff Right = {diff_right:.3f} mm")
-
+    print(f"📏 Measured offset = {x_offset:.3f} mm")
     # === LOG RESULTS TO CSV ===
     csv_file = "MarkerData.csv"
     file_exists = os.path.isfile(csv_file)
 
     data = {
-        'A Left': [A_left],
-        'B Left': [B_left],
-        'A Right': [A_right],
-        'B Right': [B_right],
-        'Diff Left': [diff_left],
-        'Diff Right': [diff_right],
+        'Distance A': [distances_A],
+        'Distance B': [distances_B],
+        'Offset': [x_offset]
     }
 
     pd.DataFrame(data).to_csv(csv_file, mode='a', header=not file_exists, index=False)
@@ -288,11 +275,12 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     }
 
 
+
 # === Main Run ===
 if __name__ == "__main__":
-    for x in range(10):
+    for x in range(1):
         safety_check()
-        calibration_distance = 400
+        calibration_distance = 50
         woody.set_speed(200)
         base_pose = [200, 0, 0, 0, 90, 0]
         calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")
