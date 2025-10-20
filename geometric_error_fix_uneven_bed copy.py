@@ -11,7 +11,7 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 10        # Printing speed (mm/s)
+PRINT_SPEED = 20        # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -242,14 +242,11 @@ while flg:
     z_thread = start_z_correction(csv_path, z_correction=True)
 
     # Example X/Y moves for perimeter
-    pose[0] = -60; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-    pose[1] = 500; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    pose[0] = 200; pose[1] = 400; pose = move_to_pose(pose, extruding=False, z_correct=z_flag)
 
-    pose[0] = 100; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-    pose[1] = -500; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    pose[1] = -400; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
-    pose[0] = -60; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
-    pose[1] = 0; pose = move_to_pose(pose, extruding=True, z_correct=z_flag); time.sleep(1)
+
 
     utils.plc.md_extruder_switch("off")
 
