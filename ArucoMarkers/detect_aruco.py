@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import argparse
 
-# --- Ensure UTF-8 output for Windows terminals ---
+# ---- Ensure UTF-8 output for Windows terminals ----
 sys.stdout.reconfigure(encoding='utf-8')
 
 # === ArUco setup ===
