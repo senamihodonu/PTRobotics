@@ -241,7 +241,7 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     cv2.imwrite(img_B_path, image_B)
     print(f"📸 Image B saved to {img_B_path}")
 
-    distances_B, marked_B = detect_from_image(img_B_path, return_marked=True)
+    distances_B, marked_B = detect_from_image(img_B_path, return_marked=True, measure=True)
 
 
     # === DIFFERENCE CALCULATION ===
@@ -266,13 +266,14 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
 
     print("✅ Calibration complete.\n")
 
-    return {
+    print({
         "image_A": img_A_path,
         "image_B": img_B_path,
         "distances_A": distances_A,
         "distances_B": distances_B,
-        "expected_move": calibration_distance,
-    }
+        "measured offset": x_offset,
+    })
+    return x_offset
 
 
 
@@ -283,4 +284,5 @@ if __name__ == "__main__":
         calibration_distance = 50
         woody.set_speed(200)
         base_pose = [200, 0, 0, 0, 90, 0]
-        calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")
+        offset = calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")
+        print(offset)

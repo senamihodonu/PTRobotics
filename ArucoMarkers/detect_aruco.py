@@ -147,6 +147,7 @@ def detect_from_image(path, save_marked=True, return_marked=False, show=False, m
     """
     abs_path = os.path.abspath(path)
     print(f"🔍 Reading image: {abs_path}")
+    offset = 0
 
     img = cv2.imread(abs_path)
     if img is None:
@@ -159,6 +160,7 @@ def detect_from_image(path, save_marked=True, return_marked=False, show=False, m
         print("\n📐 Marker-to-Marker Distances:")
         for (id1, id2), dist in distances.items():
             print(f"  Between {id1} ↔ {id2}: {dist['millimeters']:.2f} mm")
+            offset = dist['millimeters']
     else:
         print("\n📏 Measured distances (marker-to-frame in mm):")
         for marker_id, data in distances.items():
@@ -179,8 +181,7 @@ def detect_from_image(path, save_marked=True, return_marked=False, show=False, m
         cv2.imshow("ArUco Detection", annotated)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
-    return (distances, annotated) if return_marked else distances
+    return (offset, annotated) if return_marked else offset
 
 
 def main():

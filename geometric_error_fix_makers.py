@@ -39,22 +39,7 @@ def apply_z_correction_brute(pose, layer_height, tolerance, extruding=False):
             utils.plc.md_extruder_switch("on")
     return pose
 
-# def safety_check():
-#     """
-#     Ensure no safety coils are active before starting.
-#     Moves Z down and Y right if any safety coil is active.
-#     """
-#     while any(utils.plc.read_modbus_coils(c) for c in (8, 9, 14)):
-#         print("Safety check: coils active, moving Z down and Y right...")
-#         for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
-#             utils.plc.write_modbus_coils(coil, True)
 
-#     # Turn off safety coils
-#     for coil in (utils.Z_DOWN_MOTION, utils.Y_RIGHT_MOTION):
-#         utils.plc.write_modbus_coils(coil, False)
-
-#     print("Safety check complete.")
-#     time.sleep(1)
 
 
 def move_to_pose(pose, extruding=False, z_correct=False):
@@ -244,7 +229,7 @@ while flg:
     # Example X/Y moves for perimeter
     pose[0] = 200; pose[1] = 400; pose = move_to_pose(pose, extruding=False, z_correct=z_flag)
 
-    pose[1] = -400; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+    pose[1] = 300; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
 
 
