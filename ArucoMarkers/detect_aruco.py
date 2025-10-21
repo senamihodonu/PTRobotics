@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import argparse
 
-# ---- Ensure UTF-8 output for Windows terminals ----
+# --- Ensure UTF-8 output for Windows terminals ---
 sys.stdout.reconfigure(encoding='utf-8')
 
 # === ArUco setup ===
@@ -19,7 +19,7 @@ MARKER_SIZE_MM = 50  # Actual ArUco marker size in millimeters
 
 def measure_marker_to_marker_distance(frame, corners, ids, px_per_mm):
     """
-    Compute and visualize distances between each pair of detected markers.
+    Compute and visualize distances and angles between each pair of detected markers.
     Marker-to-marker line: yellow, text: black.
     """
     distances = {}
@@ -31,7 +31,7 @@ def measure_marker_to_marker_distance(frame, corners, ids, px_per_mm):
         cx, cy = int(pts[:, 0].mean()), int(pts[:, 1].mean())
         centers.append((marker_id, (cx, cy)))
 
-    # Compute all pairwise distances
+    # Compute all pairwise distances and angles
     for i in range(len(centers)):
         id1, (x1, y1) = centers[i]
         for j in range(i + 1, len(centers)):
@@ -40,15 +40,22 @@ def measure_marker_to_marker_distance(frame, corners, ids, px_per_mm):
             dist_px = np.hypot(x2 - x1, y2 - y1)
             dist_mm = dist_px / px_per_mm
 
+            # Calculate angle in degrees (relative to horizontal axis)
+            angle_rad = np.arctan2(y2 - y1, x2 - x1)
+            angle_deg = np.degrees(angle_rad)
+
             distances[(int(id1), int(id2))] = {
                 "pixels": round(dist_px, 2),
-                "millimeters": round(dist_mm, 2)
+                "millimeters": round(dist_mm, 2),
+                "angle_deg": round(angle_deg, 2)
             }
 
-            # Draw connecting line (yellow) and text (black)
+            # Draw connecting line (yellow)
             mid_x, mid_y = int((x1 + x2) / 2), int((y1 + y2) / 2)
             cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 255), 2, lineType=cv2.LINE_AA)
-            cv2.putText(frame, f"{dist_mm:.1f}mm",
+
+            # Draw text showing distance and angle
+            cv2.putText(frame, f"{dist_mm:.1f}mm {angle_deg:.1f}°",
                         (mid_x + 5, mid_y - 5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, lineType=cv2.LINE_AA)
 
@@ -157,9 +164,10 @@ def detect_from_image(path, save_marked=True, return_marked=False, show=False, m
     annotated, distances = detect_and_draw(img, measure_between_markers=measure)
 
     if measure:
-        print("\n📐 Marker-to-Marker Distances:")
+        print("\n📐 Marker-to-Marker Distances and Angles:")
         for (id1, id2), dist in distances.items():
-            print(f"  Between {id1} ↔ {id2}: {dist['millimeters']:.2f} mm")
+            print(f"  Between {id1} ↔ {id2}: {dist['millimeters']:.2f} mm, "
+                  f"Angle: {dist['angle_deg']:.2f}°")
             offset = dist['millimeters']
     else:
         print("\n📏 Measured distances (marker-to-frame in mm):")
@@ -187,7 +195,7 @@ def detect_from_image(path, save_marked=True, return_marked=False, show=False, m
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="Detect ArUco markers and measure distances (in mm)."
+        description="Detect ArUco markers and measure distances and angles (in mm & degrees)."
     )
     parser.add_argument("--image", required=True, help="Path to input image file.")
     parser.add_argument("--show", action="store_true", help="Display image window.")
@@ -197,13 +205,14 @@ def main():
                         help="Measure distances between marker centers instead of to frame edges.")
     args = parser.parse_args()
 
-    detect_from_image(
+    distance = detect_from_image(
         path=args.image,
         save_marked=not args.nosave,
         return_marked=args.returnimg,
         show=args.show,
         measure=args.measure
     )
+    print(distance)
 
 
 if __name__ == "__main__":
