@@ -227,7 +227,7 @@ while flg:
     z_thread = start_z_correction(csv_path, z_correction=True)
 
     # Example X/Y moves for perimeter
-    pose[0] = 200; pose[1] = 400; pose = move_to_pose(pose, extruding=False, z_correct=z_flag)
+    pose[0] = 150; pose[1] = 400; pose = move_to_pose(pose, extruding=False, z_correct=z_flag)
 
     pose[1] = 300; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 

@@ -266,13 +266,13 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
 
     print("✅ Calibration complete.\n")
 
-    print({
-        "image_A": img_A_path,
-        "image_B": img_B_path,
-        "distances_A": distances_A,
-        "distances_B": distances_B,
-        "measured offset": x_offset,
-    })
+    # print({
+    #     "image_A": img_A_path,
+    #     "image_B": img_B_path,
+    #     "distances_A": distances_A,
+    #     "distances_B": distances_B,
+    #     "measured offset": x_offset,
+    # })
     return x_offset
 
 
