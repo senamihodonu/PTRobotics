@@ -16,6 +16,7 @@ src_path = os.path.normpath(
 sys.path.append(src_path)
 
 # === Custom Libraries ===
+from ArucoMarkers.detect_aruco import detect_from_image
 from robot_controller import robot
 from PyPLCConnection import (
     PyPLCConnection,
@@ -207,6 +208,7 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     print(f"  Move axis: {move_axis.upper()} | Distance: {calibration_distance} mm")
 
     os.makedirs(save_dir, exist_ok=True)
+    base_pose = [200, 0, 0, 0, 90, 0]
 
     # --- Open camera ---
     cap = cv2.VideoCapture(camera_index)
