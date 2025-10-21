@@ -111,10 +111,7 @@ pose, z = utils.calibrate_height(pose, LAYER_HEIGHT)
 time.sleep(2)
 
 
-# === Print Setup ===
-utils.plc.md_extruder_switch("on")
-print("Extruder ON, starting print sequence...")
-time.sleep(4)
+
 
 
 # === Z Correction Thread ===
@@ -170,12 +167,12 @@ class ZCorrectionThread(threading.Thread):
                 print(f"[ZCorrection] Error appending CSV: {e}")
 
 # === Helper Functions ===
-def start_z_correction(csv_path, z_correction=False):
+def start_z_correction(csv_path, layer_height = LAYER_HEIGHT, z_correction=False):
     """
     Starts Z correction in a background thread.
     """
     z_thread = ZCorrectionThread(
-        LAYER_HEIGHT,
+        layer_height,
         tolerance=1,
         interval=2,
         csv_path=csv_path,
@@ -204,9 +201,27 @@ def stop_z_correction(z_thread):
 
 
 
+# === Print Setup ===
+utils.plc.md_extruder_switch("on")
+print("Extruder ON, starting print sequence...")
+time.sleep(4)
+
 # === Printing Loop (single-layer example) ===
 flg = True
 layer = 0
+caliberate = True
+layer_height = LAYER_HEIGHT
+
+csv_path = "z_correction1.csv"
+caliberate__height = z+10
+z_thread = start_z_correction(csv_path, caliberate__height, z_correction=True)
+calibration_distance = 400
+base_pose = [200, 0, caliberate__height, 0, 90, 0]
+utils.calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")
+time.sleep(2)
+utils.plc.travel(utils.Y_RIGHT_MOTION, calibration_distance, "mm", move_axis="y")
+stop_z_correction(z_thread)
+
 while flg:
     z_flag = False
     print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
@@ -223,8 +238,9 @@ while flg:
     # # Start Z correction in background
     # z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=2, csv_path="z_correction1.csv", z_correction=True)
     # z_thread.start()
-    csv_path = "z_correction1.csv"
-    z_thread = start_z_correction(csv_path, z_correction=True)
+
+    z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=True)
+
 
     # Example X/Y moves for perimeter
     pose[0] = 150; pose[1] = 400; pose = move_to_pose(pose, extruding=False, z_correct=z_flag)
