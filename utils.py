@@ -208,7 +208,7 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     print(f"  Move axis: {move_axis.upper()} | Distance: {calibration_distance} mm")
 
     os.makedirs(save_dir, exist_ok=True)
-    base_pose = [200, 0, 0, 0, 90, 0]
+    
 
     # --- Open camera ---
     cap = cv2.VideoCapture(camera_index)
@@ -228,7 +228,7 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     cv2.imwrite(img_A_path, image_A)
     print(f"📸 Image A saved to {img_A_path}")
 
-    distances_A, marked_A = detect_from_image(img_A_path, return_marked=True, measure=True)
+    distances_A, marked_A = detect_from_image(img_A_path, return_marked=True, measure=True, show=True)
 
     # === POSITION B ===
     print("➡️ Moving to position B...")
@@ -243,7 +243,7 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     cv2.imwrite(img_B_path, image_B)
     print(f"📸 Image B saved to {img_B_path}")
 
-    distances_B, marked_B = detect_from_image(img_B_path, return_marked=True, measure=True)
+    distances_B, marked_B = detect_from_image(img_B_path, return_marked=True, measure=True, show=True)
 
 
     # === DIFFERENCE CALCULATION ===
@@ -287,4 +287,4 @@ if __name__ == "__main__":
         woody.set_speed(200)
         base_pose = [200, 0, 0, 0, 90, 0]
         offset = calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")
-        print(offset)
+   

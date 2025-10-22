@@ -107,7 +107,7 @@ utils.plc.travel(utils.Z_UP_MOTION, 5, 'mm', 'z')
 
 
 # === Height Calibration ===
-pose, z = utils.calibrate_height(pose, LAYER_HEIGHT)
+pose, z = utils.calibrate_height(pose, LAYER_HEIGHT+10)
 time.sleep(2)
 
 
@@ -213,47 +213,52 @@ caliberate = True
 layer_height = LAYER_HEIGHT
 
 csv_path = "z_correction1.csv"
-caliberate__height = z+10
-z_thread = start_z_correction(csv_path, caliberate__height, z_correction=True)
-calibration_distance = 400
-base_pose = [200, 0, caliberate__height, 0, 90, 0]
+caliberate_height = LAYER_HEIGHT+10
+z_thread = start_z_correction(csv_path, caliberate_height, z_correction=True)
+calibration_distance = 50
+base_pose = [200, 0, z, 0, 90, 0]
 utils.calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")
 time.sleep(2)
-utils.plc.travel(utils.Y_RIGHT_MOTION, calibration_distance, "mm", move_axis="y")
 stop_z_correction(z_thread)
-
-while flg:
-    z_flag = False
-    print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
-
-    pose = [-100, 0, z, 0, 90, 0]
-    pose = move_to_pose(pose)
-
-    # Start perimeter path
-    utils.woody.set_speed(PRINT_SPEED)
-    utils.plc.md_extruder_switch("on")
-    time.sleep(3)
-    print("Extruder ON for perimeter path.")
-
-    # # Start Z correction in background
-    # z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=2, csv_path="z_correction1.csv", z_correction=True)
-    # z_thread.start()
-
-    z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=True)
+utils.plc.travel(utils.Y_RIGHT_MOTION, calibration_distance, "mm", axis="y")
 
 
-    # Example X/Y moves for perimeter
-    pose[0] = 150; pose[1] = 400; pose = move_to_pose(pose, extruding=False, z_correct=z_flag)
+# === Height Calibration ===
+pose, z = utils.calibrate_height(pose, LAYER_HEIGHT)
+time.sleep(2)
 
-    pose[1] = 300; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
+# while flg:
+#     z_flag = False
+#     print(f"\n=== Starting new layer at z = {z:.2f} mm ===")
+
+#     pose = [-100, 0, z, 0, 90, 0]
+#     pose = move_to_pose(pose)
+
+#     # Start perimeter path
+#     utils.woody.set_speed(PRINT_SPEED)
+#     utils.plc.md_extruder_switch("on")
+#     time.sleep(3)
+#     print("Extruder ON for perimeter path.")
+
+#     # # Start Z correction in background
+#     # z_thread = ZCorrectionThread(LAYER_HEIGHT, tolerance=1, interval=2, csv_path="z_correction1.csv", z_correction=True)
+#     # z_thread.start()
+
+#     z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=True)
+
+
+#     # Example X/Y moves for perimeter
+#     pose[0] = 150; pose[1] = 400; pose = move_to_pose(pose, extruding=False, z_correct=z_flag)
+
+#     pose[1] = 300; pose = move_to_pose(pose, extruding=True, z_correct=z_flag)
 
 
 
-    utils.plc.md_extruder_switch("off")
+#     utils.plc.md_extruder_switch("off")
 
-    # Stop Z correction thread
-    # z_thread.stop(); z_thread.join()
-    stop_z_correction(z_thread)
-    pose[2] += 20; pose = move_to_pose(pose)
+#     # Stop Z correction thread
+#     # z_thread.stop(); z_thread.join()
+#     stop_z_correction(z_thread)
+#     pose[2] += 20; pose = move_to_pose(pose)
 
-    flg = False  # stop after one loop for now
+#     flg = False  # stop after one loop for now

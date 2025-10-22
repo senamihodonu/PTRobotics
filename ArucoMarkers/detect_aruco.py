@@ -205,14 +205,14 @@ def main():
                         help="Measure distances between marker centers instead of to frame edges.")
     args = parser.parse_args()
 
-    distance = detect_from_image(
+    detect_from_image(
         path=args.image,
         save_marked=not args.nosave,
         return_marked=args.returnimg,
         show=args.show,
         measure=args.measure
     )
-    print(distance)
+    
 
 
 if __name__ == "__main__":
