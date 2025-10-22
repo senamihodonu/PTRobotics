@@ -259,6 +259,7 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
         'Distance B': [distances_B],
         'Offset': [x_offset]
     }
+    print(data)
 
     pd.DataFrame(data).to_csv(csv_file, mode='a', header=not file_exists, index=False)
 
@@ -283,7 +284,7 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
 if __name__ == "__main__":
     for x in range(1):
         safety_check()
-        calibration_distance = 50
+        calibration_distance = 400
         woody.set_speed(200)
         base_pose = [200, 0, 0, 0, 90, 0]
         offset = calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")
