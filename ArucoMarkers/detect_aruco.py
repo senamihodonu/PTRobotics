@@ -14,8 +14,16 @@ ARUCO_PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(ARUCO_DICT, ARUCO_PARAMS)
 
 # === Marker properties ===
-MARKER_SIZE_MM = 50  # Actual ArUco marker size in millimeters
-
+MARKER_SIZE_MM = 36.5  # Actual ArUco marker size in millimeters
+# === Load camera calibration ===
+try:
+    CAMERA_MATRIX = np.load('camera_matrix.npy')
+    DIST_COEFFS = np.load('dist_coeffs.npy')
+    print("📸 Loaded camera calibration files.")
+except Exception as e:
+    print("⚠️ Could not load calibration files (camera_matrix.npy, dist_coeffs.npy).")
+    print("   Please run calibration first. See: calibrate_camera.py")
+    sys.exit(1)
 
 def measure_marker_to_marker_distance(frame, corners, ids, px_per_mm):
     """
