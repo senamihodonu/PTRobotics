@@ -27,7 +27,7 @@ from PyPLCConnection import (
 print("Small program established")
 
 woody = robot(ROBOT_IP)
-speed = 50
+speed = 100
 woody.set_speed(int(speed))
 woody.set_robot_speed_percent(100)
 
@@ -39,29 +39,38 @@ woody.set_robot_speed_percent(100)
 # J4: Wrist roll
 # J5: Wrist pitch
 # J6: Wrist yaw
-print("[HOME] Moving robot to home position")
-home_joint_pose = [0,-30, 0, 0, 90, 180]
-woody.write_joint_pose(home_joint_pose)
+# print("[HOME] Moving robot to home position")
+# home_joint_pose = [0,-30, 0, 0, 90, 180]
+# woody.write_joint_pose(home_joint_pose)
 
-# pose1 = [0,-42.341, 23.213, 1.855, 29.902, 177.962]
-# woody.write_joint_pose(pose1)
+print("[HOME] Moving robot to home position...")
 
-# pose2 = [-19.938,-38, 14.169, 29.642, 62.678, 155.751]
-# woody.write_joint_pose(pose2)
+pose = [100, 0, 0, -180, 0, 0]
+woody.write_cartesian_position(pose)
 
-# pose3 = [36.047,-32.539, 15.944, -45.324, 80.924, 223.989]
-# woody.write_joint_pose(pose3)
+# # --- Sequential Motions ---
+# print("[MOVE] Executing motion sequence...")
 
-# --- Move to Starting Cartesian Position ---
-# # Cartesian pose: [X, Y, Z, W, P, R]
-# # X, Y, Z: Position in millimeters
-# # W, P, R: Orientation (Roll, Pitch, Yaw) in degrees
-# start_cartesian_pose = [
-#     322.637,  # X: Forward/backward
-#     -2.841,   # Y: Left/right
-#     847.603,  # Z: Up/down
-#     180,      # W: Roll
-#     -90,      # P: Pitch
-#     0         # R: Yaw
-# ]
-woody.write_cartesian_position([0,0, 0, 0, 0, 0])
+pose[0] = 0
+woody.write_cartesian_position(pose)
+
+pose[1] = -200
+woody.write_cartesian_position(pose)
+
+pose[0] -= 20
+woody.write_cartesian_position(pose)
+
+pose[1] = 0
+woody.write_cartesian_position(pose)
+
+pose[2] += 20
+woody.write_cartesian_position(pose)
+
+pose[1] = -200
+woody.write_cartesian_position(pose)
+
+pose[0] += 20
+woody.write_cartesian_position(pose)
+
+pose[1] = 0
+woody.write_cartesian_position(pose)
