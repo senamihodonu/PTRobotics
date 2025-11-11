@@ -75,6 +75,54 @@ def safety_check():
     print("Safety check complete.")
     time.sleep(1)
 
+def apply_z_correction_brute(pose, layer_height, tolerance, extruding=False):
+    """
+    Apply Z correction safely.
+    Turns extruder OFF during adjustment if needed.
+    """
+    corrected_z = z_difference(layer_height, pose[2], tolerance)
+    if corrected_z != pose[2]:
+        pose[2] = corrected_z
+        if extruding:
+            plc.md_extruder_switch("on")
+        woody.write_cartesian_position(pose)
+    return pose
+
+def move_to_pose(pose, layer_height, tol, extruding=False, z_correct=False):
+    """
+    Move robot to a given pose with optional Z correction.
+    """
+    woody.write_cartesian_position(pose)
+    if z_correct:
+        return apply_z_correction_brute(pose, layer_height, tol, extruding)
+    return pose
+
+def lift_and_travel(pose, travel_distance, direction):
+    """
+    Lift Z by Z_OFFSET and travel in a given direction using PLC motion.
+    """
+    z_offset = 20
+    plc.md_extruder_switch("off")
+    woody.set_speed(200)
+
+    pose[2] += z_offset
+    woody.write_cartesian_position(pose)
+
+    plc.travel(direction, travel_distance, 'mm', 'y')
+
+    pose[2] -= z_offset
+    woody.write_cartesian_position(pose)
+    return pose
+
+def sweep_y_positions(pose, y_positions, extruding=False, z_correct=False):
+    """
+    Sweep through a list of Y positions at the current X coordinate.
+    """
+    for y in y_positions:
+        pose[1] = y
+        pose = move_to_pose(pose, extruding, z_correct)
+    return pose
+
 # === Camera Utilities ===
 def open_all_cameras(max_cameras=5):
     """
