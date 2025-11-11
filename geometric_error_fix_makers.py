@@ -21,6 +21,22 @@ Z_CORRECTION = 4        # Small Z alignment correction (mm)
 TOLERANCE = 0           # Tolerance for Z correction
 Z_INCREMENT = LAYER_HEIGHT
 
+# === Robot & PLC Setup ===
+utils.woody.set_robot_uframe(utils.MD_PELLET_UFRAME)     # Select pellet extruder user frame
+utils.woody.set_robot_utool(utils.MD_PELLET_UTOOL)       # Select pellet extruder tool frame
+utils.woody.set_speed(SPEED)                             # Set travel speed (mm/s)
+utils.woody.set_robot_speed_percent(100)                 # Set robot motion override (%)
+
+# Reset PLC output states
+utils.plc.reset_coils()
+time.sleep(2)
+print("PLC coils reset.")
+
+# === Safe Start & Safety Check ===
+utils.plc.md_extruder_switch("off")
+print("Extruder switched OFF for safe start.")
+
+
 print("Parameters set.")
 
 # === Helper Functions ===
@@ -36,8 +52,6 @@ def apply_z_correction_brute(pose, layer_height, tolerance, extruding=False):
             utils.plc.md_extruder_switch("on")
         utils.woody.write_cartesian_position(pose)
     return pose
-
-
 
 
 def move_to_pose(pose, extruding=False, z_correct=False):
@@ -85,35 +99,18 @@ if len(sys.argv) > 1 and sys.argv[1].lower() in ("mv", "machinevision"):
 else:
     print("Machine vision mode OFF (no cameras opened).")
 
-
-# === Robot & PLC Setup ===
-utils.woody.set_speed(SPEED)
-utils.woody.set_robot_speed_percent(100)
-utils.plc.reset_coils()
-time.sleep(2)
-print("Robot speed configured and PLC coils reset.")
-
-
 # === Initial Pose ===
 z = 0
 pose = [-100, 0, z, 0, 90, 0]
 utils.woody.write_cartesian_position(pose)
 print(f"Robot moved to initial pose: {pose}")
 
-
-# === Safe Start & Safety Check ===
-utils.plc.md_extruder_switch("off")
-print("Extruder OFF for safe start.")
 utils.safety_check()
 utils.plc.travel(utils.Z_UP_MOTION, 5, 'mm', 'z')
-
 
 # === Height Calibration ===
 pose, z = utils.calibrate_height(pose, LAYER_HEIGHT)
 time.sleep(2)
-
-
-
 
 
 # === Z Correction Thread ===
@@ -200,8 +197,6 @@ def stop_z_correction(z_thread):
         print("✅ Z correction thread stopped successfully.")
     else:
         print("ℹ️  Z correction thread is not running.")
-
-
 
 
 

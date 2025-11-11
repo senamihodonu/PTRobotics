@@ -45,6 +45,8 @@ class robot:
         self.sync_value = 1 
         self.speed_register = 5
         self.speed_percent = 6
+        self.uframe = 7
+        self.utool = 8
 
         self.DEBUG = DEBUG
         FANUCethernetipDriver.DEBUG = DEBUG
@@ -541,6 +543,62 @@ class robot:
             raise Warning(f"Speed percent should be in the range of [0, 100], got {value}")
         
         FANUCethernetipDriver.writeR_Register(self.robot_IP, self.speed_percent, value)
+
+    # Utility Functions
+    def set_robot_uframe(self, value: int):
+        """
+        Set the active user frame register on the robot.
+
+        Parameters:
+            value (int): User frame index. Must be within [0, 30].
+        """
+        if not (0 <= value <= 30):
+            raise ValueError(f"User frame must be within the range [0, 30], received: {value}")
+
+        print("------------------------------")
+        print(f"| Setting User Frame to: {value} |")
+        print("------------------------------")
+
+        FANUCethernetipDriver.writeR_Register(self.robot_IP, self.uframe, value)
+
+
+    def get_robot_uframe(self) -> int:
+        """
+        Get the currently commanded user frame register value.
+
+        Returns:
+            int: Active User Frame index.
+        """
+        return FANUCethernetipDriver.readR_Register(self.robot_IP, self.uframe)
+
+    
+    # Utility Functions
+    def set_robot_utool(self, value: int):
+        """
+        Set the active user tool register on the robot.
+
+        Parameters:
+            value (int): User tool index. Must be within [0, 10].
+        """
+        if not (0 <= value <= 10):
+            raise ValueError(f"User tool must be within the range [0, 10], received: {value}")
+
+        print("------------------------------")
+        print(f"| Setting User Tool to: {value} |")
+        print("------------------------------")
+
+        FANUCethernetipDriver.writeR_Register(self.robot_IP, self.utool, value)
+
+
+    def get_robot_utool(self) -> int:
+        """
+        Get the currently commanded user tool register value.
+
+        Returns:
+            int: Active user tool index.
+        """
+        return FANUCethernetipDriver.readR_Register(self.robot_IP, self.utool)
+
 
     def get_robot_speed_percent(self) -> int:
         """

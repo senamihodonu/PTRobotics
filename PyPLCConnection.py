@@ -19,6 +19,10 @@ PPS_Z_ADDRESS = 12
 PLC_IP = "192.168.1.25"
 ROBOT_IP = '192.168.1.101' #Woody
 MD_EXTRUDER_ADDRESS = 13
+MD_PELLET_UFRAME = 1
+MD_PELLET_UTOOL = 1
+WOOD_NOZZLE_UFRAME = 2
+WOOD_NOZZLE_UTOOL = 2
 
 print("---------------------------------------------")
 class PyPLCConnection:

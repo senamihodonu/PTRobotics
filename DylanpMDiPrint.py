@@ -45,32 +45,35 @@ woody.set_robot_speed_percent(100)
 
 print("[HOME] Moving robot to home position...")
 
-pose = [100, 0, 0, -180, 0, 0]
+pose = [100, 0, -120, -180, 0, 0]
 woody.write_cartesian_position(pose)
 
 # # --- Sequential Motions ---
 # print("[MOVE] Executing motion sequence...")
 
-pose[0] = 0
+pose[2] -= 20
 woody.write_cartesian_position(pose)
 
-pose[1] = -200
+pose[0] = 50
+woody.write_cartesian_position(pose)
+
+pose[1] = -350
 woody.write_cartesian_position(pose)
 
 pose[0] -= 20
 woody.write_cartesian_position(pose)
 
-pose[1] = 0
+pose[1] = 50
 woody.write_cartesian_position(pose)
 
 pose[2] += 20
 woody.write_cartesian_position(pose)
 
-pose[1] = -200
+pose[1] = -350
 woody.write_cartesian_position(pose)
 
 pose[0] += 20
 woody.write_cartesian_position(pose)
 
-pose[1] = 0
+pose[1] = 50
 woody.write_cartesian_position(pose)
