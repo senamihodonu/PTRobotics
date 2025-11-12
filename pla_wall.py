@@ -45,75 +45,75 @@ time.sleep(2)
 pose = [-100, -400, 0, 0, 90, 0]  # X, Y, Z, W, P, R
 woody.write_cartesian_position(pose)
 
-# Ensure safe start: move Z down + Y right until coils 8, 9, or 14 are off
-plc.md_extruder_switch("off")
-while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
-    for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
-        plc.write_modbus_coils(coil, True)
+# # Ensure safe start: move Z down + Y right until coils 8, 9, or 14 are off
+# plc.md_extruder_switch("off")
+# while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
+#     for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
+#         plc.write_modbus_coils(coil, True)
 
-# Stop motion
-for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
-    plc.write_modbus_coils(coil, False)
+# # Stop motion
+# for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
+#     plc.write_modbus_coils(coil, False)
 
-time.sleep(1)
+# time.sleep(1)
 
-# === Print Setup ===
-woody.set_speed(print_speed)
-plc.md_extruder_switch("on")
+# # === Print Setup ===
+# woody.set_speed(print_speed)
+# plc.md_extruder_switch("on")
 
-# === Lead Sequence ===
-pose = [-100, -400, 0, 0, 90, 0]
-woody.write_cartesian_position(pose)
+# # === Lead Sequence ===
+# pose = [-100, -400, 0, 0, 90, 0]
+# woody.write_cartesian_position(pose)
 
-for layer in range(2):
-    # First pass
-    woody.set_speed(speed)
-    pose[0] = -60
-    pose[1] = -400
-    woody.write_cartesian_position(pose)
-    woody.set_speed(print_speed)
-    plc.md_extruder_switch("on")
+# for layer in range(2):
+#     # First pass
+#     woody.set_speed(speed)
+#     pose[0] = -60
+#     pose[1] = -400
+#     woody.write_cartesian_position(pose)
+#     woody.set_speed(print_speed)
+#     plc.md_extruder_switch("on")
 
-    pose[1] = 400
-    woody.write_cartesian_position(pose)
+#     pose[1] = 400
+#     woody.write_cartesian_position(pose)
 
-    pose[0] = 100
-    woody.write_cartesian_position(pose)
+#     pose[0] = 100
+#     woody.write_cartesian_position(pose)
 
-    pose[1] = -400
-    woody.write_cartesian_position(pose)
+#     pose[1] = -400
+#     woody.write_cartesian_position(pose)
 
-    pose[0] = -60
-    woody.write_cartesian_position(pose)
-    plc.md_extruder_switch("off")
+#     pose[0] = -60
+#     woody.write_cartesian_position(pose)
+#     plc.md_extruder_switch("off")
 
-    # Offset passes
-    pose[0] = -60 + offset
-    pose[1] = -400 + offset
-    woody.write_cartesian_position(pose)
-    plc.md_extruder_switch("on")
+#     # Offset passes
+#     pose[0] = -60 + offset
+#     pose[1] = -400 + offset
+#     woody.write_cartesian_position(pose)
+#     plc.md_extruder_switch("on")
 
-    pose[0] = 100 - offset
-    pose[1] = -198
-    woody.write_cartesian_position(pose)
+#     pose[0] = 100 - offset
+#     pose[1] = -198
+#     woody.write_cartesian_position(pose)
 
-    pose[0] = -60 + offset
-    pose[1] = 0
-    woody.write_cartesian_position(pose)
+#     pose[0] = -60 + offset
+#     pose[1] = 0
+#     woody.write_cartesian_position(pose)
 
-    pose[0] = 100 - offset
-    pose[1] = 198
-    woody.write_cartesian_position(pose)
+#     pose[0] = 100 - offset
+#     pose[1] = 198
+#     woody.write_cartesian_position(pose)
 
-    pose[0] = -60 + offset
-    pose[1] = 400 - offset
-    woody.write_cartesian_position(pose)
+#     pose[0] = -60 + offset
+#     pose[1] = 400 - offset
+#     woody.write_cartesian_position(pose)
 
-    # End layer
-    plc.md_extruder_switch("off")
-    pose[2] += layer_height
+#     # End layer
+#     plc.md_extruder_switch("off")
+#     pose[2] += layer_height
 
-    if layer == 1:
-        distance = pose[2]+layer_height
-        plc.travel(Z_UP_MOTION, distance, "mm", "z")
-        pose[2] = 0
+#     if layer == 1:
+#         distance = pose[2]+layer_height
+#         plc.travel(Z_UP_MOTION, distance, "mm", "z")
+#         pose[2] = 0

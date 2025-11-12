@@ -29,8 +29,9 @@ plc = PyPLCConnection(PLC_IP)
 woody = robot(ROBOT_IP)
 
 # === Parameters ===
-speed = 200
-print_speed = 200
+speed = 10
+print_speed = 10
+
 offset = 4
 layer_height = 4
 z_offset = 20

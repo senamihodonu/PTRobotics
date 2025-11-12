@@ -256,6 +256,7 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     """
     print("\n🔹 Starting calibration procedure...")
     print(f"  Move axis: {move_axis.upper()} | Distance: {calibration_distance} mm")
+    woody.set_speed(50)
 
     os.makedirs(save_dir, exist_ok=True)
     
@@ -334,13 +335,29 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
 if __name__ == "__main__":
     # for x in range(1):
     #     safety_check()
-    #     calibration_distance = 400
+    #     calibration_distance = 50
     #     woody.set_speed(200)
     #     base_pose = [200, 0, 0, 0, 90, 0]
     #     offset = calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")
-    print("[HOME] Moving robot to home position")
-    home_joint_pose = [0,-30, 0, 0, -90, 180]
+    # print("[HOME] Moving robot to home position")
+    woody.set_speed(20)                             # Set travel speed (mm/s)
+    woody.set_robot_speed_percent(50)   
+    # woody.set_robot_uframe(1)     # Select pellet extruder user frame
+    # woody.set_robot_utool(1)  
+    home_joint_pose = [0,-40, 40, 0, -40, 0]
     woody.write_joint_pose(home_joint_pose)
+    # # woody.write_joint_pose(home_joint_pose)
+    # # pose = [0,-4.779, 0, 0, 90, 0]
+    # # woody.write_cartesian_position(pose)
+
+    # pose[1]+=500
+    # woody.write_cartesian_position(pose)
+
+    # pose[1]-=500
+    # woody.write_cartesian_position(pose)
+
+    # pose[1]-=500
+    # woody.write_cartesian_position(pose)
     
     # pose1 = [0,-26.898, 5.357, -180, -84.643, 360]
     # woody.write_joint_pose(pose1)
