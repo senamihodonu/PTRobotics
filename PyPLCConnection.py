@@ -23,6 +23,8 @@ MD_PELLET_UFRAME = 1
 MD_PELLET_UTOOL = 1
 WOOD_NOZZLE_UFRAME = 2
 WOOD_NOZZLE_UTOOL = 2
+DISABLE_PIN = 16
+
 
 print("---------------------------------------------")
 class PyPLCConnection:
@@ -216,6 +218,18 @@ class PyPLCConnection:
         self.write_modbus_coils(MD_EXTRUDER_ADDRESS, value)
         print(f"Turning MD pellet extruder {status.strip().upper()}")
 
+    def disable_motor(self, value):
+        """
+        Turn the MD pellet extruder ON or OFF via Modbus coils.
+
+        :param status: "on" or "off" (case-insensitive)
+        """
+        self.write_modbus_coils(DISABLE_PIN, value)
+        if value == False:
+            print(f"Motors are enabled value = {value}")
+        else:
+            print(f"Motors are disabled value = {value}")
+
 
 
     def travel(self, coil_address, distance, unit, axis):
@@ -318,6 +332,8 @@ if __name__ == "__main__":
 
     # plc.travel(Z_DOWN_MOTION, 4,"mm","z")
     print(plc.read_current_distance())
+
+    plc.disable_motor(False)
 
     # time.sleep()
 

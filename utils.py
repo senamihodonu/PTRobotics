@@ -63,6 +63,10 @@ def safety_check():
     Ensure no safety coils are active before starting.
     Moves Z down and Y right if any safety coil is active.
     """
+    
+    plc.write_modbus_coils(Z_UP_MOTION, True)
+    time.sleep(1)
+    plc.write_modbus_coils(Z_UP_MOTION, False)
     while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
         print("Safety check: coils active, moving Z down and Y right...")
         for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):
@@ -340,24 +344,26 @@ if __name__ == "__main__":
     #     base_pose = [200, 0, 0, 0, 90, 0]
     #     offset = calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")
     # print("[HOME] Moving robot to home position")
-    woody.set_speed(20)                             # Set travel speed (mm/s)
-    woody.set_robot_speed_percent(50)   
-    # woody.set_robot_uframe(1)     # Select pellet extruder user frame
-    # woody.set_robot_utool(1)  
+    woody.set_robot_uframe(1)     # Select pellet extruder user frame
+    woody.set_robot_utool(1)  
+    woody.set_speed(100)                             # Set travel speed (mm/s)
+    woody.set_robot_speed_percent(100)   
+    time.sleep(1)
     home_joint_pose = [0,-40, 40, 0, -40, 0]
     woody.write_joint_pose(home_joint_pose)
-    # # woody.write_joint_pose(home_joint_pose)
-    # # pose = [0,-4.779, 0, 0, 90, 0]
-    # # woody.write_cartesian_position(pose)
 
-    # pose[1]+=500
-    # woody.write_cartesian_position(pose)
+    woody.write_joint_pose(home_joint_pose)
+    pose = [0,0, 0, 46.029, 89.995, 46.028]
+    woody.write_cartesian_position(pose)
 
-    # pose[1]-=500
-    # woody.write_cartesian_position(pose)
+    pose[1]+=500
+    woody.write_cartesian_position(pose)
 
-    # pose[1]-=500
-    # woody.write_cartesian_position(pose)
+    pose[1]-=500
+    woody.write_cartesian_position(pose)
+
+    pose[1]-=500
+    woody.write_cartesian_position(pose)
     
     # pose1 = [0,-26.898, 5.357, -180, -84.643, 360]
     # woody.write_joint_pose(pose1)
