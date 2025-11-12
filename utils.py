@@ -67,6 +67,7 @@ def safety_check():
     plc.write_modbus_coils(Z_UP_MOTION, True)
     time.sleep(1)
     plc.write_modbus_coils(Z_UP_MOTION, False)
+    time.sleep(1)
     while any(plc.read_modbus_coils(c) for c in (8, 9, 14)):
         print("Safety check: coils active, moving Z down and Y right...")
         for coil in (Z_DOWN_MOTION, Y_RIGHT_MOTION):

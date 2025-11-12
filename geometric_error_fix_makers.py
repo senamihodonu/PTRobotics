@@ -11,9 +11,9 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 10        # Printing speed (mm/s)
+PRINT_SPEED = 8        # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
-LAYER_HEIGHT = 4        # Vertical step per layer (mm)
+LAYER_HEIGHT = 5        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
 X_OFFSET = 9            # X-axis offset (mm)
 PRINT_OFFSET = 5        # Vertical offset between passes (mm)
@@ -92,6 +92,7 @@ class ZCorrectionThread(threading.Thread):
                     'y': y,
                     'z': z,
                     'current_height': current_height,
+                    'layer_height': LAYER_HEIGHT,
                     'print_speed': print_speed,
                     'timestamp': time.time()
                 })
@@ -151,26 +152,26 @@ def stop_z_correction(z_thread):
 
 # # --- Calibration + move setup ---
 
-calibration_distance = 50
-offset = 0
-pose[0]+= 200
+# calibration_distance = 50
+# offset = 0
+# pose[0]+= 200
 
-z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correction=True)
-try:
-    offset = utils.calibrate(
-        calibration_distance,
-        pose,
-        move_axis='y',
-        camera_index=0,
-        save_dir="samples"
-    )
-    print(f"Offset = {offset}")
-finally:
-    stop_z_correction(z_thread)
+# z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correction=True)
+# try:
+#     offset = utils.calibrate(
+#         calibration_distance,
+#         pose,
+#         move_axis='y',
+#         camera_index=0,
+#         save_dir="samples"
+#     )
+#     print(f"Offset = {offset}")
+# finally:
+#     stop_z_correction(z_thread)
 
-time.sleep(1)
-pose = utils.lift_and_travel(pose, calibration_distance, utils.Y_RIGHT_MOTION)
-time.sleep(1)
+# time.sleep(1)
+# pose = utils.lift_and_travel(pose, calibration_distance, utils.Y_RIGHT_MOTION)
+# time.sleep(1)
 
 
 # === Height Calibration ===
@@ -181,17 +182,18 @@ time.sleep(1)
 
 # === Print Setup ===
 
-z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correction=True)
+z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correction=False)
 utils.woody.set_speed(PRINT_SPEED)
 # Move to layer start pose
+utils.plc.md_extruder_switch("on")
 pose[0] = 100
 pose[1] = 500
 pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
-# utils.plc.md_extruder_switch("on")
-# time.sleep(5)
+
+
 stop_z_correction(z_thread)
 
-csv_path = "single_layer_print_bed.csv"
+csv_path = "single_layer_print_bed_no_correction_1.csv"
 flg = True
 while flg:
 
@@ -199,7 +201,7 @@ while flg:
 
     z_flag = False  # z correction toggle flag
     # Start background Z-correction thread
-    z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=True)
+    z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=False)
 
     # --- Perimeter Motion Sequence ---
     pose[1] = -500
@@ -207,7 +209,7 @@ while flg:
 
 
 #     # # End first extrusion segment
-#     # utils.plc.md_extruder_switch("off")
+    utils.plc.md_extruder_switch("off")
     stop_z_correction(z_thread)
 #     # time.sleep(1)
 

@@ -325,7 +325,7 @@ if __name__ == "__main__":
     # plc.write_modbus_coils(Y_RIGHT_MOTION, False)
     # plc.write_modbus_coils(Y_LEFT_MOTION, False)
     # plc.read_single_register(7)
-    # plc.md_extruder_switch("off")
+    plc.md_extruder_switch("off")
     # # plc.calculate_pulse_per_second("z")
     # # plc.travel(Z_UP_MOTION, 1, "in", pps=60000, lead_mm=5, pulses_per_rev=20000)
 
