@@ -22,7 +22,6 @@ Z_INCREMENT = LAYER_HEIGHT
 print("Parameters set.")
 
 
-
 # === Helper Functions ===
 def apply_z_correction_brute(pose, layer_height, tolerance, extruding=False):
     """
