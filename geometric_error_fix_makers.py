@@ -13,7 +13,7 @@ print("=== Program initialized ===")
 SPEED = 200             # Robot travel speed (mm/s)
 PRINT_SPEED = 8        # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
-LAYER_HEIGHT = 5        # Vertical step per layer (mm)
+LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
 X_OFFSET = 9            # X-axis offset (mm)
 PRINT_OFFSET = 5        # Vertical offset between passes (mm)
@@ -173,7 +173,7 @@ def stop_z_correction(z_thread):
 # pose = utils.lift_and_travel(pose, calibration_distance, utils.Y_RIGHT_MOTION)
 # time.sleep(1)
 
-
+utils.plc.travel(utils.Y_LEFT_MOTION, 100, 'mm', 'z')
 # === Height Calibration ===
 pose = [0, 0, z_pos, 46.029, 89.995, 46.028]
 pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
