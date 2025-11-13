@@ -182,7 +182,7 @@ time.sleep(1)
 
 # === Print Setup ===
 
-z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correction=True)
+z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correction=False)
 utils.woody.set_speed(PRINT_SPEED)
 # Move to layer start pose
 utils.plc.md_extruder_switch("on")
@@ -193,7 +193,7 @@ pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
 
 stop_z_correction(z_thread)
 
-csv_path = "single_layer_print_bed_correction.csv"
+csv_path = "SLP_no_correction.csv"
 flg = True
 while flg:
 
@@ -201,7 +201,7 @@ while flg:
 
     z_flag = False  # z correction toggle flag
     # Start background Z-correction thread
-    z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=True)
+    z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=False)
 
     # --- Perimeter Motion Sequence ---
     pose[1] = -500
