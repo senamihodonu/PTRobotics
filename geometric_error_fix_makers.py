@@ -11,7 +11,7 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 8        # Printing speed (mm/s)
+PRINT_SPEED = 5        # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -177,7 +177,7 @@ utils.plc.travel(utils.Y_LEFT_MOTION, 100, 'mm', 'y')
 # === Height Calibration ===
 pose = [0, 0, z_pos, 46.029, 89.995, 46.028]
 pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
-pose, z_pos = utils.calibrate_height(pose, LAYER_HEIGHT)
+
 time.sleep(1)
 
 # === Print Setup ===
@@ -186,14 +186,17 @@ z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correc
 utils.woody.set_speed(PRINT_SPEED)
 # Move to layer start pose
 utils.plc.md_extruder_switch("on")
+time.sleep(1)
 pose[0] = 100
 pose[1] = 500
 pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
 
-
 stop_z_correction(z_thread)
+time.sleep(1)
+pose, z_pos = utils.calibrate_height(pose, LAYER_HEIGHT)
+time.sleep(1)
 
-csv_path = "SLP_no_correction.csv"
+csv_path = "SLPC_no_correction_variation_5_per_s.csv"
 flg = True
 while flg:
 
