@@ -1,47 +1,13 @@
-# import pandas as pd
-# import matplotlib.pyplot as plt
-
-# # Load CSVs
-# corr = pd.read_csv('SLP_correction.csv')
-# no_corr = pd.read_csv('SLP_no_correction.csv')
-
-# # Extract actual distances in CSV
-# # (Assuming your CSV distance goes approx 0 → 1000)
-# distance_values = corr['distance'].values
-
-# # Choose sample distances similar to your example
-# sample_distances = [0, 200, 400, 600, 800, 1000]
-
-# # Function: find nearest height at each sample point
-# def sample_nearest(df, height_col):
-#     results = []
-#     for target in sample_distances:
-#         idx = (df['distance'] - target).abs().idxmin()
-#         results.append(df.loc[idx, height_col])
-#     return results
-
-# # Correct column names from the CSVs
-# corr_on  = sample_nearest(corr,    "current_height_correction")
-# corr_off = sample_nearest(no_corr, "current_height_no_correction")
-# ideal    = [4] * len(sample_distances)
-
-# # ---- Plot ----
-# plt.figure(figsize=(8,6))
-
-# plt.plot(sample_distances, ideal, '--', label="Ideal Height (4 mm)")
-# plt.plot(sample_distances, corr_off, '-o', label="Correction OFF")
-# plt.plot(sample_distances, corr_on,  '-o', label="Correction ON")
-
-# plt.xlabel("Distance Along Print Path (mm)")
-# plt.ylabel("Measured Height (mm)")
-# plt.title("Height Profile Comparison: Correction OFF vs ON")
-
-# plt.grid(True, linestyle='--', alpha=0.4)
-# plt.legend()
-# plt.tight_layout()
-# plt.show()
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.interpolate import make_interp_spline
+
+# ---------------------------------------------------------
+# Plot Modes (choose one)
+# ---------------------------------------------------------
+USE_SMOOTH_LINES = True    # Smooth spline curves (except ideal, which is always smooth)
+USE_SCATTER_ONLY = False    # Scatter plot only (experimental data only)
 
 # ---------------------------------------------------------
 # ASME Journal Figure Style Settings
@@ -59,66 +25,120 @@ plt.rcParams.update({
 })
 
 # ---------------------------------------------------------
-# Load CSVs
+# Load CSV Data
 # ---------------------------------------------------------
-# corr = pd.read_csv('SLPC_correction_variation_5_per_s.csv')
-# no_corr = pd.read_csv('SLPC_no_correction_variation_5_per_s.csv')
-corr = pd.read_csv('SLP_correction_0.csv')
-no_corr = pd.read_csv('SLP_no_correction_0.csv')
+corr          = pd.read_csv('SLPC_correction_8_per_s_0_tol.csv')   # Correction ON
+corr_w_tol    = pd.read_csv('SLP_correction_0.csv')                # Correction ON (tolerance)
+no_corr       = pd.read_csv('SLP_no_correction_0.csv')             # Correction OFF
 
-# Extract actual distance column
-distance_values = corr['distance'].values
-
-# Sample distances for comparison
-sample_distances = [0, 200, 400, 600, 800, 1000]
+sample_distances = [0, 100, 200, 300, 400, 500,
+                    600, 700, 800, 900, 1000]
 
 # ---------------------------------------------------------
-# Helper: find nearest value in dataset
+# Helper Function: Nearest-value sampling
 # ---------------------------------------------------------
-def sample_nearest(df, height_col):
-    values = []
+def sample_nearest(df, height_col="current_height"):
+    sampled = []
     for target in sample_distances:
         idx = (df['distance'] - target).abs().idxmin()
-        values.append(df.loc[idx, height_col])
-    return values
+        sampled.append(df.loc[idx, height_col])
+    return sampled
 
 # ---------------------------------------------------------
-# Correct data column names
-# (Your CSV uses these exact names)
+# Sample profiles
 # ---------------------------------------------------------
-corr_on  = sample_nearest(corr,    "current_height")
-corr_off = sample_nearest(no_corr, "current_height")
-ideal    = [4] * len(sample_distances)
+corr_on_sample  = sample_nearest(corr)
+corr_tol_sample = sample_nearest(corr_w_tol)
+corr_off_sample = sample_nearest(no_corr)
+ideal_height    = [4] * len(sample_distances)
 
 # ---------------------------------------------------------
-# Plot (ASME compliant)
+# Helper: smoothing functions
 # ---------------------------------------------------------
-fig, ax = plt.subplots(figsize=(6,4.5))  # ASME recommended size
+def smooth_curve(x, y, pts=300):
+    """Always used for ideal curve."""
+    x_smooth = np.linspace(min(x), max(x), pts)
+    spline   = make_interp_spline(x, y, k=3)
+    y_smooth = spline(x_smooth)
+    return x_smooth, y_smooth
 
-# Ideal height
-ax.plot(sample_distances, ideal, linestyle='--',
-        color='black', label="Ideal Height (4 mm)")
+def maybe_smooth(x, y, pts=300):
+    """Used for experimental curves only."""
+    if USE_SCATTER_ONLY:
+        return x, y
+    if not USE_SMOOTH_LINES:
+        return x, y
+    return smooth_curve(x, y, pts)
 
-# Correction OFF
-ax.plot(sample_distances, corr_off, '-o',
-        color='gray', label="Correction OFF")
+# Prepare smoothed or raw experimental data
+x_off, y_off = maybe_smooth(sample_distances, corr_off_sample)
+x_tol, y_tol = maybe_smooth(sample_distances, corr_tol_sample)
+x_on,  y_on  = maybe_smooth(sample_distances, corr_on_sample)
 
-# Correction ON
-ax.plot(sample_distances, corr_on, '-x',
-        color='black', fillstyle='none',
-        label="Correction ON")
+# Ideal curve ALWAYS smooth
+x_i, y_i = smooth_curve(sample_distances, ideal_height)
 
-# Labels
+# ---------------------------------------------------------
+# Plot (ASME-Compliant)
+# ---------------------------------------------------------
+fig, ax = plt.subplots(figsize=(6, 4.5))
+
+# ==== Ideal Reference Curve (ALWAYS SMOOTH) ====
+ax.plot(
+    x_i, y_i,
+    linestyle='--', linewidth=1.7,
+    color='dimgray',
+    label="Ideal Height (4 mm)"
+)
+
+# ---------------------------------------------------------
+# Experimental Curves
+# ---------------------------------------------------------
+if USE_SCATTER_ONLY:
+
+    # Scatter-only mode (ideal curve still smooth line)
+
+
+    ax.scatter(sample_distances, corr_tol_sample,
+               color='black', marker='^',
+               label="Correction ON (tolerance)")
+
+    ax.scatter(sample_distances, corr_on_sample,
+               color='darkgray', marker='x',
+               label="Correction ON")
+    
+    ax.scatter(sample_distances, corr_off_sample,
+               color='gray', marker='v',
+               label="Correction OFF")
+
+else:
+    # Line / Smooth-Line mode
+    ax.plot(x_off, y_off,
+            linestyle='-', 
+            marker=None if USE_SMOOTH_LINES else 'v',
+            color='gray',
+            label="Correction OFF")
+
+    ax.plot(x_tol, y_tol,
+            linestyle='-.',
+            marker=None if USE_SMOOTH_LINES else 'x',
+            color='black', fillstyle='none',
+            label="Correction ON (tolerance)")
+
+    ax.plot(x_on, y_on,
+            linestyle=':',
+            marker=None if USE_SMOOTH_LINES else 'x',
+            color='darkgray',
+            label="Correction ON")
+
+# ---------------------------------------------------------
+# Formatting: labels, grid, legend
+# ---------------------------------------------------------
 ax.set_xlabel("Distance Along Print Path (mm)")
 ax.set_ylabel("Measured Height (mm)")
+ax.set_title("Measured Height Profile With and Without Z-Height Correction")
 
-# Title (ASME allows short descriptive titles)
-ax.set_title("Height Profile Comparison: Correction OFF vs ON")
-
-# Grid must be subtle
 ax.grid(True, linestyle='--', linewidth=0.6, alpha=0.5)
-
-# Legend frame off for ASME
 ax.legend(frameon=False)
 
 plt.tight_layout()
