@@ -11,7 +11,7 @@ print("=== Program initialized ===")
 
 # === Parameters ===
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 5        # Printing speed (mm/s)
+PRINT_SPEED = 8        # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -121,7 +121,7 @@ def start_z_correction(csv_path, layer_height = LAYER_HEIGHT, z_correction=False
     """
     z_thread = ZCorrectionThread(
         layer_height,
-        tolerance=0,
+        tolerance=1,
         interval=2,
         csv_path=csv_path,
         z_correction=z_correction
@@ -180,12 +180,13 @@ pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
 time.sleep(1)
 
 # === Print Setup ===
-
-z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correction=True)
+utils.plc.md_extruder_switch("on")
+time.sleep(2)
+z_correct = False
+z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correction=z_correct)
 utils.woody.set_speed(PRINT_SPEED)
 # Move to layer start pose
-utils.plc.md_extruder_switch("on")
-time.sleep(1)
+
 pose[0] = 100
 pose[1] = 500
 pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
@@ -195,7 +196,7 @@ time.sleep(1)
 pose, z_pos = utils.calibrate_height(pose, LAYER_HEIGHT)
 time.sleep(1)
 
-csv_path = "SLP_correction_variation_5_per_s_0_tol.csv"
+csv_path = "SLP_no_correction_variation_5_per_s_0_tol_1.csv"
 flg = True
 while flg:
 
@@ -203,7 +204,7 @@ while flg:
 
     z_flag = False  # z correction toggle flag
     # Start background Z-correction thread
-    z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=True)
+    z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=z_correct)
 
     # --- Perimeter Motion Sequence ---
     pose[1] = -500
