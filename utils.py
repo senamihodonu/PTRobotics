@@ -338,10 +338,11 @@ from detect_aruco import *
 def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples"):
     """
     Perform camera-to-motion calibration using ArUco marker distances.
-    - Moves robot through multiple Y positions (A, B, C ...)
-    - Captures images
-    - Detects ArUco marker spacing
-    - Computes measured offset
+    - Moves robot to baseline (A)
+    - Takes image, measures ArUco marker spacing
+    - Moves robot in steps (B, C, ...)
+    - Measures new marker spacing
+    - Computes offset vs baseline
     - Logs results to CSV
     """
     print("\n🔹 Starting calibration procedure...")
@@ -349,12 +350,12 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
 
     os.makedirs(save_dir, exist_ok=True)
 
-    # --- Open camera ---
+    # --- Open Camera ---
     cap = cv2.VideoCapture(camera_index)
     if not cap.isOpened():
         raise RuntimeError("❌ Could not open camera.")
 
-    # === POSITION A ===
+    # === POSITION A (BASELINE) ===
     print("➡️ Moving to position A...")
     woody.write_cartesian_position(base_pose)
     time.sleep(2)
@@ -374,29 +375,30 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
         img_A_path, return_marked=True, measure=True, show=True
     )
 
-    # === Storage ===
+    # === Storage Containers ===
     images = {"image_A": image_A}
-    center_to_center = [dist_A]   # index 0 is for A
-    x_offset = [0]                # offset for A is 0
+    center_to_center = [dist_A]   # baseline measurement
+    x_offset = [0]                # baseline offset = 0
 
-    # ========= LOOP OVER REMAINING POSITIONS =========
-    index = 0
-    for distance_label in calibration_distance:
+    # ========= LOOP OVER CALIBRATION POSITIONS =========
+    for i, dist in enumerate(calibration_distance):
 
-        index += 1
+        # Compute letter B, C, D ...
         letter = chr(ord(letter) + 1)
         image_key = f"image_{letter}"
 
         print(f"➡️ Moving to position {image_key}...")
 
+        # Perform motion
         plc.travel(
             Y_LEFT_MOTION,
-            calibration_distance[distance_label],
+            dist,       # <-- movement in mm
             "mm",
             move_axis
         )
         time.sleep(2)
 
+        # Capture image
         ret, frame = cap.read()
         if not ret:
             raise RuntimeError(f"❌ Failed to capture image at position {image_key}.")
@@ -408,15 +410,14 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
         print(f"📸 {image_key} saved to {img_path}")
 
         # Marker detection
-        dist_B, marked_B = detect_from_image(
+        dist_measured, marked_img = detect_from_image(
             img_path, return_marked=True, measure=True, show=True
         )
 
-        # Store
-        center_to_center.append(dist_B)
+        center_to_center.append(dist_measured)
 
-        # Compute X offset (difference in marker spacing)
-        offset = center_to_center[0] - dist_B
+        # Compute offset from A
+        offset = center_to_center[0] - dist_measured
         x_offset.append(offset)
 
         print(f"📏 Measured offset at {image_key} = {offset:.3f} mm")
@@ -427,8 +428,8 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
 
         data = {
             "position": [letter],
-            "move_command_mm": [calibration_distance[distance_label]],
-            "marker_spacing_mm": [dist_B],
+            "move_command_mm": [dist],          # <-- FIXED
+            "marker_spacing_mm": [dist_measured],
             "offset_from_A_mm": [offset],
         }
 
@@ -439,49 +440,33 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
     # === CLEANUP ===
     cap.release()
     cv2.destroyAllWindows()
+    # Convert offsets to a simple Python list (already is, but ensure clean print)
+    offset_list = [float(x) for x in x_offset]
 
-    print("✅ Calibration complete.\n")
+    print("\nOffsets (mm):")
+    print(offset_list)
 
-    return x_offset
+    return offset_list
 
 
 
-
-# === Main Run ===
+# === MAIN RUN ===
 if __name__ == "__main__":
-    for x in range(1):
-        safety_check()
-        calibration_distance = 400
-        # woody.set_speed(200)
-        base_pose = [200, 0, 0, 0, 90, 0]
-        offset = calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, save_dir="samples")
-    # print("[HOME] Moving robot to home position")
-    # woody.set_robot_uframe(1)     # Select pellet extruder user frame
-    # woody.set_robot_utool(1)  
-    # woody.set_speed(100)                             # Set travel speed (mm/s)
-    # woody.set_robot_speed_percent(100)   
-    # time.sleep(1)
-    # home_joint_pose = [0,-40, 40, 0, -40, 0]
-    # woody.write_joint_pose(home_joint_pose)
 
-    # woody.write_joint_pose(home_joint_pose)
-    # pose = [0,0, 0, 46.029, 89.995, 46.028]
+    # pose = [200, 0, 0, 46.029, 89.995, 46.028]
     # woody.write_cartesian_position(pose)
+    base_pose = [200, 0, 0, 0, 90, 0]
+    woody.write_cartesian_position(base_pose)
 
-    # pose[1]+=500
-    # woody.write_cartesian_position(pose)
-
-    # pose[1]-=500
-    # woody.write_cartesian_position(pose)
-
-    # pose[1]-=500
-    # woody.write_cartesian_position(pose)
-    
-    # # pose1 = [0,-26.898, 5.357, -180, -84.643, 360]
-    # # woody.write_joint_pose(pose1)
-
-    # # pose2 = [-31.119,-22.600, 12.896, -141.002, -93.904, 330.238]
-    # # woody.write_joint_pose(pose1)
-    
-    # # pose3 = [-31.119,-22.600, 12.896, -141.002, -93.904, 330.238]
-    # # woody.write_joint_pose(pose1)
+    # for x in range(1):
+    #     safety_check()
+    #     calibration_distance = [200,200]   # movement distances in mm
+    #     base_pose = [200, 0, 0, 0, 90, 0]
+    #     woody.write_cartesian_position(base_pose)
+    #     offset = calibrate(
+    #         calibration_distance,
+    #         base_pose,
+    #         move_axis='y',
+    #         camera_index=0,
+    #         save_dir="samples"
+    #     )
