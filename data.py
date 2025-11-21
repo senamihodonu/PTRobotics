@@ -6,7 +6,7 @@ from scipy.interpolate import make_interp_spline
 # ---------------------------------------------------------
 # Plot Modes (choose one)
 # ---------------------------------------------------------
-USE_SMOOTH_LINES = True    # Smooth spline curves (except ideal, which is always smooth)
+USE_SMOOTH_LINES = True   # Smooth spline curves (except ideal, which is always smooth)
 USE_SCATTER_ONLY = False    # Scatter plot only (experimental data only)
 
 # ---------------------------------------------------------
@@ -31,9 +31,12 @@ corr          = pd.read_csv('SLPC_correction_8_per_s_0_tol.csv')   # Correction 
 corr_w_tol    = pd.read_csv('SLP_correction_0.csv')                # Correction ON (tolerance)
 no_corr       = pd.read_csv('SLP_no_correction_0.csv')             # Correction OFF
 
-sample_distances = [0, 100, 200, 300, 400, 500,
-                    600, 700, 800, 900, 1000]
+# #Variation
+# corr          = pd.read_csv('SLP_correction_variation_5_per_s_0_tol.csv')   # Correction ON
+# corr_w_tol    = pd.read_csv('SLPC_correction_variation_5_per_s.csv')                # Correction ON (tolerance)
+# no_corr       = pd.read_csv('SLPC_no_correction_variation_5_per_s.csv')             # Correction OFF
 
+sample_distances = list(range(0, 1001, 50))
 # ---------------------------------------------------------
 # Helper Function: Nearest-value sampling
 # ---------------------------------------------------------
@@ -116,19 +119,19 @@ else:
     ax.plot(x_off, y_off,
             linestyle='-', 
             marker=None if USE_SMOOTH_LINES else 'v',
-            color='gray',
+            color='red',
             label="Correction OFF")
 
     ax.plot(x_tol, y_tol,
             linestyle='-.',
             marker=None if USE_SMOOTH_LINES else 'x',
-            color='black', fillstyle='none',
+            color='green', fillstyle='none',
             label="Correction ON (tolerance)")
 
     ax.plot(x_on, y_on,
             linestyle=':',
             marker=None if USE_SMOOTH_LINES else 'x',
-            color='darkgray',
+            color='blue',
             label="Correction ON")
 
 # ---------------------------------------------------------
@@ -137,6 +140,7 @@ else:
 ax.set_xlabel("Distance Along Print Path (mm)")
 ax.set_ylabel("Measured Height (mm)")
 ax.set_title("Measured Height Profile With and Without Z-Height Correction")
+# ax.set_title("Measured Height Profile With and Without Z-Height Correction (Intensional variation)")
 
 ax.grid(True, linestyle='--', linewidth=0.6, alpha=0.5)
 ax.legend(frameon=False)
