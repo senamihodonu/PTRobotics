@@ -14,8 +14,7 @@ ARUCO_PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(ARUCO_DICT, ARUCO_PARAMS)
 
 # === Marker properties ===
-MARKER_SIZE_MM = 26.694  # Actual ArUco marker size in millimeters
-# MARKER_SIZE_MM = 18.531  # Actual ArUco marker size in millimeters
+MARKER_SIZE_MM = 36.5  # Actual ArUco marker size in millimeters
 # === Load camera calibration ===
 try:
     CAMERA_MATRIX = np.load('camera_matrix.npy')
@@ -64,9 +63,9 @@ def measure_marker_to_marker_distance(frame, corners, ids, px_per_mm):
             cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 255), 2, lineType=cv2.LINE_AA)
 
             # Draw text showing distance and angle
-            cv2.putText(frame, f"{dist_mm:.1f}mm {angle_deg:.1f} deg",
+            cv2.putText(frame, f"{dist_mm:.1f}mm {angle_deg:.1f}°",
                         (mid_x + 5, mid_y - 5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2, lineType=cv2.LINE_AA)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, lineType=cv2.LINE_AA)
 
     return distances
 
