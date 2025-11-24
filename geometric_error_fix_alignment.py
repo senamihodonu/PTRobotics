@@ -149,7 +149,7 @@ print("Height calibration complete.")
 
 # --- Calibration + move setup ---
 
-calibration_distance = [10]
+calibration_distance = [200,200]
 offset = []
 
 pose = [200, 0, z_pos, 0, 90, 0]
