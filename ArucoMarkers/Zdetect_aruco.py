@@ -14,7 +14,7 @@ ARUCO_PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(ARUCO_DICT, ARUCO_PARAMS)
 
 # === Marker properties ===
-MARKER_SIZE_MM = 37.6  # Actual ArUco marker size in millimeters
+MARKER_SIZE_MM = 36.5  # Actual ArUco marker size in millimeters
 # === Load camera calibration ===
 try:
     CAMERA_MATRIX = np.load('camera_matrix.npy')
@@ -63,9 +63,9 @@ def measure_marker_to_marker_distance(frame, corners, ids, px_per_mm):
             cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 255), 2, lineType=cv2.LINE_AA)
 
             # Draw text showing distance and angle
-            cv2.putText(frame, f"{dist_mm:.1f}mm ({angle_deg:.1f} degrees)",
-                        (mid_x - 100, mid_y+20),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2, lineType=cv2.LINE_AA)
+            cv2.putText(frame, f"{dist_mm:.1f}mm {angle_deg:.1f}°",
+                        (mid_x + 5, mid_y - 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, lineType=cv2.LINE_AA)
 
     return distances
 
@@ -74,10 +74,7 @@ def detect_and_draw(frame, measure_between_markers=False):
     """
     Detect ArUco markers in the frame, draw annotations, and return distance data.
     If measure_between_markers=True, measure distances between marker centers instead of to frame edges.
-    
     """
-    frame = cv2.undistort(frame, CAMERA_MATRIX, DIST_COEFFS)
-
     h, w = frame.shape[:2]
     frame_center = (w // 2, h // 2)
 
@@ -94,12 +91,8 @@ def detect_and_draw(frame, measure_between_markers=False):
 
         # Estimate pixel-to-mm scale from the first marker
         first_marker = corners[0].reshape((4, 2))
-        # width_px = np.linalg.norm(first_marker[0] - first_marker[1])
-        # px_per_mm = width_px / MARKER_SIZE_MM
-        side1 = np.linalg.norm(first_marker[0] - first_marker[1])
-        side2 = np.linalg.norm(first_marker[1] - first_marker[2])
-        px_per_mm = ((side1 + side2) / 2) / MARKER_SIZE_MM
-
+        width_px = np.linalg.norm(first_marker[0] - first_marker[1])
+        px_per_mm = width_px / MARKER_SIZE_MM
 
         if measure_between_markers:
             # Measure distances between centers of markers
@@ -144,7 +137,7 @@ def detect_and_draw(frame, measure_between_markers=False):
                 cv2.line(frame, frame_center, (cx, cy), (0, 255, 255), 2)
                 cv2.putText(frame, f"{dist_center_mm:.1f}mm",
                             ((cx + frame_center[0]) // 2 + 5, (cy + frame_center[1]) // 2 + 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2, lineType=cv2.LINE_AA)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, lineType=cv2.LINE_AA)
 
                 # Label marker
                 cv2.putText(frame, f"ID:{marker_id}", (cx + 10, cy - 10),

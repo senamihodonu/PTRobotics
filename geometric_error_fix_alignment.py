@@ -149,7 +149,7 @@ print("Height calibration complete.")
 
 # --- Calibration + move setup ---
 
-calibration_distance = [200,200]
+calibration_distance = [10,10]
 offset = []
 
 pose = [200, 0, z_pos, 0, 90, 0]
@@ -169,7 +169,8 @@ finally:
 
 
 # === Height Calibration ===
-pose = [200, 500, 20, 0, 90, 0]
+time.sleep(2)
+pose = [100, 200, 20, 0, 90, 0]
 utils.woody.write_cartesian_position(pose)
 time.sleep(2)
 utils.safety_check()
@@ -188,9 +189,8 @@ z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correc
 # Move to layer start pose
 
 utils.woody.set_speed(PRINT_SPEED)
+time.sleep(1)
 utils.plc.md_extruder_switch("on")
-time.sleep(3)
-utils.plc.md_extruder_switch("off")
 
 stop_z_correction(z_thread)
 time.sleep(1)
@@ -210,7 +210,11 @@ while flg:
     # --- Perimeter Motion Sequence ---
     pose[1] = 0
     pose = utils.move_to_pose(pose, layer_height= LAYER_HEIGHT, tol=TOL, extruding=True, z_correct=z_flag)
+
+    pose[0] += 20
+    pose = utils.move_to_pose(pose, layer_height= LAYER_HEIGHT, tol=TOL, extruding=True, z_correct=z_flag)
 #     # # End first extrusion segment
+    time.sleep(2)
     utils.plc.md_extruder_switch("off")
     stop_z_correction(z_thread)
     time.sleep(1)
@@ -224,25 +228,34 @@ while flg:
         utils.woody.set_speed(SPEED)
         pose[1] = 200
         pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
-        time.sleep(1)
+
+
+
 
         # Begin second extrusion pass
         utils.woody.set_speed(PRINT_SPEED)
         z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=True)
 
         utils.plc.md_extruder_switch("on")
-        time.sleep(2)
+
+        pose[0] -= 20
+        pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
+
 
         pose[1] = 0
         pose = utils.move_to_pose(pose, layer_height= LAYER_HEIGHT, tol=TOL, extruding=True, z_correct=z_flag)
 
+        pose[0] += 20
+        pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
+
         # End second pass
+        time.sleep(2)
         utils.plc.md_extruder_switch("off")
         stop_z_correction(z_thread)
 
 # #     # Lift Z before moving
-# #     pose[2] += 20
-# #     pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
+    pose[2] += 20
+    pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
 
 # #     # Stop loop for now (single-layer testing mode)
     flg = False

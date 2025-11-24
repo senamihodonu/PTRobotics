@@ -78,7 +78,7 @@ def safety_check():
         plc.write_modbus_coils(coil, False)
 
     print("Safety check complete.")
-    time.sleep(1)
+    time.sleep(2)
 
 def apply_z_correction_brute(pose, layer_height, tolerance, extruding=False):
     """
