@@ -458,15 +458,15 @@ if __name__ == "__main__":
     base_pose = [200, 0, 0, 0, 90, 0]
     woody.write_cartesian_position(base_pose)
 
-    # for x in range(1):
-    #     safety_check()
-    #     calibration_distance = [200,200]   # movement distances in mm
-    #     base_pose = [200, 0, 0, 0, 90, 0]
-    #     woody.write_cartesian_position(base_pose)
-    #     offset = calibrate(
-    #         calibration_distance,
-    #         base_pose,
-    #         move_axis='y',
-    #         camera_index=0,
-    #         save_dir="samples"
-    #     )
+    for x in range(1):
+        safety_check()
+        calibration_distance = [200,200]   # movement distances in mm
+        base_pose = [200, 0, 0, 0, 90, 0]
+        woody.write_cartesian_position(base_pose)
+        offset = calibrate(
+            calibration_distance,
+            base_pose,
+            move_axis='y',
+            camera_index=0,
+            save_dir="samples"
+        )
