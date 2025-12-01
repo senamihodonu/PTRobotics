@@ -167,7 +167,8 @@ try:
 finally:
     stop_z_correction(z_thread)
 
-
+####################################################################################################################
+"""
 # === Height Calibration ===
 time.sleep(2)
 pose = [100, 200, 20, 0, 90, 0]
@@ -259,3 +260,4 @@ while flg:
 
 # #     # Stop loop for now (single-layer testing mode)
     flg = False
+"""
