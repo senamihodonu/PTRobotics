@@ -258,6 +258,6 @@ while flg:
     pose[2] += 20
     pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
 
-# #     # Stop loop for now (single-layer testing mode)
+# #     Stop loop for now (single-layer testing mode)
     flg = False
 """
