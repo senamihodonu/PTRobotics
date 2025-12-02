@@ -14,7 +14,7 @@ ARUCO_PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(ARUCO_DICT, ARUCO_PARAMS)
 
 # === Marker properties ===
-MARKER_SIZE_MM = 35.6  # Actual ArUco marker size in millimeters
+MARKER_SIZE_MM = 38  # Actual ArUco marker size in millimeters
 # === Load camera calibration ===
 try:
     CAMERA_MATRIX = np.load('camera_matrix.npy')

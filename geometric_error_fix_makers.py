@@ -15,7 +15,7 @@ PRINT_SPEED = 8        # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
-x_offset = 9            # X-axis offset (mm)
+X_OFFSET = 9            # X-axis offset (mm)
 PRINT_OFFSET = 5        # Vertical offset between passes (mm)
 Z_CORRECTION = 4        # Small Z alignment correction (mm)
 TOL = 0                 # Tolerance for Z correction
@@ -54,9 +54,9 @@ print("Z raised to safe travel height.")
 z_pos = 0
 pose = [0, 0, z_pos, 46.029, 89.995, 46.028]
 # === Surface Height Calibration ===
-# pose, z_pos = utils.calibrate_height(pose, LAYER_HEIGHT)
-# time.sleep(2)
-# print("Height calibration complete.")
+pose, z_pos = utils.calibrate_height(pose, LAYER_HEIGHT)
+time.sleep(2)
+print("Height calibration complete.")
 
 
 # === Z Correction Thread ===
@@ -151,7 +151,7 @@ def stop_z_correction(z_thread):
 
 # # --- Calibration + move setup ---
 
-calibration_distance = [200,200]
+# calibration_distance = 50
 # offset = 0
 # pose[0]+= 200
 
@@ -172,8 +172,7 @@ calibration_distance = [200,200]
 # pose = utils.lift_and_travel(pose, calibration_distance, utils.Y_RIGHT_MOTION)
 # time.sleep(1)
 
-# utils.plc.travel(utils.Y_LEFT_MOTION, 100, 'mm', 'y')
-
+utils.plc.travel(utils.Y_LEFT_MOTION, 100, 'mm', 'y')
 # === Height Calibration ===
 pose = [0, 0, z_pos, 46.029, 89.995, 46.028]
 pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
@@ -183,12 +182,12 @@ time.sleep(1)
 # === Print Setup ===
 utils.plc.md_extruder_switch("on")
 time.sleep(2)
-z_correct = True
+z_correct = False
 z_thread = start_z_correction(csv_path=None, layer_height=LAYER_HEIGHT, z_correction=z_correct)
 utils.woody.set_speed(PRINT_SPEED)
 # Move to layer start pose
 
-pose[0] = 200
+pose[0] = 100
 pose[1] = 500
 pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
 
@@ -197,7 +196,7 @@ time.sleep(1)
 pose, z_pos = utils.calibrate_height(pose, LAYER_HEIGHT)
 time.sleep(1)
 
-csv_path = "sample.csv"
+csv_path = "SLP_no_correction_variation_5_per_s_0_tol_1.csv"
 flg = True
 while flg:
 

@@ -186,7 +186,7 @@ def calibrate_height(pose, layer_height: float):
                 f"Starting Z: {z:.2f} mm"
             )
             break
-
+    time.sleep(1)
     return pose, z
 
 def apply_z_correction_gantry(layer_height, tolerance=0.1):
@@ -389,6 +389,7 @@ def calibrate(calibration_distance, base_pose, move_axis='y', camera_index=0, sa
 
         print(f"➡️ Moving to position {image_key}...")
 
+        time.sleep(2)
         # Perform motion
         plc.travel(
             Y_LEFT_MOTION,
