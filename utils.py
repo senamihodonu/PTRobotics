@@ -186,7 +186,8 @@ def calibrate_height(pose, layer_height: float):
                 f"Starting Z: {z:.2f} mm"
             )
             break
-    time.sleep(1)
+    time.sleep(2)
+    print("Height calibration complete.")
     return pose, z
 
 def apply_z_correction_gantry(layer_height, tolerance=0.1):
