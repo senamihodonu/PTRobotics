@@ -10,7 +10,7 @@ import utils  # custom utility module
 # === Parameters ===
 alignment_calibration = True  # Flag to enable alignment calibration
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 5        # Printing speed (mm/s)
+PRINT_SPEED = 8        # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 LAYER_HEIGHT = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
