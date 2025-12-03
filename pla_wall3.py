@@ -29,8 +29,8 @@ plc = PyPLCConnection(PLC_IP)
 woody = robot(ROBOT_IP)
 
 # === Parameters ===
-speed = 10
-print_speed = 10
+speed = 200
+print_speed = 200
 
 offset = 4
 layer_height = 4
@@ -45,7 +45,7 @@ plc.reset_coils()
 time.sleep(2)
 
 # === Initial pose ===
-pose = [-100, 0, 0, 0, 90, 0]  # X, Y, Z, W, P, R
+pose = [0, 0, 0, 0, 90, 0]  # X, Y, Z, W, P, R
 woody.write_cartesian_position(pose)
 
 # === Safe start: move Z down + Y right until coils 8, 9, or 14 deactivate ===
