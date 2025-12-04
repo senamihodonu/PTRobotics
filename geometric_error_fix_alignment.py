@@ -10,15 +10,15 @@ import utils  # custom utility module
 # === Parameters ===
 alignment_calibration = True  # Flag to enable alignment calibration
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 8        # Printing speed (mm/s)
+PRINT_SPEED = 8         # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
-LAYER_HEIGHT = 4        # Vertical step per layer (mm)
+layer_height = 3        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
 x_offset = 9            # X-axis offset (mm)
 PRINT_OFFSET = 5        # Vertical offset between passes (mm)
 Z_CORRECTION = 4        # Small Z alignment correction (mm)
 TOL = 0                 # Tolerance for Z correction
-Z_INCREMENT = LAYER_HEIGHT
+
 
 # === Z Correction Thread ===
 class ZCorrectionThread(threading.Thread):
@@ -52,7 +52,7 @@ class ZCorrectionThread(threading.Thread):
                     'y': y,
                     'z': z,
                     'current_height': current_height,
-                    'layer_height': LAYER_HEIGHT,
+                    'layer_height': layer_height,
                     'print_speed': print_speed,
                     'timestamp': time.time()
                 })
@@ -76,7 +76,7 @@ class ZCorrectionThread(threading.Thread):
                 print(f"[ZCorrection] Error appending CSV: {e}")
 
 # === Helper Functions ===
-def start_z_correction(csv_path, layer_height = LAYER_HEIGHT, z_correction=False):
+def start_z_correction(csv_path, layer_height = layer_height, z_correction=False):
     """
     Starts Z correction in a background thread.
     """
@@ -150,15 +150,15 @@ z_pos = 0
 # --- Alignment Calibration ---
 if alignment_calibration:
     print("\n=== Starting Alignment Calibration ===")
-    pose, z_pos = utils.calibrate_height(pose, LAYER_HEIGHT)
-    calibration_distance = [200]
+    pose, z_pos = utils.calibrate_height(pose, layer_height)
+    calibration_distance = [400]
     offset = []
     caliberation_pose = [200, 0, z_pos, 0, 90, 0]
 
     # Start Z-correction thread
     z_thread = start_z_correction(
         csv_path=None,
-        layer_height=LAYER_HEIGHT,
+        layer_height=layer_height,
         z_correction=True
     )
 
@@ -182,102 +182,141 @@ if alignment_calibration:
 print("\n=== Calibrating to Start Print ===")
 
 # Move to start position above print area
-pose = [200, 400, 20, 0, 90, 0]
+pose = [170, 400, 20, 0, 90, 0]
 utils.woody.write_cartesian_position(pose)
 
 time.sleep(2)
 utils.safety_check()
 
 # Raise Z to a safe clearance height
-utils.plc.travel(utils.Z_UP_MOTION, 5, 'mm', 'z')
+utils.plc.travel(utils.Z_UP_MOTION, 10, 'mm', 'z')
 
-pose, z_pos = utils.calibrate_height(pose, LAYER_HEIGHT)
+pose, z_pos = utils.calibrate_height(pose, layer_height)
 print("Z raised to safe travel height.")
 
 # Update pose with corrected Z
 pose[2] = z_pos
-pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
+pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
 print("Height calibration complete.")
 
 # === Print Setup ===
 z_correct = True  # Enable Z correction during print
 
 utils.plc.md_extruder_switch("on")
-time.sleep(4)
+time.sleep(6)
 csv_path = "alignment.csv"
 flg = True
 utils.woody.set_speed(PRINT_SPEED)
 
-pose = [200, -400, 20, 0, 90, 0]
-utils.woody.write_cartesian_position(pose)
+# z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=z_correct)
+# pose = [200, -400, z_pos, 0, 90, 0]
+# utils.woody.write_cartesian_position(pose)
+# utils.plc.md_extruder_switch("off")
+# stop_z_correction(z_thread)
 
 
-# while flg:
+while flg:
 
-#     print(f"\n=== Starting New Layer at Z = {z_pos:.2f} mm ===")
+    print(f"\n=== Starting New Layer at Z = {z_pos:.2f} mm ===")
 
-#     z_flag = False  # z correction toggle flag
-#     # Start background Z-correction thread
-#     z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=z_correct)
+    z_flag = False  # z correction toggle flag
+    # Start background Z-correction thread
+    z_thread = start_z_correction(csv_path, layer_height=layer_height, z_correction=z_correct)
 
-#     # --- Perimeter Motion Sequence ---
-#     pose[1] = 0
-#     pose = utils.move_to_pose(pose, layer_height= LAYER_HEIGHT, tol=TOL, extruding=True, z_correct=z_flag)
+    # --- Perimeter Motion Sequence ---
+    pose[0] -=20
+    pose = utils.move_to_pose(pose, layer_height= layer_height, tol=TOL, extruding=True, z_correct=z_flag)
+    time.sleep(3)
 
-#     pose[0] += 20
-#     pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL, extruding=True, z_correct=z_flag)
-# #     # # End first extrusion segment
-#     time.sleep(2)
-#     utils.plc.md_extruder_switch("off")
-#     stop_z_correction(z_thread)
-#     # time.sleep(1)
+    pose[1] = 0
+    pose = utils.move_to_pose(pose, layer_height= layer_height, tol=TOL, extruding=True, z_correct=z_flag)
 
-#     for x in range(1):
-#         # Travel to next side of layer
-#         utils.woody.set_speed(SPEED)
-#         distance = 200
-#         pose[0] -= abs(offset[1])
-#         pose[1] = 200
-#         utils.lift_and_travel(pose, distance, utils.Y_LEFT_MOTION)
+    pose[0] += 20
+    pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL, extruding=True, z_correct=z_flag)
+#     # # End first extrusion segment
+    time.sleep(2)
+    utils.plc.md_extruder_switch("off")
+    stop_z_correction(z_thread)
+    # time.sleep(1)
+    pose[0] -= abs(offset[1])/2
+    for x in range(1):
+        # Travel to next side of layer
+        utils.woody.set_speed(SPEED)
+        distance = 200
+        # pose[0] -= 0
 
-#         # Move to second print start location
-#         # utils.woody.set_speed(SPEED)
+        pose[1] = 400
+        utils.lift_and_travel(pose, distance, utils.Y_LEFT_MOTION)
 
-#         # pose[0] -= abs(offset[1])
-#         # pose[1] = 200
-#         # pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
+        # Move to second print start location
+        # utils.woody.set_speed(SPEED)
 
-#         # Begin second extrusion pass
-#         utils.woody.set_speed(PRINT_SPEED)
-#         z_thread = start_z_correction(csv_path, layer_height=LAYER_HEIGHT, z_correction=True)
-#         time.sleep(1)
+        # pose[0] -= abs(offset[1])
+        # pose[1] = 200
+        # pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
+
+        # Begin second extrusion pass
+        utils.woody.set_speed(PRINT_SPEED)
+        z_thread = start_z_correction(csv_path, layer_height=layer_height, z_correction=True)
+        time.sleep(1)
 
         
-#         utils.plc.md_extruder_switch("on")
-#         time.sleep(2)
+        utils.plc.md_extruder_switch("on")
+        time.sleep(2)
 
-#         pose[0] -= 20
-#         pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
+        pose[0] -= 20
+        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
 
-#         time.sleep(3)
+        time.sleep(3)
 
 
-#         pose[1] = 0
-#         pose = utils.move_to_pose(pose, layer_height= LAYER_HEIGHT, tol=TOL, extruding=True, z_correct=z_flag)
+        pose[1] = 0
+        pose = utils.move_to_pose(pose, layer_height= layer_height, tol=TOL, extruding=True, z_correct=z_flag)
 
-#         pose[0] += 20
-#         pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
+        pose[0] += 20
+        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
 
-#         # End second pass
-#         time.sleep(1)
-#         utils.plc.md_extruder_switch("off")
-#         stop_z_correction(z_thread)
+        # End second pass
+        time.sleep(1)
+        layer_height+=3
+        pose[2]+=layer_height
 
-#     # Lift Z before moving
-#     pose[2] += 20
-#     pose = utils.move_to_pose(pose, layer_height=LAYER_HEIGHT, tol=TOL)
+        pose[0] -= 20
+        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
 
-#     # Stop loop for now (single-layer testing mode)
-#     flg = False
-# print(offset)
-# print("\n=== Program complete ===")
+        pose[1] = 400
+        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
+
+        pose[0] += 20
+        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
+
+        pose[1] = 0
+        utils.lift_and_travel(pose, distance, utils.Y_RIGHT_MOTION)
+        utils.woody.set_speed(PRINT_SPEED)
+
+        pose[0] -= 20
+        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
+
+        pose[1] = 400
+        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
+
+        pose[0] += 20
+        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
+
+        time.sleep(1)
+        layer_height+=3
+        pose[2]+=layer_height
+
+
+        # utils.plc.md_extruder_switch("off")
+
+        stop_z_correction(z_thread)
+
+    # Lift Z before moving
+    pose[2] += 20
+    pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
+
+    # Stop loop for now (single-layer testing mode)
+    flg = False
+
+print("\n=== Program complete ===")
