@@ -238,13 +238,13 @@ while flg:
     utils.plc.md_extruder_switch("off")
     stop_z_correction(z_thread)
     # time.sleep(1)
-    pose[0] -= abs(offset[1])/2
+
     for x in range(1):
         # Travel to next side of layer
         utils.woody.set_speed(SPEED)
-        distance = 200
+        distance = 400
         # pose[0] -= 0
-
+        pose[0] -= abs(offset[1])
         pose[1] = 400
         utils.lift_and_travel(pose, distance, utils.Y_LEFT_MOTION)
 
@@ -278,37 +278,7 @@ while flg:
 
         # End second pass
         time.sleep(1)
-        layer_height+=3
-        pose[2]+=layer_height
-
-        pose[0] -= 20
-        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
-
-        pose[1] = 400
-        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
-
-        pose[0] += 20
-        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
-
-        pose[1] = 0
-        utils.lift_and_travel(pose, distance, utils.Y_RIGHT_MOTION)
-        utils.woody.set_speed(PRINT_SPEED)
-
-        pose[0] -= 20
-        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
-
-        pose[1] = 400
-        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
-
-        pose[0] += 20
-        pose = utils.move_to_pose(pose, layer_height=layer_height, tol=TOL)
-
-        time.sleep(1)
-        layer_height+=3
-        pose[2]+=layer_height
-
-
-        # utils.plc.md_extruder_switch("off")
+        utils.plc.md_extruder_switch("off")
 
         stop_z_correction(z_thread)
 
