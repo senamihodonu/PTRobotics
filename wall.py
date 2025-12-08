@@ -213,21 +213,21 @@ utils.woody.set_speed(PRINT_SPEED)
 # utils.plc.md_extruder_switch("off")
 # stop_z_correction(z_thread)
 
-def safe_print_transition(pose, x, y, z_thread, clearance_height, travel_speed, print_speed):
-    
+def safe_print_transition(pose, x, y, z_thread, travel_speed, print_speed):
+    time.sleep(3)
     utils.plc.md_extruder_switch("off")
-    
     utils.woody.set_speed(travel_speed)
+    z_thread.z_correction = False
     pose[0] = x
     pose[1]= y
-    z_thread.layer_height += clearance_height
+    pose[2] += Z_OFFSET
     utils.woody.write_cartesian_position(pose)
     utils.woody.set_speed(print_speed)
     utils.plc.md_extruder_switch("on")
-    z_thread.layer_height -= clearance_height
+    pose[2] = z_pos
     utils.woody.write_cartesian_position(pose)
+    z_thread.z_correction = True
     time.sleep(3)
-
     return pose
 
 while flg:
@@ -271,7 +271,7 @@ while flg:
              ______________________________|
             |
     """ 
-    pose = safe_print_transition(pose, x=5, y=395, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    pose = safe_print_transition(pose, x=5, y=395, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
     # start infill
     pose[0] = 155
@@ -295,83 +295,254 @@ while flg:
     """ 
 
     utils.plc.md_extruder_switch("off")
-    z_thread.layer_height += clearance_height
-    utils.plc.travel(utils.Y_LEFT_MOTION, 400, 'mm', 'y')
+    z_thread.z_correction = False
+    pose[2] += Z_OFFSET
+    utils.woody.write_cartesian_position(pose)
 
-    pose = safe_print_transition(pose, x=160, y=0, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    utils.plc.travel(utils.Y_LEFT_MOTION, 400, 'mm', 'y')
+    """                |___________________
+                                \         /|
+                                  \     /  |
+             _______________________\_/____|
+            |
+            <-----------------
+            400 mm robot left travel
+    """ 
+    
+    # turn off extruder
+    # increase speed for travel
+    # set next x position
+    # set next y position
+    # set back to print speed
+    # turn on extruder
+    # restore print Z
+    pose = safe_print_transition(pose, x=160, y=0, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
 
     pose[1] = -400
     utils.woody.write_cartesian_position(pose)
+    """                |___________________
+                                \         /|
+                                  \     /  |
+     _______ _______________________\_/____|
+            |
+    """ 
 
     pose[0] = 0 
     utils.woody.write_cartesian_position(pose)
+    """                |___________________
+    |                           \         /|
+    |                             \     /  |
+    |_______ _______________________\_/____|
+            |
+    """ 
 
-    pose = safe_print_transition(pose, x=5, y=200, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    pose[1] = 0 
+    utils.woody.write_cartesian_position(pose)
+    """
+     _________|_____________
+    |             \        /|
+    |              \     /  |
+    |_________ _______\_/___|
+              |
+    """ 
+    pose = safe_print_transition(pose, x=5, y=200, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
-
-
+    # start infill
     pose[0] = 155
     pose[1]= -97.5
     utils.woody.write_cartesian_position(pose)
+    """
+     __________|____________
+    |          /  \        /|
+    |        /     \     /  |
+    |______/__ _______\_/___|
+              |
+    """ 
 
     pose[0] = 5
     pose[1]= -395
     utils.woody.write_cartesian_position(pose)
+    """
+     __________|____________
+    |\         /  \        /|
+    |  \     /     \     /  |
+    |___ \_/__ _______\_/___|
+              |
+    """ 
 
-    pose = safe_print_transition(pose, x=0, y=400, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    # Increment the absolute Z position for the next layer
+    z_pos += layer_height
 
+    # Increase the layer_height variable itself for the following iteration
+    layer_height += layer_height
+
+    # Move to a safe transition point before starting the next print sequence
+    # - x=0, y=400 → target transition coordinates
+    # - z_thread → active Z-correction thread
+    # - clearance_height → lift amount for safe travel
+    # - SPEED / PRINT_SPEED → travel vs. printing speeds
+    pose = safe_print_transition(
+        pose,
+        x=0,
+        y=400,
+        z_thread=z_thread,
+        clearance_height=clearance_height,
+        travel_speed=SPEED,
+        print_speed=PRINT_SPEED
+    )
+
+    # Small delay to ensure robot motion is fully complete before continuing
+    time.sleep(2)
 
 
     pose[1]= -400
     utils.woody.write_cartesian_position(pose)
-    
+
+
+    """
+    ___________________            
+     __________|____________
+    |\         /  \        /|
+    |  \     /     \     /  |
+    |___ \_/__ _______\_/___|
+              |
+    """ 
     pose[0] = 160
     utils.woody.write_cartesian_position(pose)
+    """
+    ___________________            
+   |      __________|____________
+   |     |\         /  \        /|
+   |     |  \     /     \     /  |
+   |     |___ \_/__ _______\_/___|
+   |             |
+    """ 
 
     pose[1]= 400
     utils.woody.write_cartesian_position(pose)
-    
-    pose = safe_print_transition(pose, x=0, y=-395, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    """
+    ------------------            
+   |      __________|____________
+   |     |\         /  \        /|
+   |     |  \     /     \     /  |
+   |     |___ \_/__ _______\_/___|
+   |             |
+    ------------------
+    """ 
 
+    pose = safe_print_transition(pose, x=5, y=-395, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
 
     pose[0] = 155
     pose[1]= -97.5
     utils.woody.write_cartesian_position(pose)
+    """
+    ------------------            
+   | \    __________|____________
+   |   \ |\         /  \        /|
+   |     |  \     /     \     /  |
+   |     |___ \_/__ _______\_/___|
+   |             |
+    ------------\-----
+   """ 
 
     pose[0] = 5
     pose[1]= 200
     utils.woody.write_cartesian_position(pose)
 
+    """
+    -------------------/            
+   | \    __________|____________
+   |   \ |\         /  \        /|
+   |     |  \     /     \     /  |
+   |     |___ \_/__ _______\_/___|
+   |             |
+    ------------\/-----
+   """ 
+
     utils.plc.md_extruder_switch("off")
 
     utils.plc.travel(utils.Y_RIGHT_MOTION, 400, 'mm', 'y')
+    """
+    -------------------/            
+   | \    __________|____________
+   |   \ |\         /  \        /|
+   |     |  \     /     \     /  |
+   |     |___ \_/__ _______\_/___|
+   |             |
+    ------------\/-----
+    ----------------->
+    400 mm robot right travel
+   """ 
 
-    pose = safe_print_transition(pose, x=160, y=0, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
-
-
+    pose = safe_print_transition(pose, x=160, y=0, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
     pose[1] = 400
     utils.woody.write_cartesian_position(pose)
+    """
+    -------------------/            
+   | \    __________|____________
+   |   \ |\         /  \        /|
+   |     |  \     /     \     /  |
+   |     |___ \_/__ _______\_/___|
+   |             |                   
+    ------------\/-------------------
+   """ 
 
     pose[0] = 0 
     utils.woody.write_cartesian_position(pose)  
+    """
+    -------------------/            
+   | \    __________|____________    |
+   |   \ |\         /  \        /|   |
+   |     |  \     /     \     /  |   |
+   |     |___ \_/__ _______\_/___|   |
+   |             |                   |
+    ------------\--------------------
+   """ 
 
     pose[1] = 0
     utils.woody.write_cartesian_position(pose)
 
-    pose = safe_print_transition(pose, x=5, y=-200, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    """
+    -------------------/-------------            
+   | \    __________|____________    |
+   |   \ |\         /  \        /|   |
+   |     |  \     /     \     /  |   |
+   |     |___ \_/__ _______\_/___|   |
+   |             |                   |
+    ------------\--------------------
+   """ 
 
+    pose = safe_print_transition(pose, x=5, y=-200, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
-
+    # start infill
     pose[0]= 155
     pose[1]= 97.5
     utils.woody.write_cartesian_position(pose)
+    """
+    -------------------/\-------------            
+   | \    __________|____________     |
+   |   \ |\         /  \         /|   |
+   |     |  \     /      \     /  |   |
+   |     |___ \_/__ ______ \_/____|   |
+   |             |                    |
+    ------------\/-----------\--------
+   """ 
 
     pose[0]= 5
     pose[1]= 395
     utils.woody.write_cartesian_position(pose)  
+    """
+    -------------------/\---------------            
+   | \    __________|_____________    / |
+   |   \ |\         /  \         /| /   |
+   |     |  \     /      \     /  |     |
+   |     |___ \_/__ ______ \_/____|     |
+   |             |                      |
+    ------------\/------------\/--------
+   """ 
     time.sleep(2)
 
     utils.plc.md_extruder_switch("off")
