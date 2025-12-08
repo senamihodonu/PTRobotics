@@ -10,15 +10,15 @@ import utils  # custom utility module
 # === Parameters ===
 alignment_calibration = False  # Flag to enable alignment calibration
 SPEED = 200             # Robot travel speed (mm/s)
-PRINT_SPEED = 8         # Printing speed (mm/s)
+PRINT_SPEED = 12         # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
-layer_height = 3        # Vertical step per layer (mm)
+layer_height = 4        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
 x_offset = 9            # X-axis offset (mm)
 PRINT_OFFSET = 5        # Vertical offset between passes (mm)
 Z_CORRECTION = 4        # Small Z alignment correction (mm)
 TOL = 0                 # Tolerance for Z correction
-clearance_height = 10   # Clearance height for safe travel moves (mm)
+clearance_height = 2   # Clearance height for safe travel moves (mm)
 
 # === Z Correction Thread ===
 class ZCorrectionThread(threading.Thread):
@@ -213,7 +213,7 @@ utils.woody.set_speed(PRINT_SPEED)
 # utils.plc.md_extruder_switch("off")
 # stop_z_correction(z_thread)
 
-def safe_print_transition(pose, x, y, z, z_thread, clearance_height, travel_speed, print_speed):
+def safe_print_transition(pose, x, y, z_thread, clearance_height, travel_speed, print_speed):
     
     utils.plc.md_extruder_switch("off")
     
@@ -410,6 +410,7 @@ while flg:
     pose[0]= 5
     pose[1]= 395
     utils.woody.write_cartesian_position(pose)  
+    time.sleep(2)
 
     utils.plc.md_extruder_switch("off")
 
