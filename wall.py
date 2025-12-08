@@ -257,16 +257,6 @@ while flg:
 
     pose = safe_print_transition(pose, x=5, y=395, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
-    # utils.plc.md_extruder_switch("off")
-    # utils.woody.set_speed(SPEED)
-    # pose[0] = 5
-    # pose[1]= 395
-    # z_thread.layer_height += clearance_height
-    # utils.woody.write_cartesian_position(pose)
-    # utils.woody.set_speed(PRINT_SPEED)
-    # utils.plc.md_extruder_switch("on")
-    # z_thread.layer_height -= clearance_height
-    # time.sleep(3)
 
     pose[0] = 155
     pose[1] = 97.5
@@ -281,16 +271,7 @@ while flg:
     utils.plc.travel(utils.Y_LEFT_MOTION, 400, 'mm', 'y')
 
     pose = safe_print_transition(pose, x=160, y=0, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
-    # utils.plc.md_extruder_switch("off")
-    # utils.woody.set_speed(SPEED)
-    # pose[0] = 160
-    # pose[1]= 0
-    # utils.woody.write_cartesian_position(pose)
-    # z_thread.layer_height += clearance_height
-    # utils.woody.set_speed(PRINT_SPEED)
-    # utils.plc.md_extruder_switch("on") 
-    # z_thread.layer_height -= clearance_height
-    # time.sleep(3)
+
 
     pose[1] = -400
     utils.woody.write_cartesian_position(pose)
@@ -300,16 +281,7 @@ while flg:
 
     pose = safe_print_transition(pose, x=5, y=200, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
-    # utils.plc.md_extruder_switch("off")
-    # utils.woody.set_speed(SPEED)
-    # pose[0] = 5
-    # pose[1]= 200
-    # z_thread.layer_height += clearance_height
-    # utils.woody.write_cartesian_position(pose)
-    # utils.woody.set_speed(PRINT_SPEED)
-    # utils.plc.md_extruder_switch("on")
-    # z_thread.layer_height -= clearance_height
-    # time.sleep(3)
+
 
     pose[0] = 155
     pose[1]= -97.5
@@ -321,17 +293,7 @@ while flg:
 
     pose = safe_print_transition(pose, x=0, y=400, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
-    # utils.plc.md_extruder_switch("off")
-    # utils.woody.set_speed(SPEED)
-    # pose[0] = 0
-    # pose[1]= 400
-    # z_thread.layer_height += clearance_height
-    # utils.woody.write_cartesian_position(pose)
-    # utils.woody.set_speed(PRINT_SPEED)
-    # utils.plc.md_extruder_switch("on")
-    # z_thread.layer_height -= clearance_height
-    # utils.woody.write_cartesian_position(pose)
-    # time.sleep(3)
+
 
     pose[1]= -400
     utils.woody.write_cartesian_position(pose)
@@ -344,17 +306,7 @@ while flg:
     
     pose = safe_print_transition(pose, x=0, y=-395, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
-    # utils.plc.md_extruder_switch("off")
-    # utils.woody.set_speed(SPEED)
-    # pose[0] = 0
-    # pose[1]= -395
-    # z_thread.layer_height += clearance_height
-    # utils.woody.write_cartesian_position(pose)
-    # utils.plc.md_extruder_switch("on")
-    # utils.woody.set_speed(PRINT_SPEED)
-    # z_thread.layer_height -= clearance_height
-    # utils.woody.write_cartesian_position(pose)
-    # time.sleep(3)
+
 
     pose[0] = 155
     pose[1]= -97.5
@@ -370,16 +322,7 @@ while flg:
 
     pose = safe_print_transition(pose, x=160, y=0, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
-    # utils.plc.md_extruder_switch("off")
-    # utils.woody.set_speed(SPEED)
-    # pose[0] = 160
-    # pose[1]= 0
-    # z_thread.layer_height += clearance_height
-    # utils.woody.write_cartesian_position(pose)
-    # utils.woody.set_speed(PRINT_SPEED)
-    # utils.plc.md_extruder_switch("on")
-    # z_thread.layer_height -= clearance_height 
-    # time.sleep(3)
+
 
     pose[1] = 400
     utils.woody.write_cartesian_position(pose)
@@ -392,16 +335,7 @@ while flg:
 
     pose = safe_print_transition(pose, x=5, y=-200, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
-    # utils.plc.md_extruder_switch("off")
-    # utils.woody.set_speed(SPEED)
-    # pose[0] = 5
-    # pose[1] = -200
-    # z_thread.layer_height += clearance_height
-    # utils.woody.write_cartesian_position(pose)
-    # utils.woody.set_speed(PRINT_SPEED)
-    # utils.plc.md_extruder_switch("on")
-    # z_thread.layer_height -= clearance_height
-    # time.sleep(3)
+
 
     pose[0]= 155
     pose[1]= 97.5
