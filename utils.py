@@ -93,7 +93,7 @@ def apply_z_correction_brute(pose, layer_height, tolerance, extruding=False):
         woody.write_cartesian_position(pose)
     return pose
 
-def move_to_pose(pose, layer_height, tol, extruding=False, z_correct=False):
+def move_to_pose(pose, layer_height, tol, extruding=True, z_correct=False):
     """
     Move robot to a given pose with optional Z correction.
     """
