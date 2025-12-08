@@ -238,33 +238,61 @@ while flg:
     # Start background Z-correction thread
     z_thread = start_z_correction(csv_path, layer_height=layer_height, z_correction=z_correct)
 
+             
+
     # --- Perimeter Motion Sequence ---
     pose[0] = 0
     utils.woody.write_cartesian_position(pose)
     time.sleep(3)
-
+    """                 |
+    """                     
     pose[1] = 400
     utils.woody.write_cartesian_position(pose)
+    """                 |___________________
+
+    """                     
     pose[0] = 160
     utils.woody.write_cartesian_position(pose)
-
+    """                |___________________
+                                           |
+                                           |
+    """                     
     pose[1] = -400
     utils.woody.write_cartesian_position(pose)
+    """                |___________________
+                                           |
+             ______________________________|
+    """ 
 
-    pose[0] = 200
+    pose[0] = 180
     utils.woody.write_cartesian_position(pose)
-
-
+    """                |___________________
+                                           |
+             ______________________________|
+            |
+    """ 
     pose = safe_print_transition(pose, x=5, y=395, z_thread=z_thread, clearance_height=clearance_height, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
-
+    # start infill
     pose[0] = 155
     pose[1] = 97.5
     utils.woody.write_cartesian_position(pose)
+    """                |__________________
+                                         /|
+                                       /  |
+             ________________________/____|
+            |
+    """ 
 
     pose[0] = 5
     pose[1] = -200
     utils.woody.write_cartesian_position(pose)
+    """                |___________________
+                                \         /|
+                                  \     /  |
+             _______________________\_/____|
+            |
+    """ 
 
     utils.plc.md_extruder_switch("off")
     z_thread.layer_height += clearance_height
