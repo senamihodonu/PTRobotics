@@ -213,7 +213,7 @@ utils.woody.set_speed(PRINT_SPEED)
 # utils.plc.md_extruder_switch("off")
 # stop_z_correction(z_thread)
 
-def safe_print_transition(pose, x, y, z_pos, z_thread, travel_speed, print_speed):
+def safe_print_transition(pose, x, y, z_position, z_thread, travel_speed, print_speed):
     time.sleep(2)
     utils.plc.md_extruder_switch("off")
     utils.woody.set_speed(travel_speed)
@@ -223,7 +223,7 @@ def safe_print_transition(pose, x, y, z_pos, z_thread, travel_speed, print_speed
     pose[2] += Z_OFFSET
     utils.woody.write_cartesian_position(pose)
     utils.woody.set_speed(print_speed)
-    pose[2] = z_pos
+    pose[2] = z_position
     utils.woody.write_cartesian_position(pose)
     time.sleep(1)
     utils.plc.md_extruder_switch("on")
