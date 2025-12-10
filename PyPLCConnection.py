@@ -217,7 +217,7 @@ class PyPLCConnection:
 
         self.write_modbus_coils(MD_EXTRUDER_ADDRESS, value)
         print(f"Turning MD pellet extruder {status.strip().upper()}")
-        time.sleep(2)
+        time.sleep(1)
 
     def disable_motor(self, value):
         """

@@ -214,7 +214,7 @@ utils.woody.set_speed(PRINT_SPEED)
 # stop_z_correction(z_thread)
 
 def safe_print_transition(pose, x, y, z_position, z_thread, travel_speed, print_speed):
-    time.sleep(2)
+    time.sleep(1)
     utils.plc.md_extruder_switch("off")
     utils.woody.set_speed(travel_speed)
     z_thread.z_correction = False
@@ -278,7 +278,7 @@ while flg:
              ______________________________|
             |
     """ 
-    pose = safe_print_transition(pose, x=5, y=395, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    pose = safe_print_transition(pose, x=5, y=395, z_position=z_pos, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
     # start infill
     pose[0] = 155
@@ -301,6 +301,15 @@ while flg:
             |
     """ 
 
+    pose[0] = 155
+    utils.woody.write_cartesian_position(pose)
+    """                |___________________
+                               | \         /|
+                               |   \     /  |
+             __________________|_____\_/____|
+            |
+    """ 
+
     utils.plc.md_extruder_switch("off")
     z_thread.z_correction = False
     pose[2] += Z_OFFSET
@@ -308,9 +317,9 @@ while flg:
 
     utils.plc.travel(utils.Y_LEFT_MOTION, 400, 'mm', 'y')
     """                |___________________
-                                \         /|
-                                  \     /  |
-             _______________________\_/____|
+                               | \         /|
+                               |   \     /  |
+             __________________|_____\_/____|
             |
             <-----------------
             400 mm robot left travel
@@ -324,47 +333,47 @@ while flg:
     # turn on extruder
     # restore print Z
     
-    pose = safe_print_transition(pose, x=160-x_offset, y=travel_offset, z_pos=z_pos, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    pose = safe_print_transition(pose, x=160-x_offset, y=travel_offset, z_position=z_pos, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
 
     pose[1] = -400
     utils.woody.write_cartesian_position(pose)
-    """                |___________________
-                                \         /|
-                                  \     /  |
-     _______ _______________________\_/____|
+    """                |____________________
+                               | \         /|
+                               |   \     /  |
+    ________ __________________|_____\_/____|
             |
     """ 
 
     pose[0] = 0-x_offset 
     utils.woody.write_cartesian_position(pose)
-    """                |___________________
-    |                           \         /|
-    |                             \     /  |
-    |_______ _______________________\_/____|
+    """                |____________________
+    |                          | \         /|
+    |                          |   \     /  |
+    |_______ __________________|_____\_/____|
             |
     """ 
 
     pose[1] = 0+travel_offset 
     utils.woody.write_cartesian_position(pose)
     """
-     _________|_____________
-    |             \        /|
-    |              \     /  |
-    |_________ _______\_/___|
+     _________|______________
+    |             |\        /|
+    |             | \     /  |
+    |_________ ___|____\_/___|
               |
     """ 
-    pose = safe_print_transition(pose, x=5-x_offset, y=200, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    pose = safe_print_transition(pose, x=5-x_offset, y=200, z_position=z_pos, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
     # start infill
     pose[0] = 155-x_offset
     pose[1]= -97.5
     utils.woody.write_cartesian_position(pose)
     """
-     __________|____________
-    |          /  \        /|
-    |        /     \     /  |
-    |______/__ _______\_/___|
+     __________|___________
+    |          /|\        /|
+    |        /  |  \     / |
+    |______/__ _|____\_/___|
               |
     """ 
 
@@ -380,11 +389,12 @@ while flg:
     # """ 
 
     # Increment the absolute Z position for the next layer
+    z_thread.z_correction = False
     z_pos += layer_height
     cummulative_z += layer_height
 
     # Increase the layer_height variable itself for the following iteration
-    layer_height += 4
+    layer_height += 3
     z_thread.layer_height = layer_height
 
 
@@ -397,13 +407,11 @@ while flg:
         pose,
         x=0-x_offset,
         y=400,
+        z_position=z_pos,
         z_thread=z_thread,
         travel_speed=SPEED,
         print_speed=PRINT_SPEED
     )
-
-    # Small delay to ensure robot motion is fully complete before continuing
-    time.sleep(1)
 
     pose[1]= -400
     utils.woody.write_cartesian_position(pose)
@@ -440,7 +448,7 @@ while flg:
     ------------------
     """ 
 
-    pose = safe_print_transition(pose, x=5-x_offset, y=-395, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    pose = safe_print_transition(pose, x=5-x_offset, y=-395, z_position=z_pos, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
 
     pose[0] = 155-x_offset
@@ -471,7 +479,6 @@ while flg:
    """ 
 
     utils.plc.md_extruder_switch("off")   
-    time.sleep(2) 
     z_thread.z_correction = False
     pose[2] += Z_OFFSET
     utils.woody.write_cartesian_position(pose)
@@ -488,7 +495,7 @@ while flg:
     400 mm robot right travel
    """ 
 
-    pose = safe_print_transition(pose, x=160, y=0, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    pose = safe_print_transition(pose, x=160, y=0, z_position=z_pos, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
     pose[1] = 400
     utils.woody.write_cartesian_position(pose)
@@ -527,7 +534,7 @@ while flg:
     ------------\--------------------
    """ 
 
-    pose = safe_print_transition(pose, x=5, y=-200, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    pose = safe_print_transition(pose, x=5, y=-200, z_position=z_pos, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
     # start infill
     pose[0]= 155
@@ -558,32 +565,33 @@ while flg:
     
 
     utils.plc.md_extruder_switch("off")
+    flg = False  # For testing, end after one layer
 
-    if  starting_z-z_pos > end_height:
-        flg = False
-        print("Reached maximum print height. Ending print.")
+    # if  starting_z-z_pos > end_height:
+    #     flg = False
+    #     print("Reached maximum print height. Ending print.")
 
-    if  starting_z-z_pos > z_transition_height:
-        #travel to safe Z
-        z_thread.z_correction = False
-        utils.plc.travel(utils.Z_UP_MOTION, z_transition_height, 'mm', 'z')
-        time.sleep(1)
-        z_thread.z_correction = True
+    # if  starting_z-z_pos > z_transition_height:
+    #     #travel to safe Z
+    #     z_thread.z_correction = False
+    #     utils.plc.travel(utils.Z_UP_MOTION, z_transition_height, 'mm', 'z')
+    #     time.sleep(1)
+    #     z_thread.z_correction = True
        
-    # Increment the absolute Z position for the next layer
-    z_pos += layer_height
-    cummulative_z += layer_height
+    # # Increment the absolute Z position for the next layer
+    # z_pos += layer_height
+    # cummulative_z += layer_height
 
-    # Increase the layer_height variable itself for the following iteration
-    layer_height += 4
-    z_thread.layer_height = layer_height
-    pose = safe_print_transition(pose, x=0, y=-400, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
-    counter += 1
+    # # Increase the layer_height variable itself for the following iteration
+    # layer_height += 4
+    # z_thread.layer_height = layer_height
+    # pose = safe_print_transition(pose, x=0, y=-400, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    # counter += 1
 
 
 
-    pose[2]= z_pos
-    utils.woody.write_cartesian_position(pose)
+    # pose[2]= z_pos
+    # utils.woody.write_cartesian_position(pose)
 
 
 stop_z_correction(z_thread)
