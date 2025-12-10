@@ -235,6 +235,12 @@ def safe_print_transition(pose, x, y, z_thread, travel_speed, print_speed):
 z_thread = start_z_correction(csv_path, layer_height=layer_height, z_correction=z_correct)
 
 counter = 0
+cummulative_z = 0
+starting_z = z_pos
+z_transition_height = layer_height*100  # Height to trigger safe Z travel
+print(f"Starting Z: {starting_z}, Transition Height: {z_transition_height}")
+end_height = 12  # Maximum print height
+
 while flg:
     
     print(f"\n=== Starting New Layer at Z = {z_pos:.2f} mm ===")
@@ -375,9 +381,10 @@ while flg:
 
     # Increment the absolute Z position for the next layer
     z_pos += layer_height
+    cummulative_z += layer_height
 
     # Increase the layer_height variable itself for the following iteration
-    layer_height += layer_height
+    layer_height += 4
     z_thread.layer_height = layer_height
 
 
@@ -551,18 +558,33 @@ while flg:
     
 
     utils.plc.md_extruder_switch("off")
+
+    if  starting_z-z_pos > end_height:
+        flg = False
+        print("Reached maximum print height. Ending print.")
+
+    if  starting_z-z_pos > z_transition_height:
+        #travel to safe Z
+        z_thread.z_correction = False
+        utils.plc.travel(utils.Z_UP_MOTION, z_transition_height, 'mm', 'z')
+        time.sleep(1)
+        z_thread.z_correction = True
        
     # Increment the absolute Z position for the next layer
     z_pos += layer_height
+    cummulative_z += layer_height
 
     # Increase the layer_height variable itself for the following iteration
-    layer_height += layer_height
+    layer_height += 4
     z_thread.layer_height = layer_height
     pose = safe_print_transition(pose, x=0, y=-400, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
     counter += 1
 
-    if counter == 2:
-        flg = False
+
+
+    pose[2]= z_pos
+    utils.woody.write_cartesian_position(pose)
+
 
 stop_z_correction(z_thread)
 
