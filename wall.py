@@ -10,7 +10,7 @@ import utils  # custom utility module
 # === Parameters ===
 alignment_calibration = False  # Flag to enable alignment calibration
 SPEED = 100             # Robot travel speed (mm/s)
-PRINT_SPEED = 10         # Printing speed (mm/s)
+PRINT_SPEED = 8         # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 layer_height = 3        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -191,7 +191,7 @@ time.sleep(2)
 utils.safety_check()
 
 # Raise Z to a safe clearance height
-utils.plc.travel(utils.Z_UP_MOTION, 10, 'mm', 'z')
+utils.plc.travel(utils.Z_UP_MOTION, 5, 'mm', 'z')
 
 pose, z_pos = utils.calibrate_height(pose, layer_height)
 print("Z raised to safe travel height.")
@@ -213,7 +213,7 @@ utils.woody.set_speed(PRINT_SPEED)
 # utils.plc.md_extruder_switch("off")
 # stop_z_correction(z_thread)
 
-def safe_print_transition(pose, x, y, z_thread, travel_speed, print_speed):
+def safe_print_transition(pose, x, y, z_pos, z_thread, travel_speed, print_speed):
     time.sleep(2)
     utils.plc.md_extruder_switch("off")
     utils.woody.set_speed(travel_speed)
@@ -229,7 +229,7 @@ def safe_print_transition(pose, x, y, z_thread, travel_speed, print_speed):
     utils.plc.md_extruder_switch("on")
     time.sleep(1)
     z_thread.z_correction = True
-    time.sleep(1)
+    time.sleep(2)
     return pose
 
 z_thread = start_z_correction(csv_path, layer_height=layer_height, z_correction=z_correct)
@@ -324,7 +324,7 @@ while flg:
     # turn on extruder
     # restore print Z
     
-    pose = safe_print_transition(pose, x=160-x_offset, y=travel_offset, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
+    pose = safe_print_transition(pose, x=160-x_offset, y=travel_offset, z_pos=z_pos, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
 
     pose[1] = -400
