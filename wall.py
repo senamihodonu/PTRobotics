@@ -237,9 +237,9 @@ z_thread = start_z_correction(csv_path, layer_height=layer_height, z_correction=
 counter = 0
 cummulative_z = 0
 starting_z = z_pos
-z_transition_height = layer_height*100  # Height to trigger safe Z travel
+z_transition_height = layer_height*2  # Height to trigger safe Z travel
 print(f"Starting Z: {starting_z}, Transition Height: {z_transition_height}")
-end_height = 12  # Maximum print height
+end_height = layer_height*4  # Maximum print height
 
 while flg:
     
