@@ -633,7 +633,7 @@ class robot:
 
         # Wait till robot is done moving
         if blocking == True:
-            time.sleep(0.5)
+            time.sleep(0.3)
             moving = self.is_moving()
             while(moving):
                 #print('in while:', moving)

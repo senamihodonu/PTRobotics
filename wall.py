@@ -10,16 +10,17 @@ import utils  # custom utility module
 # === Parameters ===
 alignment_calibration = False  # Flag to enable alignment calibration
 SPEED = 100             # Robot travel speed (mm/s)
-PRINT_SPEED = 12         # Printing speed (mm/s)
+PRINT_SPEED = 8         # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 layer_height = 3        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
 x_offset = 10            # X-axis offset (mm)
 PRINT_OFFSET = 5        # Vertical offset between passes (mm)
 Z_CORRECTION = 4        # Small Z alignment correction (mm)
-TOL = 0                 # Tolerance for Z correction
+TOL = 1                 # Tolerance for Z correction
 travel_offset = 6
 check_height_interval = 3  # Interval (s) to check height during print
+plc_lock = threading.Lock()
 
 # === Z Correction Thread ===
 class ZCorrectionThread(threading.Thread):
@@ -40,7 +41,8 @@ class ZCorrectionThread(threading.Thread):
             try:
                 if self.z_correction:
                     # Perform gantry Z correction
-                    utils.apply_z_correction_gantry(self.layer_height, tolerance=self.tolerance)
+                    with plc_lock:
+                        utils.apply_z_correction_gantry(self.layer_height, tolerance=self.tolerance)
 
                 # Record current position and sensor height
                 pose = utils.woody.read_current_cartesian_pose()
@@ -84,7 +86,7 @@ def start_z_correction(csv_path, layer_height = layer_height, z_correction=False
     # time.sleep(0.5)
     z_thread = ZCorrectionThread(
         layer_height,
-        tolerance=1,
+        tolerance=TOL,
         interval=check_height_interval,
         csv_path=csv_path,
         z_correction=z_correction
@@ -132,18 +134,18 @@ utils.plc.disable_motor(False)
 print("System parameters configured.")
 
 # === Initial Position Setup ===
-home_joint_pose = [0,-40, 40, 0, -40, 0]
-utils.woody.write_joint_pose(home_joint_pose)
+# home_joint_pose = [0,-40, 40, 0, -40, 0]
+# utils.woody.write_joint_pose(home_joint_pose)
 
-pose = [0, 0, 0, 0, 90, 0]
-utils.woody.write_cartesian_position(pose)
-print(f"Robot moved to initial pose: {pose}")
+# pose = [0, 0, 0, 0, 90, 0]
+# utils.woody.write_cartesian_position(pose)
+# print(f"Robot moved to initial pose: {pose}")
 
-# Perform pre-motion safety validation
-utils.safety_check()
-# Raise Z to a safe clearance height
-utils.plc.travel(utils.Z_UP_MOTION, 5, 'mm', 'z')
-time.sleep(2)
+# # Perform pre-motion safety validation
+# utils.safety_check()
+# # Raise Z to a safe clearance height
+# utils.plc.travel(utils.Z_UP_MOTION, 5, 'mm', 'z')
+# time.sleep(2)
 print("Z raised to safe travel height.")
 
 z_pos = 0
@@ -224,13 +226,16 @@ def safe_print_transition(pose, x, y, z_position, z_thread, travel_speed, print_
     pose[1]= y
     pose[2] += Z_OFFSET
     utils.woody.write_cartesian_position(pose)
+    pose[2] -= Z_OFFSET
+    utils.woody.write_cartesian_position(pose)
+    time.sleep(1)
     utils.woody.set_speed(print_speed)
     pose[2] = z_position
     utils.woody.write_cartesian_position(pose)
     time.sleep(1)
     utils.plc.md_extruder_switch("on")
     z_thread.z_correction = True
-    time.sleep(1)
+    time.sleep(2)
     return pose
 
 z_thread = start_z_correction(csv_path, layer_height=layer_height, z_correction=z_correct)
@@ -459,7 +464,7 @@ while flg:
    """ 
 
     pose[0] = 5-x_offset
-    pose[1]= 200
+    pose[1]= 200+x_offset
     utils.woody.write_cartesian_position(pose)
 
     """

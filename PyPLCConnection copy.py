@@ -27,33 +27,47 @@ WOOD_NOZZLE_UTOOL = 2
 DISABLE_PIN = 16
 
 
-
-
-
 print("---------------------------------------------")
 class PyPLCConnection:
-    
 
+    # def __init__(self, ip_address, port=502):
+    #     self.ip_address = ip_address
+    #     self.port = port
+    #     self.client = self.connect_to_plc()
     def __init__(self, ip_address, port=502):
         self.ip_address = ip_address
         self.port = port
-        self.client = self.connect_to_plc()
+
+        # 🔒 Thread lock to protect ALL Modbus reads/writes
         self.lock = threading.Lock()
 
+        # 🔌 Create initial client
+        self.client = self.connect_to_plc()
 
     def connect_to_plc(self):
-        try:
-            # Create a Modbus TCP client
-            self.client = ModbusTcpClient(self.ip_address, port=self.port)
-            if self.client.connect():
-                print(f"Connected to PLC at Address: {self.ip_address}:{self.port}")
-                return self.client
+        """Safely create a Modbus TCP client connection."""
+        with self.lock:  # 🔒 Prevent any thread from touching socket during connect
+            client = ModbusTcpClient(self.ip_address, port=self.port)
+
+            if not client.connect():
+                print(f"[PLC] Failed to connect to {self.ip_address}:{self.port}")
             else:
-                print(f"Failed to connect to PLC at Address: {self.ip_address}:{self.port}")
-                self.client = None  # Ensure the client is None on failure
-        except Exception as e:
-            print(f"Error while connecting to PLC: {e}")
-            self.client = None
+                print(f"[PLC] Connected to PLC at Address: {self.ip_address}:{self.port}")
+
+            return client
+    # def connect_to_plc(self):
+    #     try:
+    #         # Create a Modbus TCP client
+    #         self.client = ModbusTcpClient(self.ip_address, port=self.port)
+    #         if self.client.connect():
+    #             print(f"Connected to PLC at Address: {self.ip_address}:{self.port}")
+    #             return self.client
+    #         else:
+    #             print(f"Failed to connect to PLC at Address: {self.ip_address}:{self.port}")
+    #             self.client = None  # Ensure the client is None on failure
+    #     except Exception as e:
+    #         print(f"Error while connecting to PLC: {e}")
+    #         self.client = None
 
 
     # def write_modbus_coils(self, coil_address, value):
@@ -76,29 +90,29 @@ class PyPLCConnection:
     #     return result
 
     def write_modbus_coils(self, coil_address, value):
-        with self.lock:
-            try:
-                self.connect_to_plc()
-                print(f"Writing {value} to address {coil_address}")
+        
+        try:
+            self.connect_to_plc()
+            print(f"Writing {value} to address {coil_address}")
 
-                coil_address -= 1
+            coil_address -= 1
 
-                # Perform write (pymodbus must finish before closing socket)
-                result = self.client.write_coil(coil_address, value)
+            # Perform write (pymodbus must finish before closing socket)
+            result = self.client.write_coil(coil_address, value)
 
-                # Wait for pymodbus to fully complete transaction
-                time.sleep(0.01)
+            # Wait for pymodbus to fully complete transaction
+            time.sleep(0.01)
 
-                return result
+            return result
 
-            except Exception as e:
-                print("Error writing coil:", e)
-                raise
+        except Exception as e:
+            print("Error writing coil:", e)
+            raise
 
-            finally:
-                # Ensure pymodbus isn't still using the socket
-                time.sleep(0.01)
-                self.close_connection()
+        finally:
+            # Ensure pymodbus isn't still using the socket
+            time.sleep(0.01)
+            self.close_connection()
 
 
 
@@ -149,12 +163,11 @@ class PyPLCConnection:
         return result_list[0]
 
     def read_single_register(self, register_address):
-        with self.lock:
-            self.connect_to_plc()
-            result = self.client.read_holding_registers(register_address-1).registers
-            print("register " + str(register_address) + " is " + str(result[0]))
-            self.close_connection()
-            return result[0]
+        self.connect_to_plc()
+        result = self.client.read_holding_registers(register_address-1).registers
+        print("register " + str(register_address) + " is " + str(result[0]))
+        self.close_connection()
+        return result[0]
     # def read_single_register(self, register_address):
     #     """Read a single Modbus holding register safely."""
     #     try:
