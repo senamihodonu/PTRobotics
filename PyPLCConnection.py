@@ -204,7 +204,7 @@ class PyPLCConnection:
 
         :param status: "on" or "off" (case-insensitive)
         """
-        
+        self.connect_to_plc()
         status_lower = status.strip().lower()
 
         if status_lower == "on" or status == 1:
@@ -217,7 +217,8 @@ class PyPLCConnection:
 
         self.write_modbus_coils(MD_EXTRUDER_ADDRESS, value)
         print(f"Turning MD pellet extruder {status.strip().upper()}")
-        time.sleep(1)
+        self.close_connection()
+
 
     def disable_motor(self, value):
         """

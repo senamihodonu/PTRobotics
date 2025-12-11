@@ -10,7 +10,7 @@ import utils  # custom utility module
 # === Parameters ===
 alignment_calibration = False  # Flag to enable alignment calibration
 SPEED = 100             # Robot travel speed (mm/s)
-PRINT_SPEED = 8         # Printing speed (mm/s)
+PRINT_SPEED = 12         # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 layer_height = 3        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -18,7 +18,7 @@ x_offset = 10            # X-axis offset (mm)
 PRINT_OFFSET = 5        # Vertical offset between passes (mm)
 Z_CORRECTION = 4        # Small Z alignment correction (mm)
 TOL = 0                 # Tolerance for Z correction
-travel_offset = 10
+travel_offset = 6
 
 # === Z Correction Thread ===
 class ZCorrectionThread(threading.Thread):
@@ -217,6 +217,7 @@ def safe_print_transition(pose, x, y, z_position, z_thread, travel_speed, print_
     time.sleep(1)
     utils.plc.md_extruder_switch("off")
     utils.woody.set_speed(travel_speed)
+
     z_thread.z_correction = False
     pose[0] = x
     pose[1]= y
@@ -227,9 +228,8 @@ def safe_print_transition(pose, x, y, z_position, z_thread, travel_speed, print_
     utils.woody.write_cartesian_position(pose)
     time.sleep(1)
     utils.plc.md_extruder_switch("on")
-    time.sleep(1)
     z_thread.z_correction = True
-    time.sleep(2)
+    time.sleep(1)
     return pose
 
 z_thread = start_z_correction(csv_path, layer_height=layer_height, z_correction=z_correct)
@@ -271,13 +271,6 @@ while flg:
              ______________________________|
     """ 
 
-    pose[0] = 180
-    utils.woody.write_cartesian_position(pose)
-    """                |___________________
-                                           |
-             ______________________________|
-            |
-    """ 
     pose = safe_print_transition(pose, x=5, y=395, z_position=z_pos, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
 
     # start infill
@@ -477,6 +470,8 @@ while flg:
    |             |
     ------------\/-----
    """ 
+    pose[0] = 155-x_offset
+    utils.woody.write_cartesian_position(pose)
 
     utils.plc.md_extruder_switch("off")   
     z_thread.z_correction = False
