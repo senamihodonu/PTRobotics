@@ -19,6 +19,7 @@ PRINT_OFFSET = 5        # Vertical offset between passes (mm)
 Z_CORRECTION = 4        # Small Z alignment correction (mm)
 TOL = 0                 # Tolerance for Z correction
 travel_offset = 6
+check_height_interval = 3  # Interval (s) to check height during print
 
 # === Z Correction Thread ===
 class ZCorrectionThread(threading.Thread):
@@ -52,7 +53,7 @@ class ZCorrectionThread(threading.Thread):
                     'y': y,
                     'z': z,
                     'current_height': current_height,
-                    'layer_height': layer_height,
+                    'layer_height': self.layer_height,
                     'print_speed': print_speed,
                     'timestamp': time.time()
                 })
@@ -84,7 +85,7 @@ def start_z_correction(csv_path, layer_height = layer_height, z_correction=False
     z_thread = ZCorrectionThread(
         layer_height,
         tolerance=1,
-        interval=2,
+        interval=check_height_interval,
         csv_path=csv_path,
         z_correction=z_correction
     )

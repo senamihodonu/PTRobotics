@@ -51,82 +51,123 @@ class PyPLCConnection:
 
 
     def write_modbus_coils(self, coil_address, value):
-        self.connect_to_plc()
-        print("Writing " + str(value) + " to address ", str(coil_address))
+        """Write a Modbus coil and ALWAYS close connection."""
+        
+        try:
+            # ---- ALWAYS OPEN ----
+            self.connect_to_plc()
+            print(f"Writing {value} to address {coil_address}")
 
-        result = None
-        # Take care of the offset between pymodbus and the click plc
-        coil_address = coil_address - 1
+            # Modbus offset (Click PLC starts at 1, pymodbus starts at 0)
+            coil_address -= 1
 
-        # pymodbus built in write coil function
-        result = self.client.write_coil(coil_address, value)
-        # time.sleep(1)
-        self.close_connection()
+            # Perform write
+            result = self.client.write_coil(coil_address, value)
 
-        return result
+            return result
+
+        except Exception as e:
+            print("Error writing coil:", e)
+            raise
+
+        finally:
+            # ---- ALWAYS CLOSE ----
+            self.close_connection()
 
 
     def read_modbus_coils(self, coil_address, number_of_coils=1):
-        self.connect_to_plc()
-        # Predefining a empty list to store our result
-        result_list = []
+        """Read Modbus coils safely with auto-close, even on error."""
+        
+        try:
+            # ---- ALWAYS OPEN ----
+            self.connect_to_plc()
 
-        # Take care of the offset between pymodbus and the click plc
-        coil_address = coil_address - 1
+            # Adjust for Click PLC addressing (1-based → 0-based)
+            coil_address -= 1
 
-        # Read the modbus address values form the click PLC
-        result = self.client.read_coils(coil_address)
+            # Read coils
+            response = self.client.read_coils(coil_address, number_of_coils)
 
-        # print("Response from PLC with pymodbus library", result.bits)
+            # Handle pymodbus response errors gracefully
+            if response.isError():
+                raise Exception(f"Modbus read error: {response}")
 
-        # storing our values form the plc in a list of length
-        # 0 to the number of coils we want to read
-        result_list = result.bits[0:number_of_coils]
-        self.close_connection()
-        print(result_list)
+            # Extract only the number of bits requested
+            result_list = response.bits[:number_of_coils]
 
+            print(result_list)
+            return result_list
 
-        # print("Filtered result of only necessary values", result_list)
-        print("register " + str(coil_address+1) + " is " + str(result_list[0]))
-        return result_list[0]
+        except Exception as e:
+            print(f"Error reading Modbus coils: {e}")
+            raise  # rethrow so caller knows something went wrong
+
+        finally:
+            # ---- ALWAYS CLOSE ----
+            self.close_connection()
+
     
     def read_single_register(self, register_address):
-        self.connect_to_plc()
-        result = self.client.read_holding_registers(register_address-1).registers
-        print("register " + str(register_address) + " is " + str(result[0]))
-        self.close_connection()
-        return result[0]
-    # def read_single_register(self, register_address):
-    #     """Read a single Modbus holding register safely."""
-    #     try:
-    #         # Ensure connection is alive
-    #         if not self.client or not self.client.is_socket_open():
-    #             self.connect_to_plc()
-    #             if not self.client.is_socket_open():
-    #                 raise ConnectionError("Unable to connect to PLC.")
+        """Read one holding register safely with auto-close."""
 
-    #         # Perform read (count=1 for a single register)
-    #         response = self.client.read_holding_registers(register_address - 1, count=1)
+        try:
+            # ---- ALWAYS OPEN ----
+            self.connect_to_plc()
 
-    #         if response.isError():
-    #             raise Exception(f"PLC read error at register {register_address}: {response}")
+            # Adjust for Modbus (1-based Click → 0-based pymodbus)
+            address = register_address - 1
 
-    #         value = response.registers[0]
-    #         print(f"Register {register_address} = {value}")
-    #         return value
+            # Read the register
+            response = self.client.read_holding_registers(address, 1)
 
-    #     except Exception as e:
-    #         print(f"[PLC ERROR] Failed to read register {register_address}: {e}")
-    #         return None
+            # Check for Modbus-level errors
+            if response.isError():
+                raise Exception(f"Modbus read error: {response}")
 
-    
+            # Extract register value
+            value = response.registers[0]
+
+            print(f"register {register_address} is {value}")
+            return value
+
+        except Exception as e:
+            print(f"Error reading register {register_address}: {e}")
+            raise
+
+        finally:
+            # ---- ALWAYS CLOSE ----
+            self.close_connection()
+
+   
     def write_single_register(self, register_address, value):
-        print("writing " + str(value) + " to register " + str(register_address))
-        self.client.write_register(register_address-1, value)
+        """Write a single holding register safely with auto-close."""
+        try:
+            self.connect_to_plc()
+            print(f"Writing {value} to register {register_address}")
+
+            address = register_address - 1
+            response = self.client.write_register(address, value)
+
+            if response.isError():
+                raise Exception(f"Modbus write error: {response}")
+
+        except Exception as e:
+            print(f"Error writing register {register_address}: {e}")
+            raise
+
+        finally:
+            self.close_connection()
+
 
     def close_connection(self):
-        print("Closing Connection")
-        self.client.close()
+        """Safely close Modbus connection."""
+        try:
+            if self.client:
+                print("Closing Connection")
+                self.client.close()
+        except:
+            print("Warning: PLC connection already closed or failed to close.")
+
 
     def distance(self, distance, unit = "mm"):
         if unit.lower() == "in":
@@ -137,51 +178,25 @@ class PyPLCConnection:
             return distance
         
     def read_current_distance(self):
-    # Convert degrees to radians before calculating cosine
+        # Convert degrees to radians before calculating cosine
         angle_degrees = 21.65
         angle_radians_from_degrees = math.radians(angle_degrees)
         angle_distance = self.read_single_register(DISTANCE_DATA_ADDRESS)
         vertical_distance = angle_distance*math.cos(angle_radians_from_degrees)
-        # print(f"The cosine of {angle_degrees} degrees is: {vertical_distance}")
         return math.ceil(vertical_distance)
 
-    def calculate_pulse_per_second(self,speed_mm_min, steps_per_rev, lead_mm_rev, axis):
-        """
-        Calculate pulses per second (PPS) for the stepper motor.
-        
-        :param speed_mm_per_min: Speed of the motor in mm/min.
-        :param lead_mm: Lead of the lead screw in mm.
-        :param dip_switch_setting: Dip switch setting (multiplier).
-        :return: Pulses per second (PPS).
-        """
-        if axis.lower() == "z":
-            pulses_per_second = self.read_single_register(PPS_Z_ADDRESS)
-        elif axis.lower() == "y":
-            pulses_per_second = self.read_single_register(PPS_Y_ADDRESS)
-        # if axis.lower() == "z":
-        #     gear_ratio = 20
-        # else:
-        #     gear_ratio = 1
-        # # Convert speed from mm/min to mm/sec
-        # speed_mm_sec = speed_mm_min / 60
+    def calculate_pulse_per_second(self, speed_mm_min, steps_per_rev, lead_mm_rev, axis):
+        axis = axis.lower()
 
-        # # Calculate pulses per second (PPS)
-        # pulses_per_second = (steps_per_rev * gear_ratio/ lead_mm_rev) * speed_mm_sec
-        # print(pulses_per_second)
-        # if axis.lower() == "z":
-        #     self.write_single_register(3,0)
-        #     time.sleep(0.2)
-        #     self.write_single_register(3,int(pulses_per_second))
-        # else:
-        #     self.write_single_register(1,0)
-        #     time.sleep(0.2)
-        #     self.write_single_register(1,int(pulses_per_second))
-        return pulses_per_second
+        if axis == "z":
+            return self.read_single_register(PPS_Z_ADDRESS)
+        elif axis == "y":
+            return self.read_single_register(PPS_Y_ADDRESS)
+        else:
+            raise ValueError(f"Unsupported axis '{axis}'")
+
 
     def reset_coils(self):
-        """
-        Reset all defined Modbus coil outputs (turn them OFF).
-        """
         coil_addresses = [
             GREEN,
             Z_DOWN_MOTION,
@@ -195,68 +210,50 @@ class PyPLCConnection:
         for coil in coil_addresses:
             self.write_modbus_coils(coil, False)
 
-        print("All coils reset complete.")
+        print("All coils reset.")
+
 
 
     def md_extruder_switch(self, status):
-        """
-        Turn the MD pellet extruder ON or OFF via Modbus coils.
+        """Turn pellet extruder ON or OFF."""
+        s = str(status).strip().lower()
 
-        :param status: "on" or "off" (case-insensitive)
-        """
-        self.connect_to_plc()
-        status_lower = status.strip().lower()
-
-        if status_lower == "on" or status == 1:
+        if s in ("on", "1"):
             value = True
-        elif status_lower == "off" or status == 0:
+        elif s in ("off", "0"):
             value = False
         else:
-            print(f"'{status}' is not a supported value. Please enter 'ON'/1 or 'OFF'/0.")
+            print(f"Unsupported extruder value '{status}'. Use ON/OFF.")
             return
 
         self.write_modbus_coils(MD_EXTRUDER_ADDRESS, value)
-        print(f"Turning MD pellet extruder {status.strip().upper()}")
-        self.close_connection()
+        print(f"Extruder turned {status.upper()}")
+
 
 
     def disable_motor(self, value):
-        """
-        Turn the MD pellet extruder ON or OFF via Modbus coils.
-
-        :param status: "on" or "off" (case-insensitive)
-        """
         self.write_modbus_coils(DISABLE_PIN, value)
-        if value == False:
-            print(f"Motors are enabled value = {value}")
-        else:
-            print(f"Motors are disabled value = {value}")
+        state = "disabled" if value else "enabled"
+        print(f"Motors are {state} (value = {value})")
 
 
 
     def travel(self, coil_address, distance, unit, axis):
         """
-        Move stepper motor a given distance at axis-specific pulse rate,
-        with countdown timer during motion.
-
-        :param coil_address: Modbus coil address for motor
-        :param distance: Distance to travel
-        :param unit: 'mm', 'inches', or 'feet'
-        :param axis: Axis being moved ('x', 'y', or 'z')
-        :return: Travel time in seconds
+        Move stepper motor a given distance using Modbus coil control.
+        Pulse rate is read from PLC.
         """
 
-        # === Axis-specific settings ===
         axis = axis.lower()
+
+        # === Read pulse rate (auto-close inside read_single_register) ===
         if axis == "z":
-            pulse_rate = self.read_single_register(PPS_Z_ADDRESS)   # pulses per second
-            # pulse_rate = 60000
+            pulse_rate = self.read_single_register(PPS_Z_ADDRESS)
             pulses_per_rev = DIP_SWITCH_SETTING_Z
             lead_mm = LEAD_Z_SCREW
-            gear_ratio = 20  # example: 20:1 reduction
+            gear_ratio = 20
         elif axis == "y":
             pulse_rate = self.read_single_register(PPS_Y_ADDRESS)
-            # pulse_rate = 40000
             pulses_per_rev = DIP_SWITCH_SETTING_Y
             lead_mm = LEAD_Y_SCREW
             gear_ratio = 1
@@ -264,12 +261,12 @@ class PyPLCConnection:
             print(f"Error: Unsupported axis '{axis}'")
             return 0
 
-        # === Validate inputs ===
+        # === Validate ===
         if distance <= 0:
             print("Error: Distance must be positive.")
             return 0
 
-        # === Convert distance to mm ===
+        # === Unit conversion ===
         unit = unit.lower()
         if unit in ("inches", "in"):
             distance *= 25.4
@@ -280,24 +277,21 @@ class PyPLCConnection:
             return 0
 
         # === Calculate motion parameters ===
-        # If gear_ratio = 20 means motor turns 20 revs per 1 screw rev → divide
         pulses_per_screw_rev = pulses_per_rev * gear_ratio
         pulses_per_mm = pulses_per_screw_rev / lead_mm
-        speed_mm_per_sec = pulse_rate / pulses_per_mm
-        travel_time = distance / speed_mm_per_sec
+        speed_mm_s = pulse_rate / pulses_per_mm
+        travel_time = distance / speed_mm_s
 
         print(
             f"Axis: {axis.upper()}, Distance: {distance:.2f} mm, "
-            f"Speed: {speed_mm_per_sec:.3f} mm/s, "
-            f"Travel time: {travel_time:.2f} s"
+            f"Speed: {speed_mm_s:.3f} mm/s, Travel time: {travel_time:.2f} s"
         )
 
-        # === Run motor (coil on) ===
-        self.connect_to_plc()
+        # === Turn motor ON ===
         self.write_modbus_coils(coil_address, True)
 
-        # Countdown loop
-        remaining = int(round(travel_time))
+        # Countdown
+        remaining = round(travel_time)
         while remaining > 0:
             sys.stdout.write(f"\rTime remaining: {remaining} s")
             sys.stdout.flush()
@@ -305,14 +299,13 @@ class PyPLCConnection:
             remaining -= 1
 
         sys.stdout.write("\rTime remaining: 0 s\n")
-        sys.stdout.flush()
 
-        # === Stop motor (coil off) ===
+        # === Turn motor OFF ===
         self.write_modbus_coils(coil_address, False)
-        self.close_connection()
-        time.sleep(2)
 
+        time.sleep(2)
         return travel_time
+
 
 
 
