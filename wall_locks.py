@@ -10,7 +10,7 @@ import utils  # custom utility module
 # === Parameters ===
 alignment_calibration = False  # Flag to enable alignment calibration
 SPEED = 100             # Robot travel speed (mm/s)
-PRINT_SPEED = 8         # Printing speed (mm/s)
+PRINT_SPEED = 25         # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 layer_height = 3        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -19,7 +19,7 @@ PRINT_OFFSET = 5        # Vertical offset between passes (mm)
 Z_CORRECTION = 4        # Small Z alignment correction (mm)
 TOL = 1                 # Tolerance for Z correction
 travel_offset = 6
-check_height_interval = 3  # Interval (s) to check height during print
+check_height_interval = 2  # Interval (s) to check height during print
 
 plc_lock = threading.Lock()
 robot_lock = threading.Lock()
