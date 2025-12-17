@@ -36,12 +36,17 @@ class ZCorrectionThread(threading.Thread):
         self._running.set()
         self.samples = []
         self.z_correction = z_correction
+        # self.z_correction_event = threading.Event()
+        # if z_correction:
+        #         self.z_correction_event.set()
+
 
     def run(self):
         print("[ZCorrection] Thread started")
         while self._running.is_set():
             try:
                 if self.z_correction:
+                # if self.z_correction_event.is_set():
                     # Perform gantry Z correction
                     with plc_lock:
                         utils.apply_z_correction_gantry(self.layer_height, tolerance=self.tolerance)
@@ -242,6 +247,8 @@ def safe_print_transition(pose, x, y, z_position, z_thread, travel_speed, print_
         utils.woody.set_speed(travel_speed)
 
     z_thread.z_correction = False
+    # z_thread.z_correction_event.clear()
+
     pose[0] = x
     pose[1]= y
     pose[2] += Z_OFFSET
@@ -260,6 +267,8 @@ def safe_print_transition(pose, x, y, z_position, z_thread, travel_speed, print_
     with plc_lock:
         utils.plc.md_extruder_switch("on")
     z_thread.z_correction = True
+    # z_thread.z_correction_event.set()
+
     time.sleep(2)
     return pose
 
@@ -345,6 +354,8 @@ while flg:
     with plc_lock:
         utils.plc.md_extruder_switch("off")
     z_thread.z_correction = False
+    # z_thread.z_correction_event.clear()
+
     pose[2] += Z_OFFSET
     with robot_lock:
         utils.woody.write_cartesian_position(pose)
@@ -416,6 +427,8 @@ while flg:
 
     # Increment the absolute Z position for the next layer
     z_thread.z_correction = False
+    # z_thread.z_correction_event.clear()
+
     pose[0] = 0-x_offset
     pose[1]= 400
     pose[2] += Z_OFFSET
@@ -518,6 +531,7 @@ while flg:
     with plc_lock:
         utils.plc.md_extruder_switch("off")
     z_thread.z_correction = False
+    # z_thread.z_correction_event.clear()
     pose[2] += Z_OFFSET
     with robot_lock:
         utils.woody.write_cartesian_position(pose)
