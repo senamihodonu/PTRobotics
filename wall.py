@@ -134,18 +134,18 @@ utils.plc.disable_motor(False)
 print("System parameters configured.")
 
 # === Initial Position Setup ===
-# home_joint_pose = [0,-40, 40, 0, -40, 0]
-# utils.woody.write_joint_pose(home_joint_pose)
+home_joint_pose = [0,-40, 40, 0, -40, 0]
+utils.woody.write_joint_pose(home_joint_pose)
 
-# pose = [0, 0, 0, 0, 90, 0]
-# utils.woody.write_cartesian_position(pose)
-# print(f"Robot moved to initial pose: {pose}")
+pose = [0, 0, 0, 0, 90, 0]
+utils.woody.write_cartesian_position(pose)
+print(f"Robot moved to initial pose: {pose}")
 
-# # Perform pre-motion safety validation
-# utils.safety_check()
-# # Raise Z to a safe clearance height
-# utils.plc.travel(utils.Z_UP_MOTION, 5, 'mm', 'z')
-# time.sleep(2)
+# Perform pre-motion safety validation
+utils.safety_check()
+# Raise Z to a safe clearance height
+utils.plc.travel(utils.Z_UP_MOTION, 5, 'mm', 'z')
+time.sleep(2)
 print("Z raised to safe travel height.")
 
 z_pos = 0
@@ -389,6 +389,14 @@ while flg:
 
     # Increment the absolute Z position for the next layer
     z_thread.z_correction = False
+    pose[0] = 0-x_offset
+    pose[1]= 400
+    pose[2] += Z_OFFSET
+    utils.woody.write_cartesian_position(pose)
+
+    pose[2] += Z_OFFSET
+    utils.woody.write_cartesian_position(pose)
+
     z_pos += layer_height
     cummulative_z += layer_height
 
