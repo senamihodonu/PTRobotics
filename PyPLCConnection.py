@@ -5,9 +5,13 @@ import math
 import threading
 
 LEAD_Y_SCREW = 2.54 #mm
+LEAD_Y_SCREW_ADDRESS = 21
 LEAD_Z_SCREW = 5 #mm
+LEAD_Z_SCREW_ADDRESS = 20
 DIP_SWITCH_SETTING_Y = 20000 #pulse per revolution
+DIP_SWITCH_SETTING_Y_ADDRESS = 19 
 DIP_SWITCH_SETTING_Z = 20000 #pulse per revolution
+DIP_SWITCH_SETTING_Z_ADDRESS = 18
 GREEN = 6
 Y_LEFT_MOTION = 4
 Y_RIGHT_MOTION = 3
@@ -25,6 +29,8 @@ MD_PELLET_UTOOL = 1
 WOOD_NOZZLE_UFRAME = 2
 WOOD_NOZZLE_UTOOL = 2
 DISABLE_PIN = 16
+Z_ENABLE_PIN = 17
+LAYER_HEIGHT_ADDRESS = 16
 
 
 
@@ -341,6 +347,10 @@ class PyPLCConnection:
         else:
             print(f"Motors are disabled value = {value}")
 
+    def write_layer_height(self, layer_height):
+        self.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
+
+
 
 
     def travel(self, coil_address, distance, unit, axis):
@@ -425,6 +435,7 @@ class PyPLCConnection:
 
 
         return travel_time
+    
 
 
 
@@ -441,15 +452,20 @@ if __name__ == "__main__":
     # plc.write_modbus_coils(Y_RIGHT_MOTION, False)
     # plc.write_modbus_coils(Y_LEFT_MOTION, False)
     # plc.read_single_register(7)
-    plc.md_extruder_switch("off")
+    # plc.md_extruder_switch("off")
     # # plc.calculate_pulse_per_second("z")
     # # plc.travel(Z_UP_MOTION, 1, "in", pps=60000, lead_mm=5, pulses_per_rev=20000)
 
 
     # plc.travel(Z_DOWN_MOTION, 4,"mm","z")
-    print(plc.read_current_distance())
+    # print(plc.read_current_distance())
 
-    plc.disable_motor(False)
+    # plc.disable_motor(False)
+    plc.write_layer_height(12)
+    plc.write_single_register(DIP_SWITCH_SETTING_Y_ADDRESS, DIP_SWITCH_SETTING_Y)
+    plc.write_single_register(DIP_SWITCH_SETTING_Z_ADDRESS, DIP_SWITCH_SETTING_Z)
+    plc.write_single_register(LEAD_Z_SCREW_ADDRESS, LEAD_Z_SCREW)
+    
 
     # time.sleep()
 
