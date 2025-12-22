@@ -31,6 +31,10 @@ WOOD_NOZZLE_UTOOL = 2
 DISABLE_PIN = 16
 Z_ENABLE_PIN = 17
 LAYER_HEIGHT_ADDRESS = 16
+Z_GEAR_RATIO = 20
+Z_GEAR_RATIO_ADDRESS = 22
+tolerance = 2 #mm
+tolerance_address = 23
 
 
 
@@ -348,6 +352,7 @@ class PyPLCConnection:
             print(f"Motors are disabled value = {value}")
 
     def write_layer_height(self, layer_height):
+        self.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
         self.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
 
 
