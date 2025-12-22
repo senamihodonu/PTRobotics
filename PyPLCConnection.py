@@ -30,11 +30,12 @@ WOOD_NOZZLE_UFRAME = 2
 WOOD_NOZZLE_UTOOL = 2
 DISABLE_PIN = 16
 Z_ENABLE_PIN = 17
+layer_height = 10
 LAYER_HEIGHT_ADDRESS = 16
 Z_GEAR_RATIO = 20
 Z_GEAR_RATIO_ADDRESS = 22
 tolerance = 2 #mm
-tolerance_address = 23
+TOLERANCE_ADDRESS = 23
 
 
 
@@ -466,10 +467,14 @@ if __name__ == "__main__":
     # print(plc.read_current_distance())
 
     # plc.disable_motor(False)
-    plc.write_layer_height(12)
-    plc.write_single_register(DIP_SWITCH_SETTING_Y_ADDRESS, DIP_SWITCH_SETTING_Y)
-    plc.write_single_register(DIP_SWITCH_SETTING_Z_ADDRESS, DIP_SWITCH_SETTING_Z)
-    plc.write_single_register(LEAD_Z_SCREW_ADDRESS, LEAD_Z_SCREW)
+    # plc.write_layer_height(12)
+    # plc.write_single_register(DIP_SWITCH_SETTING_Y_ADDRESS, DIP_SWITCH_SETTING_Y)
+    # plc.write_single_register(DIP_SWITCH_SETTING_Z_ADDRESS, DIP_SWITCH_SETTING_Z)
+    plc.write_single_register(TOLERANCE_ADDRESS, tolerance)
+    plc.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
+    plc.write_single_register(Z_GEAR_RATIO_ADDRESS, Z_GEAR_RATIO)
+    plc.write_modbus_coils(Z_ENABLE_PIN, True)
+    # plc.read_single_register(7)
     
 
     # time.sleep()
