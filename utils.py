@@ -55,7 +55,9 @@ print_offset = 5       # Vertical offset between passes (mm)
 z_correction = 4       # Fine Z correction for alignment (mm)
 
 current_distance = plc.read_current_distance()
+
 flg = True
+
 
 # === Safety Check ===
 def safety_check():

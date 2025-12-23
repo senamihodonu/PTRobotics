@@ -125,6 +125,7 @@ utils.woody.set_robot_utool(utils.MD_PELLET_UTOOL)       # Select pellet extrude
 utils.woody.set_speed(SPEED)                             # Set travel speed (mm/s)
 
 # Reset PLC output states
+utils.plc.write_single_register()
 utils.plc.reset_coils()
 utils.plc.disable_motor(True)
 utils.plc.md_extruder_switch("off")
