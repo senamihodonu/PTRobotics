@@ -149,27 +149,35 @@ class PyPLCConnection:
     
     import struct
 
+
+
     def read_float_register(self, register_address):
         try:
             self.connect_to_plc()
-            result = self.client.read_holding_registers(register_address - 1, 2)
 
-            if not result or not hasattr(result, "registers"):
+            # Modbus is 0-based → subtract 1
+            result = self.client.read_holding_registers(
+                address=register_address-1,
+                count=2
+            )
+
+            if result is None or not hasattr(result, "registers"):
                 raise ValueError("Invalid response from PLC")
 
-            high_word = result.registers[0]
-            low_word  = result.registers[1]
+            regs = result.registers
+            if len(regs) < 2:
+                raise ValueError("Not enough registers returned")
 
-            raw = struct.pack('>HH', high_word, low_word)
-            value = struct.unpack('>f', raw)[0]
+            # BRX = big-endian word order
+            raw = struct.pack(">HH", regs[0], regs[1])
+            value = struct.unpack(">f", raw)[0]
+
             return value
 
         except Exception as e:
             print(f"[PLC] Error reading float at register {register_address}: {e}")
             return None
 
-        finally:
-            self.close_connection()
 
     def write_float_register(self, register_address, value):
         try:
@@ -446,8 +454,8 @@ if __name__ == "__main__":
     plc.write_single_register(TOLERANCE_ADDRESS, tolerance)
     plc.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
     plc.write_single_register(Z_GEAR_RATIO_ADDRESS, Z_GEAR_RATIO)
-    plc.write_modbus_coils(Z_ENABLE_PIN, True)
-    # plc.read_single_register(7)
+    plc.write_modbus_coils(Z_ENABLE_PIN, False)
+    print(plc.read_float_register(24))
     
 
     # time.sleep()
