@@ -3,6 +3,7 @@ from pymodbus.client import ModbusTcpClient
 import sys
 import math
 import threading
+import struct
 
 LEAD_Y_SCREW = 2.54 #mm
 LEAD_Y_SCREW_ADDRESS = 21
@@ -87,29 +88,28 @@ class PyPLCConnection:
     #     return result
 
     def write_modbus_coils(self, coil_address, value):
-        with self.lock:
-            try:
-                self.connect_to_plc()
-                print(f"Writing {value} to address {coil_address}")
+        try:
+            self.connect_to_plc()
+            print(f"Writing {value} to address {coil_address}")
 
-                coil_address -= 1
+            coil_address -= 1
 
-                # Perform write (pymodbus must finish before closing socket)
-                result = self.client.write_coil(coil_address, value)
+            # Perform write (pymodbus must finish before closing socket)
+            result = self.client.write_coil(coil_address, value)
 
-                # Wait for pymodbus to fully complete transaction
-                time.sleep(0.01)
+            # Wait for pymodbus to fully complete transaction
+            time.sleep(0.01)
 
-                return result
+            return result
 
-            except Exception as e:
-                print("Error writing coil:", e)
-                raise
+        except Exception as e:
+            print("Error writing coil:", e)
+            raise
 
-            finally:
-                # Ensure pymodbus isn't still using the socket
-                time.sleep(0.01)
-                self.close_connection()
+        finally:
+            # Ensure pymodbus isn't still using the socket
+            time.sleep(0.01)
+            self.close_connection()
 
 
 
@@ -125,128 +125,80 @@ class PyPLCConnection:
         self.connect_to_plc()
         # Predefining a empty list to store our result
         result_list = []
-
-
-
         # Take care of the offset between pymodbus and the click plc
         coil_address = coil_address - 1
 
         # Read the modbus address values form the click PLC
         result = self.client.read_coils(coil_address)
 
-        # print("Response from PLC with pymodbus library", result.bits)
-
-
-
         # storing our values form the plc in a list of length
         # 0 to the number of coils we want to read
         result_list = result.bits[0:number_of_coils]
         self.close_connection()
         print(result_list)
-
-
-
-
-
-
-
-
-
-
-
-
         # print("Filtered result of only necessary values", result_list)
         print("register " + str(coil_address+1) + " is " + str(result_list[0]))
         return result_list[0]
 
     def read_single_register(self, register_address):
-        with self.lock:
-            self.connect_to_plc()
-            result = self.client.read_holding_registers(register_address-1).registers
-            print("register " + str(register_address) + " is " + str(result[0]))
-            self.close_connection()
-            return result[0]
-    # def read_single_register(self, register_address):
-    #     """Read a single Modbus holding register safely."""
-    #     try:
-    #         # Ensure connection is alive
-    #         if not self.client or not self.client.is_socket_open():
-    #             self.connect_to_plc()
-    #             if not self.client.is_socket_open():
-    #                 raise ConnectionError("Unable to connect to PLC.")
-
-    #         # Perform read (count=1 for a single register)
-    #         response = self.client.read_holding_registers(register_address - 1, count=1)
-
-    #         if response.isError():
-    #             raise Exception(f"PLC read error at register {register_address}: {response}")
-
-    #         value = response.registers[0]
-    #         print(f"Register {register_address} = {value}")
-    #         return value
-
-    #     except Exception as e:
-    #         print(f"[PLC ERROR] Failed to read register {register_address}: {e}")
-    #         return None
-
+        self.connect_to_plc()
+        result = self.client.read_holding_registers(register_address-1).registers
+        print("register " + str(register_address) + " is " + str(result[0]))
+        self.close_connection()
+        return result[0]
     
+    import struct
 
+    def read_float_register(self, register_address):
+        try:
+            self.connect_to_plc()
+            result = self.client.read_holding_registers(register_address - 1, 2)
 
+            if not result or not hasattr(result, "registers"):
+                raise ValueError("Invalid response from PLC")
 
+            high_word = result.registers[0]
+            low_word  = result.registers[1]
 
+            raw = struct.pack('>HH', high_word, low_word)
+            value = struct.unpack('>f', raw)[0]
+            return value
 
+        except Exception as e:
+            print(f"[PLC] Error reading float at register {register_address}: {e}")
+            return None
 
+        finally:
+            self.close_connection()
 
+    def write_float_register(self, register_address, value):
+        try:
+            self.connect_to_plc()
 
+            raw = struct.pack('>f', value)
+            high_word, low_word = struct.unpack('>HH', raw)
 
+            result = self.client.write_registers(register_address - 1, [high_word, low_word])
 
+            if not result:
+                raise ValueError("PLC did not acknowledge write")
 
+            return True
 
+        except Exception as e:
+            print(f"[PLC] Error writing float {value} to register {register_address}: {e}")
+            return False
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        finally:
+            self.close_connection()
 
     def write_single_register(self, register_address, value):
         print("writing " + str(value) + " to register " + str(register_address))
         self.client.write_register(register_address-1, value)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def close_connection(self):
         print("Closing Connection")
         self.client.close()
-
-
-
-
-
-
 
     def distance(self, distance, unit = "mm"):
         if unit.lower() == "in":
@@ -308,7 +260,8 @@ class PyPLCConnection:
             Z_UP_MOTION,
             Y_RIGHT_MOTION,
             Y_LEFT_MOTION,
-            MD_EXTRUDER_ADDRESS
+            MD_EXTRUDER_ADDRESS,
+            Z_ENABLE_PIN,
         ]
 
         print("Resetting all coils to False...")
@@ -352,12 +305,35 @@ class PyPLCConnection:
         else:
             print(f"Motors are disabled value = {value}")
 
-    def write_layer_height(self, layer_height):
-        self.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
-        self.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
+    def configure_z_correction(self, status=None, tolerance=None, layer_height=None):
+        if tolerance is not None:
+            self.write_single_register(TOLERANCE_ADDRESS, tolerance)
 
+        if layer_height is not None:
+            self.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
 
+    def z_correction(self, status: str | int) -> None:
+        """
+        Turn the Z correction ON or OFF via Modbus coils.
 
+        :param status: "on", "off", 1, or 0
+        """
+        if isinstance(status, str):
+            status_normalized = status.strip().lower()
+        else:
+            status_normalized = status
+
+        if status_normalized in ("on", 1):
+            value: bool = True
+            print("Z correction enabled (value = True)")
+        elif status_normalized in ("off", 0):
+            value = False
+            print("Z correction disabled (value = False)")
+        else:
+            print(f"'{status}' is not a supported value. Please enter 'ON'/1 or 'OFF'/0.")
+            return
+
+        self.write_modbus_coils(Z_ENABLE_PIN, value)
 
     def travel(self, coil_address, distance, unit, axis):
         """
@@ -437,9 +413,6 @@ class PyPLCConnection:
         # === Stop motor (coil off) ===
         self.write_modbus_coils(coil_address, False)
         self.close_connection()
-        time.sleep(2)
-
-
         return travel_time
     
 

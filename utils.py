@@ -44,6 +44,7 @@ woody = robot(ROBOT_IP)
 print("PLC and Robot connections established.")
 plc.reset_coils()
 
+
 # === Parameters ===
 speed = 200            # Robot travel speed (mm/s)
 print_speed = 10       # Printing speed (mm/s)
