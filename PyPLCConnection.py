@@ -455,7 +455,7 @@ if __name__ == "__main__":
     plc.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
     plc.write_single_register(Z_GEAR_RATIO_ADDRESS, Z_GEAR_RATIO)
     plc.configure_z_correction(layer_height=4, tolerance=2)
-    plc.write_modbus_coils(Z_ENABLE_PIN, True)
+    plc.write_modbus_coils(Z_ENABLE_PIN, False)
 
     
 
