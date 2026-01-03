@@ -30,7 +30,7 @@ MD_PELLET_UTOOL = 1
 WOOD_NOZZLE_UFRAME = 2
 WOOD_NOZZLE_UTOOL = 2
 DISABLE_PIN = 16
-Z_ENABLE_PIN = 17
+Z_CORRECTION_ENABLE = 17
 layer_height = 10
 LAYER_HEIGHT_ADDRESS = 16
 Z_GEAR_RATIO = 20
@@ -341,7 +341,7 @@ class PyPLCConnection:
             print(f"'{status}' is not a supported value. Please enter 'ON'/1 or 'OFF'/0.")
             return
 
-        self.write_modbus_coils(Z_ENABLE_PIN, value)
+        self.write_modbus_coils(Z_CORRECTION_ENABLE, value)
 
     def travel(self, coil_address, distance, unit, axis):
         """
@@ -451,11 +451,12 @@ if __name__ == "__main__":
     # plc.write_layer_height(12)
     # plc.write_single_register(DIP_SWITCH_SETTING_Y_ADDRESS, DIP_SWITCH_SETTING_Y)
     # plc.write_single_register(DIP_SWITCH_SETTING_Z_ADDRESS, DIP_SWITCH_SETTING_Z)
-    plc.write_single_register(TOLERANCE_ADDRESS, tolerance)
-    plc.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
-    plc.write_single_register(Z_GEAR_RATIO_ADDRESS, Z_GEAR_RATIO)
-    plc.configure_z_correction(layer_height=4, tolerance=2)
-    plc.write_modbus_coils(Z_ENABLE_PIN, False)
+    # plc.write_single_register(TOLERANCE_ADDRESS, tolerance)
+    # plc.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
+    # plc.write_single_register(Z_GEAR_RATIO_ADDRESS, Z_GEAR_RATIO)
+    # plc.configure_z_correction(layer_height=4, tolerance=2)
+    # plc.write_modbus_coils(Z_CORRECTION_ENABLE, False)
+    plc.z_correction('on')
 
     
 
