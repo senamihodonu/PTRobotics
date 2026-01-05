@@ -37,6 +37,7 @@ Z_GEAR_RATIO = 20
 Z_GEAR_RATIO_ADDRESS = 22
 tolerance = 2 #mm
 TOLERANCE_ADDRESS = 23
+CUMM_Z_DISPLAY_ADDRESS = 27
 
 
 
@@ -269,7 +270,7 @@ class PyPLCConnection:
             Y_RIGHT_MOTION,
             Y_LEFT_MOTION,
             MD_EXTRUDER_ADDRESS,
-            Z_ENABLE_PIN,
+            Z_CORRECTION_ENABLE,
         ]
 
         print("Resetting all coils to False...")
@@ -319,6 +320,7 @@ class PyPLCConnection:
 
         if layer_height is not None:
             self.write_single_register(LAYER_HEIGHT_ADDRESS, layer_height)
+        time.sleep(1)
 
     def z_correction(self, status: str | int) -> None:
         """
@@ -356,6 +358,7 @@ class PyPLCConnection:
         """
 
         # === Axis-specific settings ===
+        time.sleep(2)
         axis = axis.lower()
 
 

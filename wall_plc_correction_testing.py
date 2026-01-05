@@ -9,7 +9,7 @@ import utils  # custom utility module
 # === Parameters ===
 alignment_calibration = False  # Flag to enable alignment calibration
 SPEED = 100             # Robot travel speed (mm/s)
-PRINT_SPEED = 50         # Printing speed (mm/s)
+PRINT_SPEED = 10         # Printing speed (mm/s)
 INSIDE_OFFSET = 6       # Offset for inner infill moves (mm)
 layer_height = 3        # Vertical step per layer (mm)
 Z_OFFSET = 20           # Safe Z offset for travel moves (mm)
@@ -20,6 +20,7 @@ TOL = 1                 # Tolerance for Z correction
 travel_offset = 6
 check_height_interval = 3  # Interval (s) to check height during print
 cummulative_z = layer_height
+new_layer_height = 3
 
 
 class ZLoggingThread(threading.Thread):
@@ -42,7 +43,7 @@ class ZLoggingThread(threading.Thread):
                 x, y, z = pose[0], pose[1], pose[2]
                 current_height = utils.read_current_z_distance()
                 print_speed = utils.woody.get_speed()
-                utils.plc.write_single_register(utils.CUMM_Z_DISPLAY_ADDRESS, cummulative_z)
+                
 
                 # Only log if enabled
                 if self.log_data:
@@ -257,20 +258,24 @@ print(f"Starting Z: {starting_z}, Transition Height: {z_transition_height}")
 end_height = layer_height*4  # Maximum print height
 
 
+
+pose = [-60,-350, z_pos, 0, 90, 0]
+utils.woody.write_cartesian_position(pose)
+time.sleep(1)
+
+utils.plc.md_extruder_switch("on")
 utils.plc.z_correction('on')
+utils.plc.write_single_register(utils.CUMM_Z_DISPLAY_ADDRESS, cummulative_z)
 time.sleep(2)
 
-while flg:
-    pose = [-60,-350, z_pos, 0, 90, 0]
-    utils.woody.write_cartesian_position(pose)
+pose[1] = -400
+utils.woody.write_cartesian_position(pose)
+    
 
+while flg:
     utils.plc.md_extruder_switch("on")
     utils.plc.z_correction('on')
-    time.sleep(2)
-
-    pose[1] = -400
-    utils.woody.write_cartesian_position(pose)
-    
+    time.sleep(1)
 
     print(f"\n=== Starting New Layer at Z = {z_pos:.2f} mm ===")
 
@@ -297,361 +302,29 @@ while flg:
              ______________________________|
     """ 
     
-    pose[0] = 200
+    pose[0] = 0
     utils.woody.write_cartesian_position(pose)
     """                |___________________
                                            |
              ______________________________|
             |
     """ 
-    time.sleep(2)
-    
-    pose = safe_print_transition(pose, x=5, y=395, z_thread=z_thread, z_position=z_pos, travel_speed=SPEED, print_speed=PRINT_SPEED)
-
-    # start infill
-    pose[0] = 155
-    pose[1] = 97.5
-    utils.woody.write_cartesian_position(pose)
-    """                |__________________
-                                         /|
-                                       /  |
-             ________________________/____|
-            |
-    """ 
-
-    pose[0] = 5
-    pose[1] = -200
-    utils.woody.write_cartesian_position(pose)
-    """                |___________________
-                                \         /|
-                                  \     /  |
-             _______________________\_/____|
-            |
-    """ 
-
-    pose[0] = 155
-    utils.woody.write_cartesian_position(pose)
-    """                |___________________
-                               | \         /|
-                               |   \     /  |
-             __________________|_____\_/____|
-            |
-    """ 
-
-    utils.plc.md_extruder_switch("off")
-    utils.plc.z_correction("off")
-    z_thread.log_data = False
     pose[2] += Z_OFFSET
     utils.woody.write_cartesian_position(pose)
     time.sleep(1)
-    utils.plc.travel(utils.Y_LEFT_MOTION, 400, 'mm', 'y')
-    """                |___________________
-                               | \         /|
-                               |   \     /  |
-             __________________|_____\_/____|
-            |
-            <-----------------
-            400 mm robot left travel
-    """ 
-    
-    # turn off extruder
-    # increase speed for travel
-    # set next x position
-    # set next y position
-    # set back to print speed
-    # turn on extruder
-    # restore print Z
-    
-    pose = safe_print_transition(
-        pose,
-        x=160 - x_offset,
-        y=travel_offset,
-        z_thread=z_thread,
-        z_position=z_pos,
-        travel_speed=SPEED,
-        print_speed=PRINT_SPEED
-    )
-    
-    pose[1] = -400
-    utils.woody.write_cartesian_position(pose)
-    """                |____________________
-                               | \         /|
-                               |   \     /  |
-    ________ __________________|_____\_/____|
-            |
-    """ 
-
-    pose[0] = 0-x_offset 
-    utils.woody.write_cartesian_position(pose)
-    """                |____________________
-    |                          | \         /|
-    |                          |   \     /  |
-    |_______ __________________|_____\_/____|
-            |
-    """ 
-
-    pose[1] = 0+travel_offset 
-    utils.woody.write_cartesian_position(pose)
-    """
-     _________|______________
-    |             |\        /|
-    |             | \     /  |
-    |_________ ___|____\_/___|
-              |
-    """ 
-    pose = safe_print_transition(
-    pose,
-    x=5 - x_offset,
-    y=200+(travel_offset/2),
-    z_thread=z_thread,
-    z_position=z_pos,
-    travel_speed=SPEED,
-    print_speed=PRINT_SPEED
-    )
-
-    # start infill
-    pose[0] = 155-x_offset
-    pose[1]= -97.5
-    utils.woody.write_cartesian_position(pose)
-    """
-     __________|___________
-    |          /|\        /|
-    |        /  |  \     / |
-    |______/__ _|____\_/___|
-              |
-    """ 
-
-    pose[0] = 5-x_offset
-    pose[1]= -395
-    utils.woody.write_cartesian_position(pose)
-    """
-     __________|____________
-    |\         /  \        /|
-    |  \     /     \     /  |
-    |___ \_/__ _______\_/___|
-              |
-    """ 
-
-    z_thread.log_data = False
     utils.plc.md_extruder_switch("off")
     utils.plc.z_correction("off")
-    # Increment the absolute Z position for the next layer
-
-    pose[2] += Z_OFFSET
-    utils.woody.write_cartesian_position(pose)
-
-    print(f"layer before after {layer_height}")
-    print(f"z_pos before is {z_pos}")
-    z_pos += layer_height
-
-    cummulative_z += layer_height
-
-    # Increase the layer_height variable itself for the following iteration
-    layer_height += 3
-    utils.plc.configure_z_correction(layer_height=layer_height)
-
-    print(f"layer height after {layer_height}")
-    print(f"z_pos after is {z_pos}")
-    
-
-    # Move to a safe transition point before starting the next print sequence
-    # - x=0, y=400 → target transition coordinates
-    # - z_thread → active Z-correction thread
-    # - clearance_height → lift amount for safe travel
-    # - SPEED / PRINT_SPEED → travel vs. printing speeds
-    pose = safe_print_transition(
-        pose,
-        x=0-x_offset,
-        y=400+travel_offset,
-        z_position=z_pos,
-        z_thread=z_thread,
-        travel_speed=SPEED,
-        print_speed=PRINT_SPEED
-    )
-    
-    pose[1]= -400
-    utils.woody.write_cartesian_position(pose)
-
-
-    """
-    ___________________            
-     __________|____________
-    |\         /  \        /|
-    |  \     /     \     /  |
-    |___ \_/__ _______\_/___|
-              |
-    """ 
-    pose[0] = 160-x_offset
-    utils.woody.write_cartesian_position(pose)
-    """
-    ___________________            
-   |      __________|____________
-   |     |\         /  \        /|
-   |     |  \     /     \     /  |
-   |     |___ \_/__ _______\_/___|
-   |             |
-    """ 
-
-    pose[1]= 400+travel_offset
-    utils.woody.write_cartesian_position(pose)
-    """
-    ------------------            
-   |      __________|____________
-   |     |\         /  \        /|
-   |     |  \     /     \     /  |
-   |     |___ \_/__ _______\_/___|
-   |             |
-    ------------------
-    """ 
-
-    pose = safe_print_transition(
-        pose,
-        x=5 - x_offset,
-        y=-395,
-        z_thread=z_thread,
-        z_position=z_pos,
-        travel_speed=SPEED,
-        print_speed=PRINT_SPEED
-    )
-
-
-    pose[0] = 155-x_offset
-    pose[1]= -97.5
-    utils.woody.write_cartesian_position(pose)
-    """
-    ------------------            
-   | \    __________|____________
-   |   \ |\         /  \        /|
-   |     |  \     /     \     /  |
-   |     |___ \_/__ _______\_/___|
-   |             |
-    ------------\-----
-   """ 
-
-    pose[0] = 5-x_offset
-    pose[1]= 200
-    utils.woody.write_cartesian_position(pose)
-
-    """
-    -------------------/            
-   | \    __________|____________
-   |   \ |\         /  \        /|
-   |     |  \     /     \     /  |
-   |     |___ \_/__ _______\_/___|
-   |             |
-    ------------\/-----
-   """ 
-    pose[0] = 155-x_offset
-    utils.woody.write_cartesian_position(pose)
-    time.sleep(1)
-
-    utils.plc.md_extruder_switch("off")  
-    utils.plc.z_correction('off') 
-    z_thread.log_data = False
-    pose[2] += Z_OFFSET
-    utils.woody.write_cartesian_position(pose)
-    time.sleep(1)
-    utils.plc.travel(utils.Y_RIGHT_MOTION, 400, 'mm', 'y')
-    """
-    -------------------/            
-   | \    __________|____________
-   |   \ |\         /  \        /|
-   |     |  \     /     \     /  |
-   |     |___ \_/__ _______\_/___|
-   |             |
-    ------------\/-----
-    ----------------->
-    400 mm robot right travel
-   """ 
-
-    pose = safe_print_transition(
-    pose,
-    x=160,
-    y=0,
-    z_thread=z_thread,
-    z_position=z_pos,
-    travel_speed=SPEED,
-    print_speed=PRINT_SPEED
-)
-
-    pose[1] = 400
-    utils.woody.write_cartesian_position(pose)
-    """
-    -------------------/            
-   | \    __________|____________
-   |   \ |\         /  \        /|
-   |     |  \     /     \     /  |
-   |     |___ \_/__ _______\_/___|
-   |             |                   
-    ------------\/-------------------
-   """ 
-
-    pose[0] = 0 
-    utils.woody.write_cartesian_position(pose)  
-    """
-    -------------------/            
-   | \    __________|____________    |
-   |   \ |\         /  \        /|   |
-   |     |  \     /     \     /  |   |
-   |     |___ \_/__ _______\_/___|   |
-   |             |                   |
-    ------------\--------------------
-   """ 
-
-    pose[1] = 0
-    utils.woody.write_cartesian_position(pose)
-
-    """
-    -------------------/-------------            
-   | \    __________|____________    |
-   |   \ |\         /  \        /|   |
-   |     |  \     /     \     /  |   |
-   |     |___ \_/__ _______\_/___|   |
-   |             |                   |
-    ------------\--------------------
-   """ 
-
-    pose = safe_print_transition(pose, x=5, y=-200, z_position=z_pos, z_thread=z_thread, travel_speed=SPEED, print_speed=PRINT_SPEED)
-
-    # start infill
-    pose[0]= 155
-    pose[1]= 97.5
-    utils.woody.write_cartesian_position(pose)
-    """
-    -------------------/\-------------            
-   | \    __________|____________     |
-   |   \ |\         /  \         /|   |
-   |     |  \     /      \     /  |   |
-   |     |___ \_/__ ______ \_/____|   |
-   |             |                    |
-    ------------\/-----------\--------
-   """ 
-
-    pose[0]= 5
-    pose[1]= 395
-    utils.woody.write_cartesian_position(pose)  
-    """
-    -------------------/\---------------            
-   | \    __________|_____________    / |
-   |   \ |\         /  \         /| /   |
-   |     |  \     /      \     /  |     |
-   |     |___ \_/__ ______ \_/____|     |
-   |             |                      |
-    ------------\/------------\/--------
-   """ 
-    
-    pose[2] += Z_OFFSET
-    utils.woody.write_cartesian_position(pose)
-    utils.plc.md_extruder_switch("off")
-    utils.plc.z_correction("off")
-
-    z_pos += layer_height
 
     if cummulative_z > 2*layer_height:
         flg = False  # For testing, end after one layer
     
-    cummulative_z += layer_height
-    layer_height += 3
+    cummulative_z += 3
+    z_pos += 3
+    new_layer_height +=3
+    utils.plc.configure_z_correction(layer_height=new_layer_height)
+    utils.plc.write_single_register(utils.CUMM_Z_DISPLAY_ADDRESS, cummulative_z)
+      
+
 
 
 stop_z_logging(z_thread)
