@@ -1,6 +1,0 @@
-id,group_tag,print_tag,image_tag1,image_tag2,humidity,temperature,print_speed,layer_height,pressure,width,image_tag3,comments
-291,User_20250922-142822_SSE,20250922-142822_p1,c1_20250922-142822.jpg,None,0.0,0.0,0.0,100.0,15.0,0.0,None,None
-292,User_20250922-142822_SSE,20250922-143905_p2,c1_20250922-143905.jpg,None,0.0,0.0,0.0,100.0,15.0,0.0,None,None
-293,User_20250922-142822_SSE,20250922-143925_p3,c1_20250922-143925.jpg,None,0.0,0.0,0.0,100.0,15.0,0.0,None,None
-294,User_20250922-142822_SSE,20250922-143927_p4,c1_20250922-143927.jpg,None,0.0,0.0,0.0,100.0,15.0,0.0,None,None
-295,User_20250922-142822_SSE,20250922-144005_p5,c1_20250922-144005.jpg,None,0.0,0.0,0.0,100.0,15.0,0.0,None,None

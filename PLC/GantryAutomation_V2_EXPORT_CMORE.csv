@@ -759,7 +759,7 @@ MassiveDimension,65,PROGRAM,ADD1BB91
 Z_correction,75,PROGRAM,30E52768
 #END
 
-#BEGIN DM_NICKNAMES F5628DC6
+#BEGIN DM_NICKNAMES A32E6E59
 // nickname, data-type, DM-element, User-BuiltIn-Block-Heap-Type, block-name-or-heap-item-name
 ESTOP,DISCRETE,X0,BBLOCK,X
 p1,DISCRETE,X1,BBLOCK,X
